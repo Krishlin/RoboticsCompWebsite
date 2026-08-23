@@ -15,8 +15,8 @@ def checkin_list():
 
 @checkin_bp.route("/inspect/<int:team_number>", methods=["GET", "POST"])
 def inspection_form(team_number):
-    # TODO(Shivani): on POST, save a new Inspection row (see
-    # logic.py:record_inspection). For now this just shows the form.
+    # TODO(Shivani): on POST, save a new Inspection row. For now this just
+    # shows the form.
     team = get_team(team_number)
     return render_template("checkin/inspection_form.html", team=team)
 

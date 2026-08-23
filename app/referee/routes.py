@@ -19,8 +19,8 @@ def current_match():
 
 @referee_bp.route("/result/<int:match_id>", methods=["GET", "POST"])
 def result_entry(match_id):
-    # TODO(Serena): on POST, record win_time_seconds automatically (start
-    # button tap to winner tap) and hand off to logic.py:submit_result.
+    # TODO(Serena): on POST, save the result and record win_time_seconds
+    # automatically (start button tap to winner tap).
     match = MATCHES_BY_ID.get(match_id)
     red = get_team(match["red_team_number"]) if match else None
     blue = get_team(match["blue_team_number"]) if match else None

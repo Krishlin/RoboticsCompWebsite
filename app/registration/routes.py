@@ -14,10 +14,8 @@ from app.registration import registration_bp
 
 @registration_bp.route("/", methods=["GET", "POST"])
 def signup():
-    # TODO(Emily): on POST, validate the form and create a real Team row
-    # (see logic.py for the pieces you'll need: assign_team_number,
-    # is_email_unique, validate_student_count). For now this just re-renders
-    # the empty form no matter what is submitted.
+    # TODO(Emily): on POST, validate the form and create a real Team row.
+    # For now this just re-renders the empty form no matter what is submitted.
     return render_template("registration/signup.html", divisions=DIVISIONS)
 
 

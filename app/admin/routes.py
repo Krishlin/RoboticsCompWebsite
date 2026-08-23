@@ -16,8 +16,8 @@ def dashboard():
 @admin_bp.route("/edit/<int:match_id>", methods=["GET", "POST"])
 def edit_result(match_id):
     # TODO(Yueyue): on POST, save the changed fields and write an
-    # AuditEntry for each one (see logic.py:edit_result_with_audit). A
-    # MatchResult may only be changed through this page.
+    # AuditEntry for each one. A MatchResult may only be changed through
+    # this page.
     match = MATCHES_BY_ID.get(match_id)
     result = RESULTS_BY_MATCH_ID.get(match_id)
     return render_template("admin/edit_result.html", match=match, result=result)
