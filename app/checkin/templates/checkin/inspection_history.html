@@ -1,0 +1,33 @@
+{# owner: Shivani — every past inspection attempt for one team, most recent is current #}
+{% extends "base.html" %}
+{% block title %}Inspection History{% endblock %}
+{% block content %}
+    <h1 class="page-title">Inspection History — Team {{ team.team_number if team else "?" }}</h1>
+
+    {% if not history %}
+        <p class="text-muted">No inspections recorded yet.</p>
+    {% endif %}
+
+    {% for inspection in history %}
+        <div class="card">
+            <p>
+                {% if inspection.passed %}
+                    <span class="badge badge-success">Passed</span>
+                {% else %}
+                    <span class="badge badge-danger">Failed</span>
+                {% endif %}
+                <span class="owner-tag">Inspector: {{ inspection.inspector_name }}</span>
+            </p>
+            <ul>
+                <li>Size OK: {{ "Yes" if inspection.size_ok else "No" }}</li>
+                <li>Weight OK: {{ "Yes" if inspection.weight_ok else "No" }}</li>
+                <li>micro:bit present: {{ "Yes" if inspection.microbit_present else "No" }}</li>
+                <li>Team number displayed: {{ "Yes" if inspection.team_number_displayed else "No" }}</li>
+                <li>Ref start/stop test: {{ "Yes" if inspection.ref_start_stop_test else "No" }}</li>
+            </ul>
+            {% if inspection.notes %}
+                <p><strong>Notes:</strong> {{ inspection.notes }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endblock %}

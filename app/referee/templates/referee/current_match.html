@@ -1,0 +1,40 @@
+{# owner: Serena — phone-sized current-match screen for the referee standing at an arena #}
+{% extends "base.html" %}
+{% block title %}Referee — Current Match{% endblock %}
+{% block content %}
+    <h1 class="page-title">Current Match</h1>
+
+    {% if match %}
+        <div class="card">
+            <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
+            <p style="font-size: 1.5rem;">
+                <span class="badge badge-red">RED — {{ red.name if red else "TBD" }}</span>
+                <br><br>
+                <span class="badge badge-blue">BLUE — {{ blue.name if blue else "TBD" }}</span>
+            </p>
+            <p id="timer" style="font-size: 2rem; text-align: center;">00:00</p>
+            <button class="btn btn-large">Start match</button>
+            <br><br>
+            <a class="btn btn-large btn-secondary" href="{{ url_for('referee.result_entry', match_id=match.id) }}">Enter result</a>
+        </div>
+    {% else %}
+        <p class="text-muted">No match currently assigned to this arena.</p>
+    {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<script>
+    // Placeholder timer. Serena's real version starts on the Start button
+    // tap and stops on the winner tap, recording win_time_seconds.
+    let seconds = 0;
+    setInterval(function () {
+        seconds += 1;
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        const timerEl = document.getElementById("timer");
+        if (timerEl) {
+            timerEl.textContent = m + ":" + s;
+        }
+    }, 1000);
+</script>
+{% endblock %}

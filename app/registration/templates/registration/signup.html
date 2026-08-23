@@ -1,0 +1,59 @@
+{# owner: Emily — public signup form for a new team #}
+{% extends "base.html" %}
+{% block title %}Register a Team{% endblock %}
+{% block content %}
+    <h1 class="page-title">Register a Team</h1>
+    <p class="page-subtitle">This form doesn't save anything yet — it's a shell.</p>
+
+    <form class="card" method="POST">
+        <div class="form-group">
+            <label for="team_name">Team name</label>
+            <input type="text" id="team_name" name="team_name" placeholder="e.g. The Sumo Squad">
+        </div>
+
+        <div class="form-group">
+            <label for="affiliation">School</label>
+            <input type="text" id="affiliation" name="affiliation" placeholder="School name, or leave blank for Independent">
+        </div>
+
+        <div class="form-group">
+            <label for="division">Division</label>
+            <select id="division" name="division">
+                {% for division in divisions %}
+                    <option value="{{ division }}">{{ division }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Students (1 to 4)</label>
+            <input type="text" name="student_1" placeholder="Student 1 name">
+            <input type="text" name="student_2" placeholder="Student 2 name (optional)">
+            <input type="text" name="student_3" placeholder="Student 3 name (optional)">
+            <input type="text" name="student_4" placeholder="Student 4 name (optional)">
+        </div>
+
+        <div class="form-group">
+            <label for="adult_name">Adult of record</label>
+            <input type="text" id="adult_name" name="adult_name">
+        </div>
+
+        <div class="form-group">
+            <label for="adult_email">Adult email</label>
+            <input type="email" id="adult_email" name="adult_email">
+            <p class="hint">Must be unique across all teams.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="adult_phone">Adult phone (optional)</label>
+            <input type="tel" id="adult_phone" name="adult_phone">
+        </div>
+
+        <div class="checkbox-row">
+            <input type="checkbox" id="kit_ordered" name="kit_ordered">
+            <label for="kit_ordered">We already ordered a kit</label>
+        </div>
+
+        <button type="submit" class="btn">Register team</button>
+    </form>
+{% endblock %}

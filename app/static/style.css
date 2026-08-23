@@ -1,0 +1,251 @@
+/* owner: shared / lead
+   Shared styles for the whole app. Use these classes instead of writing
+   your own button/table/form styles in your blueprint's templates.
+   Exceptions: app/bracket/static/bracket/bracket.css and
+   app/rankings/templates/rankings/display.html may use their own CSS,
+   because those two pages need layouts nothing here covers. */
+
+:root {
+    --color-bg: #f7f7f9;
+    --color-surface: #ffffff;
+    --color-text: #1a1a1a;
+    --color-muted: #6b7280;
+    --color-border: #e2e2e6;
+    --color-primary: #2f5fa8;
+    --color-primary-dark: #244a86;
+    --color-red: #c0392b;
+    --color-blue: #2f5fa8;
+    --color-success: #1e7e34;
+    --color-warning: #b06d00;
+    --radius: 8px;
+    --spacing: 1rem;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+/* --- Navigation --- */
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.75rem 1.5rem;
+}
+
+.site-nav-brand {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.site-nav-links a {
+    margin-left: 1rem;
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.site-nav-links a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* --- Layout --- */
+
+.page-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.page-title {
+    margin-top: 0;
+}
+
+.page-subtitle {
+    color: var(--color-muted);
+    margin-top: -0.5rem;
+}
+
+/* --- Cards --- */
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--spacing);
+    margin-bottom: var(--spacing);
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--spacing);
+}
+
+/* --- Buttons --- */
+
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 1rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-bg);
+}
+
+.btn-large {
+    padding: 1rem 1.5rem;
+    font-size: 1.25rem;
+    width: 100%;
+}
+
+.btn-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* --- Forms --- */
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.form-group .hint {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* --- Tables --- */
+
+table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-surface);
+}
+
+table.data-table th,
+table.data-table td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+table.data-table th {
+    background: var(--color-bg);
+    font-weight: 600;
+}
+
+table.data-table tr:hover td {
+    background: var(--color-bg);
+}
+
+/* --- Status badges --- */
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #e3f4e6;
+    color: var(--color-success);
+}
+
+.badge-warning {
+    background: #fdf1dd;
+    color: var(--color-warning);
+}
+
+.badge-danger {
+    background: #fbe6e3;
+    color: var(--color-red);
+}
+
+.badge-neutral {
+    background: #eceef1;
+    color: var(--color-muted);
+}
+
+.badge-red {
+    background: #fbe6e3;
+    color: var(--color-red);
+}
+
+.badge-blue {
+    background: #e6edf8;
+    color: var(--color-blue);
+}
+
+/* --- Utility --- */
+
+.owner-tag {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+
+.text-muted {
+    color: var(--color-muted);
+}

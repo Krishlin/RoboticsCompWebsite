@@ -1,0 +1,44 @@
+{# owner: Shivani — pass/fail inspection checklist for one team #}
+{% extends "base.html" %}
+{% block title %}Inspect Team{% endblock %}
+{% block content %}
+    <h1 class="page-title">Inspect Team {{ team.team_number if team else "?" }}</h1>
+    {% if team %}
+        <p class="page-subtitle">{{ team.name }} — {{ team.division }}</p>
+    {% endif %}
+
+    <form class="card" method="POST">
+        <div class="checkbox-row">
+            <input type="checkbox" id="size_ok" name="size_ok">
+            <label for="size_ok">Size within limit</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="weight_ok" name="weight_ok">
+            <label for="weight_ok">Weight within limit</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="microbit_present" name="microbit_present">
+            <label for="microbit_present">micro:bit present</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="team_number_displayed" name="team_number_displayed">
+            <label for="team_number_displayed">Team number displayed on robot</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="ref_start_stop_test" name="ref_start_stop_test">
+            <label for="ref_start_stop_test">Passed referee start/stop test</label>
+        </div>
+
+        <div class="form-group">
+            <label for="inspector_name">Inspector name</label>
+            <input type="text" id="inspector_name" name="inspector_name">
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notes (optional)</label>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn">Submit inspection</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,38 @@
+{# owner: Yueyue — head ref dashboard: all matches, pause/resume, CSV export #}
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+    <h1 class="page-title">Admin Dashboard</h1>
+
+    <div class="btn-row" style="margin-bottom: 1rem;">
+        <button class="btn btn-secondary">Pause schedule</button>
+        <button class="btn btn-secondary">Resume schedule</button>
+        <button class="btn btn-secondary">Insert replay match</button>
+        <a class="btn" href="#">Export all results (CSV)</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Match</th>
+                <th>Division</th>
+                <th>Arena</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+                <tr>
+                    <td>{{ match.match_number }}</td>
+                    <td>{{ match.division }}</td>
+                    <td>{{ match.arena }}</td>
+                    <td>{{ match.status }}</td>
+                    <td><a href="{{ url_for('admin.edit_result', match_id=match.id) }}">Edit result</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p style="margin-top: 1rem;"><a href="{{ url_for('admin.audit_log') }}">View audit log</a></p>
+{% endblock %}

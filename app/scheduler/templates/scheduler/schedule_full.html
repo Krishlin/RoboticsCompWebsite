@@ -1,0 +1,41 @@
+{# owner: Shaurya — full qualification schedule, all arenas and divisions #}
+{% extends "base.html" %}
+{% block title %}Schedule{% endblock %}
+{% block content %}
+    <h1 class="page-title">Qualification Schedule</h1>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Match</th>
+                <th>Division</th>
+                <th>Arena</th>
+                <th>Time</th>
+                <th>Red</th>
+                <th>Blue</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+                <tr>
+                    <td>{{ match.match_number }}</td>
+                    <td>{{ match.division }}</td>
+                    <td>{{ match.arena }}</td>
+                    <td>{{ match.scheduled_time }}</td>
+                    <td><span class="badge badge-red">{{ match.red_team_name }}</span></td>
+                    <td><span class="badge badge-blue">{{ match.blue_team_name }}</span></td>
+                    <td>
+                        {% if match.status == "complete" %}
+                            <span class="badge badge-success">Complete</span>
+                        {% elif match.status == "in_progress" %}
+                            <span class="badge badge-warning">In progress</span>
+                        {% else %}
+                            <span class="badge badge-neutral">Scheduled</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

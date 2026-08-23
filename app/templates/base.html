@@ -1,0 +1,31 @@
+<!-- owner: shared / lead -->
+<!-- Shared layout every page extends. Don't edit this file from inside your
+     own blueprint folder — if you need something new, ask at check-in. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SRC Tournament{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="site-nav">
+        <a href="{{ url_for('main.home') }}" class="site-nav-brand">SRC Tournament</a>
+        <div class="site-nav-links">
+            <a href="/register/">Register</a>
+            <a href="/checkin/">Check-in</a>
+            <a href="/schedule/">Schedule</a>
+            <a href="/referee/">Referee</a>
+            <a href="/rankings/Middle_School">Rankings</a>
+            <a href="/bracket/Middle_School">Bracket</a>
+            <a href="/admin/">Admin</a>
+        </div>
+    </nav>
+
+    <main class="page-container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

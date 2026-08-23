@@ -1,0 +1,25 @@
+{# owner: Jon — enter a team number, see their next match and arena #}
+{% extends "base.html" %}
+{% block title %}Pit Lookup{% endblock %}
+{% block content %}
+    <h1 class="page-title">Pit Lookup</h1>
+
+    <form class="card" method="POST">
+        <div class="form-group">
+            <label for="team_number">Team number</label>
+            <input type="number" id="team_number" name="team_number">
+        </div>
+        <button type="submit" class="btn">Find next match</button>
+    </form>
+
+    {% if team %}
+        <div class="card">
+            <p><strong>{{ team.name }}</strong> ({{ team.division }})</p>
+            {% if next_match %}
+                <p>Next match: {{ next_match.match_number }} on {{ next_match.arena }} at {{ next_match.scheduled_time }}</p>
+            {% else %}
+                <p class="text-muted">No upcoming match found.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

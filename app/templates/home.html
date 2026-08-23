@@ -1,0 +1,17 @@
+{# owner: shared / lead — home page listing every route in the app and who owns it #}
+{% extends "base.html" %}
+{% block title %}SRC Tournament — Home{% endblock %}
+{% block content %}
+    <h1 class="page-title">SRC Tournament Software</h1>
+    <p class="page-subtitle">Every page in the app, and who's building it.</p>
+
+    <div class="card-grid">
+        {% for route in routes %}
+            <div class="card">
+                <span class="badge badge-neutral">{{ route.owner }}</span>
+                <p><a href="{{ route.path }}">{{ route.label }}</a></p>
+                <p class="owner-tag">{{ route.path }}</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

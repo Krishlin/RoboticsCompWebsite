@@ -1,0 +1,31 @@
+{# owner: Yueyue — every change made to a result, who made it, and when #}
+{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block content %}
+    <h1 class="page-title">Audit Log</h1>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Match</th>
+                <th>Changed by</th>
+                <th>When</th>
+                <th>Field</th>
+                <th>Old value</th>
+                <th>New value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.match_id }}</td>
+                    <td>{{ entry.changed_by }}</td>
+                    <td>{{ entry.changed_at }}</td>
+                    <td>{{ entry.field }}</td>
+                    <td>{{ entry.old_value }}</td>
+                    <td>{{ entry.new_value }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,52 @@
+/* owner: Krish S
+   Custom bracket rendering CSS. Exception to the shared-stylesheet rule
+   (per CLAUDE.md) — the bracket layout can't come from shared button/table
+   classes. */
+
+.bracket-board {
+    display: flex;
+    gap: 2.5rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+}
+
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 220px;
+    gap: 1.5rem;
+}
+
+.bracket-round-title {
+    text-align: center;
+    font-weight: 600;
+    color: var(--color-muted);
+    margin-bottom: 0.5rem;
+}
+
+.bracket-match {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    overflow: hidden;
+}
+
+.bracket-slot {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.bracket-slot:last-child {
+    border-bottom: none;
+}
+
+.bracket-slot.is-winner {
+    font-weight: 700;
+    background: #e3f4e6;
+}
+
+.bracket-slot.is-tbd {
+    color: var(--color-muted);
+    font-style: italic;
+}

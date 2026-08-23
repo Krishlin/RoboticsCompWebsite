@@ -1,0 +1,39 @@
+{# owner: Shivani — one row per team, tap to check in #}
+{% extends "base.html" %}
+{% block title %}Check-in{% endblock %}
+{% block content %}
+    <h1 class="page-title">Check-in</h1>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>Division</th>
+                <th>Status</th>
+                <th>Inspection</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+                <tr>
+                    <td>{{ team.team_number }}</td>
+                    <td>{{ team.name }}</td>
+                    <td>{{ team.division }}</td>
+                    <td>
+                        {% if team.checked_in %}
+                            <span class="badge badge-success">Checked in</span>
+                        {% else %}
+                            <button class="btn btn-secondary">Check in</button>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">Inspect</a>
+                        &middot;
+                        <a href="{{ url_for('checkin.inspection_history', team_number=team.team_number) }}">History</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,19 @@
+{# owner: Serena — confirm screen before a result locks in, phone-sized #}
+{% extends "base.html" %}
+{% block title %}Referee — Confirm{% endblock %}
+{% block content %}
+    <h1 class="page-title">Confirm Result</h1>
+
+    {% if match %}
+        <div class="card">
+            <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
+            <p>Double check the result before submitting. Once submitted, this
+            match locks and can only be changed by the head ref.</p>
+            <button class="btn btn-large">Submit result</button>
+            <br><br>
+            <a class="btn btn-large btn-secondary" href="{{ url_for('referee.result_entry', match_id=match.id) }}">Go back and edit</a>
+        </div>
+    {% else %}
+        <p class="text-muted">Match not found.</p>
+    {% endif %}
+{% endblock %}

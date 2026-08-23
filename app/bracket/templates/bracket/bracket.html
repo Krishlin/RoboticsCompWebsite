@@ -1,0 +1,32 @@
+{# owner: Krish S — elimination bracket rendering.
+   Exception to the shared-styles rule (per CLAUDE.md): this page has its
+   own CSS in app/bracket/static/bracket/bracket.css. #}
+{% extends "base.html" %}
+{% block title %}Bracket — {{ division }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ url_for('bracket.static', filename='bracket/bracket.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Bracket — {{ division }}</h1>
+    <p class="page-subtitle">Single elimination. A tie inserts a replay instead of advancing anyone.</p>
+
+    <div class="bracket-board">
+        {% for round in rounds %}
+            <div class="bracket-round">
+                <div class="bracket-round-title">{{ round.round_name }}</div>
+                {% for match in round.matches %}
+                    <div class="bracket-match">
+                        <div class="bracket-slot {% if match.winner == match.red %}is-winner{% endif %} {% if match.red == 'TBD' %}is-tbd{% endif %}">
+                            {{ match.red }}
+                        </div>
+                        <div class="bracket-slot {% if match.winner == match.blue %}is-winner{% endif %} {% if match.blue == 'TBD' %}is-tbd{% endif %}">
+                            {{ match.blue }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

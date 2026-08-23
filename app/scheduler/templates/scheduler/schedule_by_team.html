@@ -1,0 +1,36 @@
+{# owner: Shaurya — printable per-team match list #}
+{% extends "base.html" %}
+{% block title %}Schedule — Team {{ team_number }}{% endblock %}
+{% block content %}
+    <h1 class="page-title">Schedule — Team {{ team_number }}</h1>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Match</th>
+                <th>Arena</th>
+                <th>Time</th>
+                <th>Opponent</th>
+                <th>Side</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+                <tr>
+                    <td>{{ match.match_number }}</td>
+                    <td>{{ match.arena }}</td>
+                    <td>{{ match.scheduled_time }}</td>
+                    {% if match.red_team_number == team_number %}
+                        <td>{{ match.blue_team_name }}</td>
+                        <td><span class="badge badge-red">Red</span></td>
+                    {% else %}
+                        <td>{{ match.red_team_name }}</td>
+                        <td><span class="badge badge-blue">Blue</span></td>
+                    {% endif %}
+                    <td>{{ match.status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,37 @@
+{# owner: Yueyue — edit any submitted result; every change must write an AuditEntry #}
+{% extends "base.html" %}
+{% block title %}Edit Result{% endblock %}
+{% block content %}
+    <h1 class="page-title">Edit Result</h1>
+
+    {% if match and result %}
+        <form class="card" method="POST">
+            <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
+
+            <div class="form-group">
+                <label for="outcome">Outcome</label>
+                <select id="outcome" name="outcome">
+                    <option value="red" {% if result.outcome == "red" %}selected{% endif %}>Red</option>
+                    <option value="blue" {% if result.outcome == "blue" %}selected{% endif %}>Blue</option>
+                    <option value="tie" {% if result.outcome == "tie" %}selected{% endif %}>Tie</option>
+                    <option value="double_dq" {% if result.outcome == "double_dq" %}selected{% endif %}>Double DQ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="red_final_zone">Red final zone</label>
+                <input type="text" id="red_final_zone" name="red_final_zone" value="{{ result.red_final_zone }}">
+            </div>
+
+            <div class="form-group">
+                <label for="blue_final_zone">Blue final zone</label>
+                <input type="text" id="blue_final_zone" name="blue_final_zone" value="{{ result.blue_final_zone }}">
+            </div>
+
+            <p class="hint">Saving this will write an AuditEntry for every field that changed.</p>
+            <button type="submit" class="btn">Save changes</button>
+        </form>
+    {% else %}
+        <p class="text-muted">No result found for this match.</p>
+    {% endif %}
+{% endblock %}

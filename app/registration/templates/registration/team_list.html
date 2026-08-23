@@ -1,0 +1,49 @@
+{# owner: Emily — full team list, used for check-in reference and CSV export #}
+{% extends "base.html" %}
+{% block title %}All Teams{% endblock %}
+{% block content %}
+    <h1 class="page-title">Registered Teams</h1>
+
+    <div class="btn-row" style="margin-bottom: 1rem;">
+        <a class="btn btn-secondary" href="#">Export CSV</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>Division</th>
+                <th>School</th>
+                <th>Students</th>
+                <th>Kit</th>
+                <th>Checked in</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+                <tr>
+                    <td>{{ team.team_number }}</td>
+                    <td>{{ team.name }}</td>
+                    <td>{{ team.division }}</td>
+                    <td>{{ team.affiliation }}</td>
+                    <td>{{ team.students | join(", ") }}</td>
+                    <td>
+                        {% if team.kit_ordered %}
+                            <span class="badge badge-success">Ordered</span>
+                        {% else %}
+                            <span class="badge badge-warning">Not ordered</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if team.checked_in %}
+                            <span class="badge badge-success">Yes</span>
+                        {% else %}
+                            <span class="badge badge-neutral">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
