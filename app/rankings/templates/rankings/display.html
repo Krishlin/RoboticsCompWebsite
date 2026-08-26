@@ -43,7 +43,10 @@
 
     <div class="card display-current">
         {% if current_match %}
-            Now playing: Match {{ current_match.match_number }} — {{ current_match.arena }}
+            Now playing: Match {{ current_match.match_number }} — {{ current_match.arena }}<br>
+            {{ current_match.red_team_number }} — {{ current_match.red_team_name }}
+            &nbsp;vs&nbsp;
+            {{ current_match.blue_team_number }} — {{ current_match.blue_team_name }}
         {% else %}
             No match currently in progress
         {% endif %}
@@ -53,7 +56,11 @@
         <h2>Up Next</h2>
         <ul class="display-next-list">
             {% for match in next_matches %}
-                <li>Match {{ match.match_number }} — {{ match.arena }} — {{ match.scheduled_time }}</li>
+                <li>
+                    Match {{ match.match_number }} — {{ match.arena }} — {{ match.scheduled_time }}<br>
+                    {{ match.red_team_number }} {{ match.red_team_name }} vs
+                    {{ match.blue_team_number }} {{ match.blue_team_name }}
+                </li>
             {% else %}
                 <li class="text-muted">Nothing else scheduled.</li>
             {% endfor %}
