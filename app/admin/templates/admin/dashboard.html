@@ -18,17 +18,49 @@
                 <th>Division</th>
                 <th>Arena</th>
                 <th>Status</th>
-                <th></th>
+                <th>Outcome</th>
+                <th>Red final zone</th>
+                <th>Blue final zone</th>
+                <th>Win time</th>
             </tr>
         </thead>
         <tbody>
-            {% for match in matches %}
+            {% for row in match_rows %}
+                {% set match = row.match %}
+                {% set result = row.result %}
                 <tr>
                     <td>{{ match.match_number }}</td>
                     <td>{{ match.division }}</td>
                     <td>{{ match.arena }}</td>
                     <td>{{ match.status }}</td>
-                    <td><a href="{{ url_for('admin.edit_result', match_id=match.id) }}">Edit result</a></td>
+                    <td>
+                        {% if result %}
+                            {{ result.outcome }}
+                        {% else %}
+                            No result yet
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result %}
+                            {{ result.red_final_zone }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result %}
+                            {{ result.blue_final_zone }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result and result.win_time_seconds is not none %}
+                            {{ result.win_time_seconds }}s
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>

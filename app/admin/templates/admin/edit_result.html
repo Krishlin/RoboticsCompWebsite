@@ -4,6 +4,10 @@
 {% block content %}
     <h1 class="page-title">Edit Result</h1>
 
+    {% if error_message %}
+        <p class="text-muted" style="color: #8b1e1e; margin-bottom: 1rem;">{{ error_message }}</p>
+    {% endif %}
+
     {% if match and result %}
         <form class="card" method="POST">
             <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
