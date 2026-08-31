@@ -3,6 +3,7 @@
 {% block title %}Register a Team{% endblock %}
 {% block content %}
     <h1 class="page-title">Register a Team</h1>
+    {% if success %}<p class="success">Team registered! Check the database to confirm.</p>{% endif %} 
     <p class="page-subtitle">This form doesn't save anything yet — it's a shell.</p>
 
     <form class="card" method="POST">
