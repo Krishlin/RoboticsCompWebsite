@@ -23,6 +23,11 @@
             </div>
 
             <div class="form-group">
+                <label for="win_time_seconds">Win time (seconds)</label>
+                <input type="number" step="0.1" id="win_time_seconds" name="win_time_seconds" value="{{ result.win_time_seconds if result.win_time_seconds is not none else '' }}">
+            </div>
+
+            <div class="form-group">
                 <label for="red_final_zone">Red final zone</label>
                 <input type="text" id="red_final_zone" name="red_final_zone" value="{{ result.red_final_zone }}">
             </div>

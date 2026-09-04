@@ -5,8 +5,8 @@
 from flask import render_template, request, redirect, url_for
 
 from app.db import db
-from app.fake_data import MATCHES, RESULTS_BY_MATCH_ID, MATCHES_BY_ID
-from app.models import AuditEntry, MatchResult
+from app.fake_data import MATCHES, RESULTS_BY_MATCH_ID
+from app.models import AuditEntry, Match, MatchResult
 from app.admin import admin_bp
 
 
@@ -35,10 +35,8 @@ def dashboard():
 
 @admin_bp.route("/edit/<int:match_id>", methods=["GET", "POST"])
 def edit_result(match_id):
-    match = MATCHES_BY_ID.get(match_id)
+    match = Match.query.filter_by(id=match_id).first()
     result = MatchResult.query.filter_by(match_id=match_id).first()
-    if result is None:
-        result = RESULTS_BY_MATCH_ID.get(match_id)
 
     if request.method == "POST":
         if result is None:
@@ -49,27 +47,33 @@ def edit_result(match_id):
                 error_message="No result found for this match.",
             )
 
+        if match is None:
+            return render_template(
+                "admin/edit_result.html",
+                match=None,
+                result=result,
+                error_message="No match found for this result.",
+            )
+
         updated_values = {
             "outcome": request.form.get("outcome"),
+            "win_time_seconds": request.form.get("win_time_seconds"),
             "red_final_zone": request.form.get("red_final_zone"),
             "blue_final_zone": request.form.get("blue_final_zone"),
         }
-
-        if not isinstance(result, MatchResult):
-            # The app still has fake-data fallback for GET-only display. Do not
-            # try to mutate those placeholder dicts; use the real model when
-            # saving changes.
-            return render_template(
-                "admin/edit_result.html",
-                match=match,
-                result=result,
-                error_message="Result updates must use the real database-backed MatchResult model.",
-            )
 
         try:
             changed_fields = []
             for field_name, new_value in updated_values.items():
                 old_value = getattr(result, field_name)
+
+                if field_name == "win_time_seconds":
+                    if new_value in (None, ""):
+                        converted_value = None
+                    else:
+                        converted_value = float(new_value)
+                    new_value = converted_value
+
                 if old_value != new_value:
                     changed_fields.append((field_name, old_value, new_value))
                     setattr(result, field_name, new_value)
@@ -87,7 +91,7 @@ def edit_result(match_id):
             if changed_fields:
                 db.session.add(result)
                 db.session.commit()
-            return redirect(url_for("admin.audit_log"))
+            return redirect(url_for("admin.edit_result", match_id=match_id))
         except Exception:
             db.session.rollback()
             return render_template(
