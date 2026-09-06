@@ -22,6 +22,7 @@
                 <th>Red final zone</th>
                 <th>Blue final zone</th>
                 <th>Win time</th>
+                <th>Edit Result</th>
             </tr>
         </thead>
         <tbody>
@@ -57,6 +58,13 @@
                     <td>
                         {% if result and result.win_time_seconds is not none %}
                             {{ result.win_time_seconds }}s
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result %}
+                            <a href="/admin/edit/{{ match.id }}">Edit Result</a>
                         {% else %}
                             —
                         {% endif %}
