@@ -6,12 +6,33 @@ from flask import render_template
 
 from app.fake_data import TEAMS, INSPECTIONS, get_team
 from app.checkin import checkin_bp
-
+from app.db import db
+from app.models import Team
+from flask import render_template, redirect, url_for 
 
 @checkin_bp.route("/")
 def checkin_list():
-    return render_template("checkin/checkin_list.html", teams=TEAMS)
+    # Get every team from the real database,
+    # ordered by team number.
+    teams = Team.query.order_by(Team.team_number).all()
 
+    # Send those teams to the check-in page.
+    return render_template("checkin/checkin_list.html", teams=teams)
+
+
+@checkin_bp.route("/<int:team_id>/check-in", methods=["POST"])
+def check_in_team(team_id):
+    # Find the team that matches the ID from the button.
+    team = Team.query.get_or_404(team_id)
+
+    # Mark the team as arrived.
+    team.checked_in = True
+
+    # Save that change to the database.
+    db.session.commit()
+
+    # Send the user back to the check-in list.
+    return redirect(url_for("checkin.checkin_list"))
 
 @checkin_bp.route("/inspect/<int:team_number>", methods=["GET", "POST"])
 def inspection_form(team_number):
