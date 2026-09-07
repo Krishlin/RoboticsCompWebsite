@@ -2,7 +2,7 @@
 # Head ref panel: edit any result (writing an AuditEntry every time), pause
 # and resume the schedule, insert a replay match, global CSV export.
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, abort
 
 from app.db import db
 from app.fake_data import MATCHES, RESULTS_BY_MATCH_ID
@@ -108,3 +108,12 @@ def edit_result(match_id):
 def audit_log():
     entries = AuditEntry.query.order_by(AuditEntry.changed_at.desc()).all()
     return render_template("admin/audit_log.html", entries=entries)
+
+
+@admin_bp.route("/match/<int:match_id>/history")
+def match_history(match_id):
+    match = Match.query.filter_by(id=match_id).first()
+    if match is None:
+        abort(404)
+    entries = AuditEntry.query.filter_by(match_id=match_id).order_by(AuditEntry.changed_at.desc()).all()
+    return render_template("admin/match_history.html", match=match, entries=entries)

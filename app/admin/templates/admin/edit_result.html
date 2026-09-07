@@ -38,7 +38,10 @@
             </div>
 
             <p class="hint">Saving this will write an AuditEntry for every field that changed.</p>
-            <button type="submit" class="btn" onclick="sessionStorage.setItem('resultSaved', 'true')">Save changes</button>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn" onclick="sessionStorage.setItem('resultSaved', 'true')">Save changes</button>
+                <a class="btn" href="{{ url_for('admin.match_history', match_id=match.id) }}">View history</a>
+            </div>
 
             <div id="success-message" class="success-message" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px; font-size: 0.95rem;">
                 Changes saved successfully.
