@@ -38,8 +38,24 @@
             </div>
 
             <p class="hint">Saving this will write an AuditEntry for every field that changed.</p>
-            <button type="submit" class="btn">Save changes</button>
+            <button type="submit" class="btn" onclick="sessionStorage.setItem('resultSaved', 'true')">Save changes</button>
+
+            <div id="success-message" class="success-message" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px; font-size: 0.95rem;">
+                Changes saved successfully.
+            </div>
         </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (sessionStorage.getItem('resultSaved') === 'true') {
+                    var errorMessage = document.querySelector('p.text-muted');
+                    if (!errorMessage) {
+                        document.getElementById('success-message').style.display = 'block';
+                    }
+                    sessionStorage.removeItem('resultSaved');
+                }
+            });
+        </script>
     {% else %}
         <p class="text-muted">No result found for this match.</p>
     {% endif %}

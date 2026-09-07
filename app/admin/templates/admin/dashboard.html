@@ -8,6 +8,7 @@
         <button class="btn btn-secondary">Pause schedule</button>
         <button class="btn btn-secondary">Resume schedule</button>
         <button class="btn btn-secondary">Insert replay match</button>
+        <a class="btn" href="/admin/audit-log">View audit log</a>
         <a class="btn" href="#">Export all results (CSV)</a>
     </div>
 
@@ -73,6 +74,4 @@
             {% endfor %}
         </tbody>
     </table>
-
-    <p style="margin-top: 1rem;"><a href="{{ url_for('admin.audit_log') }}">View audit log</a></p>
 {% endblock %}
