@@ -106,3 +106,15 @@ class AuditEntry(db.Model):
     field = db.Column(db.String(50), nullable=False)
     old_value = db.Column(db.String(200), nullable=True)
     new_value = db.Column(db.String(200), nullable=True)
+
+
+class ScheduleState(db.Model):
+    __tablename__ = "schedule_state"
+
+    id = db.Column(db.Integer, primary_key=True)
+    is_paused = db.Column(db.Boolean, default=False, nullable=False)
+    changed_by = db.Column(db.String(120), nullable=True)  # who paused/resumed the schedule
+    changed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)  # when the state last changed
+
+    # Use single-row design: always maintain exactly one row with id=1
+    # for global schedule state.

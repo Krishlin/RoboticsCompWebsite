@@ -2,11 +2,13 @@
 # Head ref panel: edit any result (writing an AuditEntry every time), pause
 # and resume the schedule, insert a replay match, global CSV export.
 
+from datetime import datetime
+
 from flask import render_template, request, redirect, url_for, abort
 
 from app.db import db
 from app.fake_data import MATCHES, RESULTS_BY_MATCH_ID
-from app.models import AuditEntry, Match, MatchResult
+from app.models import AuditEntry, Match, MatchResult, ScheduleState
 from app.admin import admin_bp
 
 
@@ -27,10 +29,21 @@ def _current_admin_name():
     return "admin"
 
 
+def _get_or_create_schedule_state():
+    """Get the global schedule state. Create it if it doesn't exist."""
+    state = ScheduleState.query.filter_by(id=1).first()
+    if state is None:
+        state = ScheduleState(id=1, is_paused=False, changed_by=None)
+        db.session.add(state)
+        db.session.commit()
+    return state
+
+
 @admin_bp.route("/")
 def dashboard():
     match_rows = _match_rows_with_results()
-    return render_template("admin/dashboard.html", match_rows=match_rows)
+    schedule_state = _get_or_create_schedule_state()
+    return render_template("admin/dashboard.html", match_rows=match_rows, schedule_state=schedule_state)
 
 
 @admin_bp.route("/edit/<int:match_id>", methods=["GET", "POST"])
@@ -117,3 +130,25 @@ def match_history(match_id):
         abort(404)
     entries = AuditEntry.query.filter_by(match_id=match_id).order_by(AuditEntry.changed_at.desc()).all()
     return render_template("admin/match_history.html", match=match, entries=entries)
+
+
+@admin_bp.route("/pause", methods=["POST"])
+def pause_schedule():
+    """Pause the schedule."""
+    state = _get_or_create_schedule_state()
+    state.is_paused = True
+    state.changed_by = _current_admin_name()
+    state.changed_at = datetime.utcnow()
+    db.session.commit()
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/resume", methods=["POST"])
+def resume_schedule():
+    """Resume the schedule."""
+    state = _get_or_create_schedule_state()
+    state.is_paused = False
+    state.changed_by = _current_admin_name()
+    state.changed_at = datetime.utcnow()
+    db.session.commit()
+    return redirect(url_for("admin.dashboard"))
