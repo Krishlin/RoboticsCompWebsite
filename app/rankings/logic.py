@@ -63,6 +63,8 @@ def get_division_rankings(division):
             "match_id": r.match_id,
             "outcome": r.outcome,
             "win_time_seconds": r.win_time_seconds,
+            "red_final_zone": r.red_final_zone,
+            "blue_final_zone": r.blue_final_zone,
         }
         for r in results
     ]
@@ -92,12 +94,7 @@ def _enrich_match(match):
 
 
 def get_current_match(division=None):
-    """The match currently in progress, optionally filtered by division.
-
-    If more than one arena is running at once (normal — multiple arenas run
-    in parallel), this returns the most recently started one. The display
-    page is meant to run one instance per arena/division anyway.
-    """
+    """The match currently in progress, optionally filtered by division."""
     query = Match.query.filter_by(status="in_progress")
     if division:
         query = query.filter_by(division=division)
