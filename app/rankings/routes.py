@@ -5,8 +5,9 @@
 
 from flask import render_template, request
 
-from app.fake_data import fake_rankings, CURRENT_MATCH, upcoming_matches, get_team
+from app.fake_data import CURRENT_MATCH, upcoming_matches, get_team
 from app.rankings import rankings_bp
+from app.rankings.calculator import calculate_rankings
 
 
 @rankings_bp.route("/<division>")
@@ -15,7 +16,7 @@ def rankings(division):
     return render_template(
         "rankings/rankings.html",
         division=division_name,
-        rankings=fake_rankings(division_name),
+        rankings=calculate_rankings(division_name),
     )
 
 
@@ -27,7 +28,7 @@ def display(division):
         division=division_name,
         current_match=CURRENT_MATCH,
         next_matches=upcoming_matches(division_name, limit=3),
-        rankings=fake_rankings(division_name)[:8],
+        rankings=calculate_rankings(division_name)[:8],
     )
 
 

@@ -18,9 +18,18 @@
                 <button type="submit" class="btn btn-secondary">Pause schedule</button>
             </form>
         {% endif %}
-        <button class="btn btn-secondary">Insert replay match</button>
+        <form method="POST" action="{{ url_for('admin.insert_replay_match') }}" style="display: inline; margin-left: 0.5rem;">
+            <select name="original_match_id" style="padding: 0.5rem; margin-right: 0.5rem;">
+                <option value="">-- Select match to replay --</option>
+                {% for row in match_rows %}
+                    {% set match = row.match %}
+                    <option value="{{ match.id }}">Match {{ match.match_number }} ({{ match.division }}, {{ match.arena }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary">Insert replay match</button>
+        </form>
         <a class="btn" href="/admin/audit-log">View audit log</a>
-        <a class="btn" href="#">Export all results (CSV)</a>
+        <a class="btn" href="{{ url_for('admin.export_csv') }}">Export all results (CSV)</a>
     </div>
 
     <table class="data-table">

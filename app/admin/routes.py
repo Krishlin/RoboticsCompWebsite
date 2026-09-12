@@ -2,20 +2,22 @@
 # Head ref panel: edit any result (writing an AuditEntry every time), pause
 # and resume the schedule, insert a replay match, global CSV export.
 
+import csv
+import io
 from datetime import datetime
 
-from flask import render_template, request, redirect, url_for, abort
+from flask import render_template, request, redirect, url_for, abort, Response
 
 from app.db import db
-from app.fake_data import MATCHES, RESULTS_BY_MATCH_ID
 from app.models import AuditEntry, Match, MatchResult, ScheduleState
 from app.admin import admin_bp
 
 
 def _match_rows_with_results():
     rows = []
-    for match in MATCHES:
-        result = RESULTS_BY_MATCH_ID.get(match["id"])
+    matches = Match.query.order_by(Match.division, Match.match_number).all()
+    for match in matches:
+        result = MatchResult.query.filter_by(match_id=match.id).first()
         rows.append({
             "match": match,
             "result": result,
@@ -37,6 +39,14 @@ def _get_or_create_schedule_state():
         db.session.add(state)
         db.session.commit()
     return state
+
+
+def _get_next_match_number_for_division(division):
+    """Get the next available match_number for a given division."""
+    max_match = Match.query.filter_by(division=division).order_by(Match.match_number.desc()).first()
+    if max_match is None:
+        return 1
+    return max_match.match_number + 1
 
 
 @admin_bp.route("/")
@@ -152,3 +162,115 @@ def resume_schedule():
     state.changed_at = datetime.utcnow()
     db.session.commit()
     return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/replay", methods=["POST"])
+def insert_replay_match():
+    """Create a replay of an existing match."""
+    original_match_id = request.form.get("original_match_id")
+
+    if not original_match_id:
+        abort(400)
+
+    original_match = Match.query.filter_by(id=original_match_id).first()
+    if original_match is None:
+        abort(404)
+
+    # Get the next available match_number for this division
+    next_match_number = _get_next_match_number_for_division(original_match.division)
+
+    # Create the replay match
+    replay_match = Match(
+        match_number=next_match_number,
+        phase=original_match.phase,
+        division=original_match.division,
+        arena=original_match.arena,
+        scheduled_time=original_match.scheduled_time,
+        red_team_id=original_match.red_team_id,
+        blue_team_id=original_match.blue_team_id,
+        status="scheduled",
+        is_replay=True,
+        bracket_round=original_match.bracket_round,
+        bracket_slot=original_match.bracket_slot,
+    )
+
+    try:
+        db.session.add(replay_match)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        abort(500)
+
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/export.csv", methods=["GET"])
+def export_csv():
+    """Export all matches and results to CSV."""
+    # Query all matches ordered by division and match_number
+    matches = Match.query.order_by(Match.division, Match.match_number).all()
+
+    # Define CSV columns
+    columns = [
+        "match_id",
+        "match_number",
+        "division",
+        "phase",
+        "arena",
+        "scheduled_time",
+        "red_team_id",
+        "blue_team_id",
+        "status",
+        "is_replay",
+        "bracket_round",
+        "bracket_slot",
+        "outcome",
+        "win_time_seconds",
+        "red_final_zone",
+        "blue_final_zone",
+        "submitted_at",
+        "submitted_by",
+    ]
+
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=columns, restval="")
+    writer.writeheader()
+
+    # Write each match row
+    for match in matches:
+        result = MatchResult.query.filter_by(match_id=match.id).first()
+
+        row = {
+            "match_id": match.id,
+            "match_number": match.match_number,
+            "division": match.division,
+            "phase": match.phase,
+            "arena": match.arena,
+            "scheduled_time": match.scheduled_time.isoformat() if match.scheduled_time else "",
+            "red_team_id": match.red_team_id,
+            "blue_team_id": match.blue_team_id,
+            "status": match.status,
+            "is_replay": match.is_replay,
+            "bracket_round": match.bracket_round,
+            "bracket_slot": match.bracket_slot,
+        }
+
+        # Add result columns if result exists
+        if result:
+            row["outcome"] = result.outcome
+            row["win_time_seconds"] = result.win_time_seconds
+            row["red_final_zone"] = result.red_final_zone
+            row["blue_final_zone"] = result.blue_final_zone
+            row["submitted_at"] = result.submitted_at.isoformat() if result.submitted_at else ""
+            row["submitted_by"] = result.submitted_by
+
+        writer.writerow(row)
+
+    # Prepare response
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=matches.csv"},
+    )
