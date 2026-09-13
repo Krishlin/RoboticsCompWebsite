@@ -2,32 +2,90 @@
 {% extends "base.html" %}
 {% block title %}Inspection History{% endblock %}
 {% block content %}
-    <h1 class="page-title">Inspection History — Team {{ team.team_number if team else "?" }}</h1>
 
-    {% if not history %}
-        <p class="text-muted">No inspections recorded yet.</p>
+<h1 class="page-title">
+    Inspection History — Team {{ team.team_number }}
+</h1>
+
+
+{% if current %}
+
+    <h2>Current Status</h2>
+
+    {% if current.passed %}
+        <span class="badge badge-success">Passed</span>
+    {% else %}
+        <span class="badge">Failed</span>
     {% endif %}
 
-    {% for inspection in history %}
-        <div class="card">
-            <p>
-                {% if inspection.passed %}
-                    <span class="badge badge-success">Passed</span>
-                {% else %}
-                    <span class="badge badge-danger">Failed</span>
-                {% endif %}
-                <span class="owner-tag">Inspector: {{ inspection.inspector_name }}</span>
-            </p>
-            <ul>
-                <li>Size OK: {{ "Yes" if inspection.size_ok else "No" }}</li>
-                <li>Weight OK: {{ "Yes" if inspection.weight_ok else "No" }}</li>
-                <li>micro:bit present: {{ "Yes" if inspection.microbit_present else "No" }}</li>
-                <li>Team number displayed: {{ "Yes" if inspection.team_number_displayed else "No" }}</li>
-                <li>Ref start/stop test: {{ "Yes" if inspection.ref_start_stop_test else "No" }}</li>
-            </ul>
-            {% if inspection.notes %}
-                <p><strong>Notes:</strong> {{ inspection.notes }}</p>
-            {% endif %}
-        </div>
-    {% endfor %}
+{% else %}
+
+    <p>Not inspected yet.</p>
+
+{% endif %}
+
+
+<h2>Attempts</h2>
+
+{% if history %}
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Attempt</th>
+                <th>Result</th>
+                <th>Time</th>
+                <th>Inspector</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for inspection in history %}
+
+            <tr>
+
+                <td>
+                    {{ loop.revindex }}
+                </td>
+
+                <td>
+                    {% if inspection.passed %}
+                        Passed
+                    {% else %}
+                        Failed
+                    {% endif %}
+                </td>
+
+                <td>
+                    {{ inspection.inspected_at }}
+                </td>
+
+                <td>
+                    {{ inspection.inspector_name }}
+                </td>
+
+                <td>
+                    {{ inspection.notes }}
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+{% endif %}
+
+
+<p>
+    <a href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">
+        Inspect Again
+    </a>
+</p>
+
 {% endblock %}
