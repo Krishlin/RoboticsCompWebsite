@@ -3,7 +3,14 @@
 {% block title %}Register a Team{% endblock %}
 {% block content %}
     <h1 class="page-title">Register a Team</h1>
-    <p class="page-subtitle">This form doesn't save anything yet — it's a shell.</p>
+    {% if success %}<p class="success">Team registered! Check the database to confirm.</p>{% endif %}
+    {% if errors %}
+<ul class="errors" style="color: red;">
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
     <form class="card" method="POST">
         <div class="form-group">
@@ -56,4 +63,13 @@
 
         <button type="submit" class="btn">Register team</button>
     </form>
+
+    <script>
+    document.querySelector('form.card').addEventListener('submit', function(e) {
+        const btn = this.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Registering...';
+    });
+    </script>
 {% endblock %}
+
