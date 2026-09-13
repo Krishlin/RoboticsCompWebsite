@@ -50,6 +50,26 @@ def get_division_rankings(division):
 
     teams = Team.query.filter_by(division=division).all()
     matches = Match.query.filter_by(division=division, phase="qualification").all()
+
+    # A replayed match keeps its row and its result so the audit trail still
+    # resolves, but only one of the two counts toward standings — otherwise
+    # the pairing pays out twice.
+    #
+    # The handover happens when the replay is COMPLETE, not when it is
+    # scheduled. Voiding the original the moment a replay is ordered would
+    # leave the pairing worth nothing until the replay actually runs, which
+    # drops a team's points on the big screen and then puts them back. This
+    # also matches the existing rule in tiebreak.py that only complete
+    # matches count at all.
+    # OPEN: whether a voided result should stop counting immediately instead
+    # is Rio's call, not ours — see the note in the PR.
+    superseded_ids = {
+        m.replaces_match_id
+        for m in matches
+        if m.replaces_match_id is not None and m.status == "complete"
+    }
+    matches = [m for m in matches if m.id not in superseded_ids]
+
     match_ids = [m.id for m in matches]
     results = (
         MatchResult.query.filter(MatchResult.match_id.in_(match_ids)).all()

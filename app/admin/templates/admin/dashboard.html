@@ -21,7 +21,7 @@
         <form method="POST" action="{{ url_for('admin.insert_replay_match') }}" style="display: inline; margin-left: 0.5rem;">
             <select name="original_match_id" style="padding: 0.5rem; margin-right: 0.5rem;">
                 <option value="">-- Select match to replay --</option>
-                {% for row in match_rows %}
+                {% for row in match_rows if row.replayable %}
                     {% set match = row.match %}
                     <option value="{{ match.id }}">Match {{ match.match_number }} ({{ match.division }}, {{ match.arena }})</option>
                 {% endfor %}

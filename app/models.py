@@ -73,6 +73,13 @@ class Match(db.Model):
     status = db.Column(db.String(20), default="scheduled", nullable=False)  # scheduled/in_progress/complete
     is_replay = db.Column(db.Boolean, default=False, nullable=False)
 
+    # Set on a replay, pointing at the match it supersedes. The superseded
+    # match keeps its row and its MatchResult (the audit trail still needs
+    # them) but must not be counted twice in standings, so anything that
+    # scores matches has to skip every id that appears here. At most one
+    # live replay per match: admin.insert_replay_match refuses a second.
+    replaces_match_id = db.Column(db.Integer, db.ForeignKey("match.id"), nullable=True)
+
     bracket_round = db.Column(db.Integer, nullable=True)  # elimination only
     bracket_slot = db.Column(db.Integer, nullable=True)  # elimination only
 

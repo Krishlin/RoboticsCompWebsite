@@ -27,7 +27,7 @@
                     <td>{{ team.name }}</td>
                     <td>{{ team.division }}</td>
                     <td>{{ team.affiliation }}</td>
-                    <td>{{ team.students | join(", ") }}</td>
+                    <td>{{ team.students.splitlines() | join(", ") }}</td>
                     <td>
                         {% if team.kit_ordered %}
                             <span class="badge badge-success">Ordered</span>

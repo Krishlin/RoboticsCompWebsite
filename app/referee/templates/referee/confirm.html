@@ -7,11 +7,44 @@
     {% if match %}
         <div class="card">
             <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
-            <p>Double check the result before submitting. Once submitted, this
-            match locks and can only be changed by the head ref.</p>
-            <button class="btn btn-large">Submit result</button>
-            <br><br>
-            <a class="btn btn-large btn-secondary" href="{{ url_for('referee.result_entry', match_id=match.id) }}">Go back and edit</a>
+
+            {% if locked %}
+                <p><strong>This match is already locked.</strong> A result was
+                submitted by {{ result.submitted_by }} and only the head ref can
+                change it now.</p>
+                <a class="btn btn-large btn-secondary" href="{{ url_for('referee.current_match') }}">Back to current match</a>
+            {% else %}
+                <p>Double check the result before submitting. Once submitted, this
+                match locks and can only be changed by the head ref.</p>
+
+                <p style="font-size: 1.25rem;">
+                    Winner:
+                    {% if values.outcome == "red" %}
+                        <span class="badge badge-red">RED — {{ red.name if red else "TBD" }}</span>
+                    {% elif values.outcome == "blue" %}
+                        <span class="badge badge-blue">BLUE — {{ blue.name if blue else "TBD" }}</span>
+                    {% elif values.outcome == "tie" %}
+                        <span class="badge badge-neutral">TIE</span>
+                    {% else %}
+                        <span class="badge badge-neutral">DOUBLE DQ</span>
+                    {% endif %}
+                </p>
+                <p>
+                    Red final zone: <strong>{{ values.red_final_zone }}</strong><br>
+                    Blue final zone: <strong>{{ values.blue_final_zone }}</strong><br>
+                    Win time: <strong>{{ values.win_time_seconds if values.win_time_seconds is not none else "not recorded" }}</strong>
+                </p>
+
+                <form method="POST" action="{{ url_for('referee.submit_result', match_id=match.id) }}">
+                    <input type="hidden" name="outcome" value="{{ values.outcome }}">
+                    <input type="hidden" name="red_final_zone" value="{{ values.red_final_zone }}">
+                    <input type="hidden" name="blue_final_zone" value="{{ values.blue_final_zone }}">
+                    <input type="hidden" name="win_time_seconds" value="{{ values.win_time_seconds if values.win_time_seconds is not none else '' }}">
+                    <button type="submit" class="btn btn-large">Submit result</button>
+                </form>
+                <br>
+                <a class="btn btn-large btn-secondary" href="{{ url_for('referee.result_entry', match_id=match.id) }}">Go back and edit</a>
+            {% endif %}
         </div>
     {% else %}
         <p class="text-muted">Match not found.</p>

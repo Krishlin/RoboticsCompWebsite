@@ -10,7 +10,7 @@ main_bp = Blueprint("main", __name__)
 # your blueprint, add one line here too, so it shows up on the home page.
 ROUTE_INDEX = [
     {"owner": "Emily", "label": "Sign up a team", "path": "/register/"},
-    {"owner": "Emily", "label": "Registration confirmation", "path": "/register/confirmation"},
+    {"owner": "Emily", "label": "Registration confirmation (team 101)", "path": "/register/confirmation/101"},
     {"owner": "Emily", "label": "Team list / CSV export", "path": "/register/teams"},
 
     {"owner": "Shivani", "label": "Check-in list", "path": "/checkin/"},
@@ -23,7 +23,7 @@ ROUTE_INDEX = [
 
     {"owner": "Serena", "label": "Referee: current match", "path": "/referee/"},
     {"owner": "Serena", "label": "Referee: enter result", "path": "/referee/result/1"},
-    {"owner": "Serena", "label": "Referee: confirm submission", "path": "/referee/confirm/1"},
+    {"owner": "Serena", "label": "Referee: confirm submission (reached from the result form)", "path": "/referee/confirm/1"},
 
     {"owner": "Jon", "label": "Rankings (Middle School)", "path": "/rankings/Middle_School"},
     {"owner": "Jon", "label": "Big-screen display (Middle School)", "path": "/rankings/display/Middle_School"},

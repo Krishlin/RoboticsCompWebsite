@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for, abort
 
 from app.fake_data import DIVISIONS
 from app.registration import registration_bp
@@ -9,7 +9,6 @@ from sqlalchemy.exc import IntegrityError
 
 @registration_bp.route("/", methods=["GET", "POST"])
 def signup():
-    success = False
     errors = []
 
     form_data = {
@@ -41,6 +40,9 @@ def signup():
         adult_phone = request.form.get("adult_phone", "").strip() or None
         kit_ordered = request.form.get("kit_ordered") is not None
 
+        # Everything the registrant typed, so signup.html can put it back in
+        # the form when validation fails. A coach entering four students
+        # should not have to retype the lot because one field was blank.
         form_data.update(
             team_name=team_name,
             affiliation=request.form.get("affiliation", "").strip(),
@@ -90,8 +92,8 @@ def signup():
             # the second one, so we catch that and try again with a fresh
             # number instead of crashing.
             attempts = 0
-            saved = False
-            while attempts < 3 and not saved:
+            saved_team_number = None
+            while attempts < 3 and saved_team_number is None:
                 attempts += 1
                 last_team = Team.query.order_by(Team.team_number.desc()).first()
                 next_number = (last_team.team_number + 1) if last_team else 1
@@ -110,25 +112,41 @@ def signup():
                 db.session.add(new_team)
                 try:
                     db.session.commit()
-                    saved = True
+                    saved_team_number = new_team.team_number
                 except IntegrityError:
                     db.session.rollback()
                     # loop again and try the next number
 
-            if saved:
-                success = True
-                form_data = {key: "" for key in form_data}
-                form_data["kit_ordered"] = False
-            else:
-                errors.append(
-                    "Something went wrong assigning a team number. Please try again."
+            if saved_team_number is not None:
+                # Send them to the confirmation page, which is the only place
+                # they are told their team number.
+                return redirect(
+                    url_for("registration.confirmation", team_number=saved_team_number)
                 )
+
+            errors.append(
+                "Something went wrong assigning a team number. Please try again."
+            )
 
     return render_template(
         "registration/signup.html",
         divisions=DIVISIONS,
-        success=success,
         errors=errors,
         form_data=form_data,
     )
 
+
+@registration_bp.route("/confirmation/<int:team_number>")
+def confirmation(team_number):
+    """Shown straight after a team registers, so they learn their number."""
+    team = Team.query.filter_by(team_number=team_number).first()
+    if team is None:
+        abort(404)
+    return render_template("registration/confirmation.html", team=team)
+
+
+@registration_bp.route("/teams")
+def team_list():
+    """Full team list, used as the check-in reference."""
+    teams = Team.query.order_by(Team.team_number).all()
+    return render_template("registration/team_list.html", teams=teams)

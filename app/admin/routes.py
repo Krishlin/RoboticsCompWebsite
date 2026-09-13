@@ -4,25 +4,52 @@
 
 import csv
 import io
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 
 from flask import render_template, request, redirect, url_for, abort, Response
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.db import db
 from app.models import AuditEntry, Match, MatchResult, ScheduleState
 from app.admin import admin_bp
 
+# How far after the end of a division's schedule a replay is slotted. The
+# replay used to inherit the original's scheduled_time, which put it in the
+# past and pinned it to the top of "Up Next" for the rest of the event.
+REPLAY_GAP_MINUTES = 15
+
 
 def _match_rows_with_results():
-    rows = []
+    """Every match with its result and whether it can still be replayed.
+
+    Results and replay links are fetched in one query each rather than per
+    row: adding a per-row replay lookup to the old loop would have made the
+    dashboard issue three queries per match instead of one.
+    """
     matches = Match.query.order_by(Match.division, Match.match_number).all()
-    for match in matches:
-        result = MatchResult.query.filter_by(match_id=match.id).first()
-        rows.append({
+
+    results_by_match = {
+        r.match_id: r
+        for r in MatchResult.query.filter(
+            MatchResult.match_id.in_([m.id for m in matches])
+        ).all()
+    } if matches else {}
+
+    already_replayed = {
+        m.replaces_match_id for m in matches if m.replaces_match_id is not None
+    }
+
+    return [
+        {
             "match": match,
-            "result": result,
-        })
-    return rows
+            "result": results_by_match.get(match.id),
+            # What insert_replay_match will actually accept, so the dropdown
+            # doesn't offer choices that come back as a 400.
+            "replayable": match.status == "complete" and match.id not in already_replayed,
+        }
+        for match in matches
+    ]
 
 
 def _current_admin_name():
@@ -31,13 +58,40 @@ def _current_admin_name():
     return "admin"
 
 
-def _get_or_create_schedule_state():
-    """Get the global schedule state. Create it if it doesn't exist."""
+def _read_schedule_state():
+    """The global schedule state, for read-only handlers.
+
+    Returns an unsaved default when the row doesn't exist yet. Rendering a
+    page must never write: /admin/ used to create the row on GET, so a
+    browser prefetch or a crawler mutated the database, and two dashboards
+    loading at once both inserted id=1 and every loser got a 500.
+    """
     state = ScheduleState.query.filter_by(id=1).first()
     if state is None:
-        state = ScheduleState(id=1, is_paused=False, changed_by=None)
-        db.session.add(state)
+        return ScheduleState(id=1, is_paused=False, changed_by=None)
+    return state
+
+
+def _get_or_create_schedule_state():
+    """Get the global schedule state, creating the single row if needed.
+
+    Only for handlers that are about to change it. The insert races against
+    other requests doing the same thing, so a duplicate id=1 is expected and
+    means someone else won — re-read rather than failing the request.
+    """
+    state = ScheduleState.query.filter_by(id=1).first()
+    if state is not None:
+        return state
+
+    state = ScheduleState(id=1, is_paused=False, changed_by=None)
+    db.session.add(state)
+    try:
         db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        state = ScheduleState.query.filter_by(id=1).first()
+        if state is None:
+            raise
     return state
 
 
@@ -52,79 +106,99 @@ def _get_next_match_number_for_division(division):
 @admin_bp.route("/")
 def dashboard():
     match_rows = _match_rows_with_results()
-    schedule_state = _get_or_create_schedule_state()
+    schedule_state = _read_schedule_state()
     return render_template("admin/dashboard.html", match_rows=match_rows, schedule_state=schedule_state)
+
+
+def _parse_win_time(raw_value):
+    """Validate the win_time_seconds form field.
+
+    Returns (value, error_message); exactly one of the two is None. float()
+    accepts "nan" and "inf", and SQLite stores a NaN as NULL — so an audit
+    entry would record a new_value the database does not contain, and on
+    Postgres a stored NaN makes the standings sort non-deterministic because
+    NaN compares false against everything.
+    """
+    if raw_value in (None, ""):
+        return None, None
+    try:
+        value = float(raw_value)
+    except ValueError:
+        return None, f"Win time must be a number. Got {raw_value!r}."
+    if not math.isfinite(value):
+        return None, f"Win time must be a real number. Got {raw_value!r}."
+    if value < 0:
+        return None, f"Win time cannot be negative. Got {raw_value!r}."
+    return value, None
 
 
 @admin_bp.route("/edit/<int:match_id>", methods=["GET", "POST"])
 def edit_result(match_id):
     match = Match.query.filter_by(id=match_id).first()
+    if match is None:
+        abort(404)
     result = MatchResult.query.filter_by(match_id=match_id).first()
+
+    def _render(error_message=None):
+        return render_template(
+            "admin/edit_result.html",
+            match=match,
+            result=result,
+            error_message=error_message,
+        )
 
     if request.method == "POST":
         if result is None:
-            return render_template(
-                "admin/edit_result.html",
-                match=match,
-                result=None,
-                error_message="No result found for this match.",
-            )
+            return _render("No result found for this match.")
 
-        if match is None:
-            return render_template(
-                "admin/edit_result.html",
-                match=None,
-                result=result,
-                error_message="No match found for this result.",
-            )
+        text_fields = ("outcome", "red_final_zone", "blue_final_zone")
+        missing = [name for name in text_fields if request.form.get(name) is None]
+        if missing:
+            return _render("Missing form field(s): " + ", ".join(missing) + ".")
+
+        win_time, win_time_error = _parse_win_time(request.form.get("win_time_seconds"))
+        if win_time_error:
+            return _render(win_time_error)
 
         updated_values = {
             "outcome": request.form.get("outcome"),
-            "win_time_seconds": request.form.get("win_time_seconds"),
+            "win_time_seconds": win_time,
             "red_final_zone": request.form.get("red_final_zone"),
             "blue_final_zone": request.form.get("blue_final_zone"),
         }
 
-        try:
-            changed_fields = []
-            for field_name, new_value in updated_values.items():
-                old_value = getattr(result, field_name)
+        changed_fields = []
+        for field_name, new_value in updated_values.items():
+            old_value = getattr(result, field_name)
+            if old_value != new_value:
+                changed_fields.append((field_name, old_value, new_value))
+                setattr(result, field_name, new_value)
 
-                if field_name == "win_time_seconds":
-                    if new_value in (None, ""):
-                        converted_value = None
-                    else:
-                        converted_value = float(new_value)
-                    new_value = converted_value
-
-                if old_value != new_value:
-                    changed_fields.append((field_name, old_value, new_value))
-                    setattr(result, field_name, new_value)
-
-            for field_name, old_value, new_value in changed_fields:
-                audit_entry = AuditEntry(
-                    match_id=match_id,
-                    changed_by=_current_admin_name(),
-                    field=field_name,
-                    old_value=str(old_value) if old_value is not None else None,
-                    new_value=str(new_value) if new_value is not None else None,
-                )
-                db.session.add(audit_entry)
-
-            if changed_fields:
-                db.session.add(result)
-                db.session.commit()
+        if not changed_fields:
             return redirect(url_for("admin.edit_result", match_id=match_id))
-        except Exception:
-            db.session.rollback()
-            return render_template(
-                "admin/edit_result.html",
-                match=match,
-                result=result,
-                error_message="Could not save the result change. No database changes were committed.",
-            )
 
-    return render_template("admin/edit_result.html", match=match, result=result)
+        for field_name, old_value, new_value in changed_fields:
+            audit_entry = AuditEntry(
+                match_id=match_id,
+                changed_by=_current_admin_name(),
+                field=field_name,
+                old_value=str(old_value) if old_value is not None else None,
+                new_value=str(new_value) if new_value is not None else None,
+            )
+            db.session.add(audit_entry)
+
+        db.session.add(result)
+        try:
+            db.session.commit()
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            return _render(
+                "Could not save the result change, so nothing was committed: "
+                f"{exc.__class__.__name__}."
+            )
+        return redirect(url_for("admin.edit_result", match_id=match_id))
+
+    return _render()
 
 
 @admin_bp.route("/audit-log")
@@ -164,9 +238,26 @@ def resume_schedule():
     return redirect(url_for("admin.dashboard"))
 
 
+def _next_replay_time(original_match):
+    """When to run a replay: after everything else in that division.
+
+    Derived from the existing schedule rather than the clock on purpose —
+    seed.py writes local event times and seed_for_testing.py writes UTC into
+    the same column, so anchoring to now() would land the replay hours away
+    from the rest of the schedule depending on which seeder ran.
+    """
+    last_time = (
+        db.session.query(db.func.max(Match.scheduled_time))
+        .filter(Match.division == original_match.division)
+        .scalar()
+    )
+    anchor = last_time or original_match.scheduled_time or datetime.utcnow()
+    return anchor + timedelta(minutes=REPLAY_GAP_MINUTES)
+
+
 @admin_bp.route("/replay", methods=["POST"])
 def insert_replay_match():
-    """Create a replay of an existing match."""
+    """Create a replay that supersedes an existing match."""
     original_match_id = request.form.get("original_match_id")
 
     if not original_match_id:
@@ -176,28 +267,66 @@ def insert_replay_match():
     if original_match is None:
         abort(404)
 
-    # Get the next available match_number for this division
-    next_match_number = _get_next_match_number_for_division(original_match.division)
+    # A replay overwrites a result, so there has to be a result to overwrite.
+    # Replaying a match that hasn't run yet used to be accepted and just
+    # duplicated the fixture.
+    if original_match.status != "complete":
+        abort(
+            400,
+            description=(
+                f"Match {original_match.match_number} is '{original_match.status}', "
+                "not complete — there is no result to replay."
+            ),
+        )
 
-    # Create the replay match
+    # Two live replays of one match would both score, which is exactly the
+    # double count replaces_match_id exists to prevent. Replaying a replay is
+    # fine: the chain supersedes one link at a time.
+    existing_replay = Match.query.filter_by(replaces_match_id=original_match.id).first()
+    if existing_replay is not None:
+        abort(
+            400,
+            description=(
+                f"Match {original_match.match_number} has already been replayed as "
+                f"match {existing_replay.match_number}. Replay that one instead."
+            ),
+        )
+
     replay_match = Match(
-        match_number=next_match_number,
+        match_number=_get_next_match_number_for_division(original_match.division),
         phase=original_match.phase,
         division=original_match.division,
         arena=original_match.arena,
-        scheduled_time=original_match.scheduled_time,
+        scheduled_time=_next_replay_time(original_match),
         red_team_id=original_match.red_team_id,
         blue_team_id=original_match.blue_team_id,
         status="scheduled",
         is_replay=True,
+        replaces_match_id=original_match.id,
+        # The replay inherits the bracket slot because it takes the original's
+        # place in it; replaces_match_id is what tells the bracket which of the
+        # two is live.
         bracket_round=original_match.bracket_round,
         bracket_slot=original_match.bracket_slot,
     )
+    db.session.add(replay_match)
+    db.session.flush()  # assign replay_match.id for the audit entry below
+
+    # The original silently stops counting toward standings from here, so it
+    # has to be visible in the audit log.
+    db.session.add(
+        AuditEntry(
+            match_id=original_match.id,
+            changed_by=_current_admin_name(),
+            field="superseded_by_match_id",
+            old_value=None,
+            new_value=str(replay_match.id),
+        )
+    )
 
     try:
-        db.session.add(replay_match)
         db.session.commit()
-    except Exception:
+    except SQLAlchemyError:
         db.session.rollback()
         abort(500)
 
