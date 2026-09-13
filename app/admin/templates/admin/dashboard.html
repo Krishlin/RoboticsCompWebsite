@@ -4,11 +4,32 @@
 {% block content %}
     <h1 class="page-title">Admin Dashboard</h1>
 
+    <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background-color: {% if schedule_state.is_paused %}#fff3cd{% else %}#d4edda{% endif %}; border: 1px solid {% if schedule_state.is_paused %}#ffc107{% else %}#28a745{% endif %}; border-radius: 4px; font-weight: bold;">
+        Schedule is {% if schedule_state.is_paused %}<span style="color: #ff6b6b;">PAUSED</span>{% else %}<span style="color: #28a745;">ACTIVE</span>{% endif %}
+    </div>
+
     <div class="btn-row" style="margin-bottom: 1rem;">
-        <button class="btn btn-secondary">Pause schedule</button>
-        <button class="btn btn-secondary">Resume schedule</button>
-        <button class="btn btn-secondary">Insert replay match</button>
-        <a class="btn" href="#">Export all results (CSV)</a>
+        {% if schedule_state.is_paused %}
+            <form method="POST" action="{{ url_for('admin.resume_schedule') }}" style="display: inline;">
+                <button type="submit" class="btn btn-secondary">Resume schedule</button>
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('admin.pause_schedule') }}" style="display: inline;">
+                <button type="submit" class="btn btn-secondary">Pause schedule</button>
+            </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('admin.insert_replay_match') }}" style="display: inline; margin-left: 0.5rem;">
+            <select name="original_match_id" style="padding: 0.5rem; margin-right: 0.5rem;">
+                <option value="">-- Select match to replay --</option>
+                {% for row in match_rows %}
+                    {% set match = row.match %}
+                    <option value="{{ match.id }}">Match {{ match.match_number }} ({{ match.division }}, {{ match.arena }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary">Insert replay match</button>
+        </form>
+        <a class="btn" href="/admin/audit-log">View audit log</a>
+        <a class="btn" href="{{ url_for('admin.export_csv') }}">Export all results (CSV)</a>
     </div>
 
     <table class="data-table">
@@ -18,21 +39,59 @@
                 <th>Division</th>
                 <th>Arena</th>
                 <th>Status</th>
-                <th></th>
+                <th>Outcome</th>
+                <th>Red final zone</th>
+                <th>Blue final zone</th>
+                <th>Win time</th>
+                <th>Edit Result</th>
             </tr>
         </thead>
         <tbody>
-            {% for match in matches %}
+            {% for row in match_rows %}
+                {% set match = row.match %}
+                {% set result = row.result %}
                 <tr>
                     <td>{{ match.match_number }}</td>
                     <td>{{ match.division }}</td>
                     <td>{{ match.arena }}</td>
                     <td>{{ match.status }}</td>
-                    <td><a href="{{ url_for('admin.edit_result', match_id=match.id) }}">Edit result</a></td>
+                    <td>
+                        {% if result %}
+                            {{ result.outcome }}
+                        {% else %}
+                            No result yet
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result %}
+                            {{ result.red_final_zone }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result %}
+                            {{ result.blue_final_zone }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result and result.win_time_seconds is not none %}
+                            {{ result.win_time_seconds }}s
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result %}
+                            <a href="/admin/edit/{{ match.id }}">Edit Result</a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-
-    <p style="margin-top: 1rem;"><a href="{{ url_for('admin.audit_log') }}">View audit log</a></p>
 {% endblock %}

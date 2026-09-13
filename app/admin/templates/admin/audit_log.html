@@ -18,7 +18,7 @@
         <tbody>
             {% for entry in entries %}
                 <tr>
-                    <td>{{ entry.match_id }}</td>
+                    <td><a href="{{ url_for('admin.match_history', match_id=entry.match_id) }}">{{ entry.match_id }}</a></td>
                     <td>{{ entry.changed_by }}</td>
                     <td>{{ entry.changed_at }}</td>
                     <td>{{ entry.field }}</td>
