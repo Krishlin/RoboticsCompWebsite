@@ -24,7 +24,9 @@
                         {% if team.checked_in %}
                             <span class="badge badge-success">Checked in</span>
                         {% else %}
-                            <button class="btn btn-secondary">Check in</button>
+                            <form method="POST" action="{{ url_for('checkin.check_in_team', team_id=team.id) }}">
+                            <button type="submit" class="btn btn-secondary">Check in</button>
+                            </form>
                         {% endif %}
                     </td>
                     <td>
