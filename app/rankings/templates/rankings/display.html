@@ -7,33 +7,12 @@
 {% block extra_head %}
     <meta http-equiv="refresh" content="15">
     <style>
-        /* Custom big-screen styles, scoped to this page's own classes so
-           they don't leak into the shared stylesheet. */
-        .display-page {
-            max-width: none;
-            padding: 2rem;
-        }
-        .display-heading {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-        }
-        .display-current {
-            font-size: 2.5rem;
-            text-align: center;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        .display-next-list {
-            font-size: 1.5rem;
-        }
-        .display-rankings-table {
-            font-size: 1.75rem;
-            width: 100%;
-        }
-        .display-rankings-table th,
-        .display-rankings-table td {
-            padding: 0.75rem 1rem;
-        }
+        .display-page { max-width: none; padding: 2rem; }
+        .display-heading { font-size: 3rem; margin-bottom: 0.5rem; }
+        .display-current { font-size: 2.5rem; text-align: center; padding: 2rem; margin-bottom: 2rem; }
+        .display-next-list { font-size: 1.5rem; }
+        .display-rankings-table { font-size: 1.75rem; width: 100%; }
+        .display-rankings-table th, .display-rankings-table td { padding: 0.75rem 1rem; }
     </style>
 {% endblock %}
 
@@ -43,7 +22,10 @@
 
     <div class="card display-current">
         {% if current_match %}
-            Now playing: Match {{ current_match.match_number }} — {{ current_match.arena }}
+            Now playing: Match {{ current_match.match_number }} — {{ current_match.arena }}<br>
+            {{ current_match.red_team_number }} — {{ current_match.red_team_name }}
+            &nbsp;vs&nbsp;
+            {{ current_match.blue_team_number }} — {{ current_match.blue_team_name }}
         {% else %}
             No match currently in progress
         {% endif %}
@@ -53,7 +35,11 @@
         <h2>Up Next</h2>
         <ul class="display-next-list">
             {% for match in next_matches %}
-                <li>Match {{ match.match_number }} — {{ match.arena }} — {{ match.scheduled_time }}</li>
+                <li>
+                    Match {{ match.match_number }} — {{ match.arena }} — {{ match.scheduled_time }}<br>
+                    {{ match.red_team_number }} {{ match.red_team_name }} vs
+                    {{ match.blue_team_number }} {{ match.blue_team_name }}
+                </li>
             {% else %}
                 <li class="text-muted">Nothing else scheduled.</li>
             {% endfor %}

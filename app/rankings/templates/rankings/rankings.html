@@ -12,7 +12,10 @@
                 <th>W</th>
                 <th>L</th>
                 <th>T</th>
-                <th>Avg win time</th>
+                <th>Win pts</th>
+                <th>SP</th>
+                <th>Ring pts</th>
+                <th>Fastest win</th>
             </tr>
         </thead>
         <tbody>
@@ -23,7 +26,10 @@
                     <td>{{ row.wins }}</td>
                     <td>{{ row.losses }}</td>
                     <td>{{ row.ties }}</td>
-                    <td>{{ row.avg_win_time }}s</td>
+                    <td>{{ row.win_points }}</td>
+                    <td>{{ row.sp }}</td>
+                    <td>{{ row.ring_points }}</td>
+                    <td>{{ row.fastest_win_time ~ "s" if row.fastest_win_time is not none else "—" }}</td>
                 </tr>
             {% endfor %}
         </tbody>
