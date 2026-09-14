@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Referee — Enter Result{% endblock %}
+
+{% block content %}
+<div class="referee-container">
+  {% if locked %}
+    <!-- Locked View (Head Ref Override) -->
+    <div class="card" style="text-align: center; padding: 30px;">
+      <h2 style="color: #f44336;">Match Locked</h2>
+      <p style="color: #fff; margin-bottom: 20px;">This match result has already been submitted and locked. Only a Head Referee can modify it.</p>
+      
+      <form method="POST" action="{{ url_for('referee.unlock_match', match_id=match.id) }}">
+        <button type="submit" class="btn btn-secondary" style="background-color: #ff9800; color: #000;">Unlock Match (Head Ref Only)</button>
+      </form>
+      
+      <div class="actions" style="margin-top: 20px;">
+        <a href="{{ url_for('referee.current_match') }}" class="btn btn-secondary">Back to Match</a>
+      </div>
+    </div>
+  {% else %}
+    <!-- Active Entry View -->
+    <div class="match-meta">
+      <h2>Match {{ match.match_number }}</h2>
+      <p>Select Match Outcome & Zones</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('referee.result_entry', match_id=match.id) }}" class="actions-form" id="resultForm">
+      <input type="hidden" name="winner" id="selectedWinner" value="">
+      <input type="hidden" name="win_time_seconds" id="winTimeInput" value="">
+
+      <!-- Team Selection Buttons -->
+      <div class="teams-group">
+        <button type="button" class="team-card red-team btn-select" onclick="selectOutcome('red')">
+          <span class="label">RED WIN</span>
+          <span class="team-name">{{ red.name if red else "Red Team" }}</span>
+        </button>
+        
+        <button type="button" class="team-card blue-team btn-select" onclick="selectOutcome('blue')">
+          <span class="label">BLUE WIN</span>
+          <span class="team-name">{{ blue.name if blue else "Blue Team" }}</span>
+        </button>
+      </div>
+
+      <!-- Alternative Outcomes -->
+      <div class="actions" style="margin-bottom: 20px;">
+        <button type="button" class="btn btn-secondary btn-select" onclick="selectOutcome('tie')">Tie</button>
+        <button type="button" class="btn btn-secondary btn-select" onclick="selectOutcome('double_dq')">Double DQ</button>
+      </div>
+
+      <!-- Final Zone Selection -->
+      <div class="confirm-box" style="margin-bottom: 20px; text-align: left;">
+        <p class="selection-text" style="color: #fff; font-size: 1rem;">Final Zones:</p>
+        
+        <div style="margin-bottom: 10px;">
+          <label for="red_zone" style="font-size: 0.9rem; color: #f44336;">{{ red.name if red else "Red" }} Zone:</label>
+          <select name="red_zone" id="red_zone" class="btn btn-secondary" style="padding: 10px; width: 100%; margin-top: 5px;">
+            <option value="None">None / Failed</option>
+            <option value="Zone Yellow">Zone Yellow</option>
+            <option value="Zone Pink">Zone Pink</option>
+            <option value="Zone Green">Zone Green</option>
+            <option value="Zone Orange">Zone Orange</option>
+            <option value="Zone Teal">Zone Teal</option>
+            <option value="Zone White">Zone White</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="blue_zone" style="font-size: 0.9rem; color: #2196f3;">{{ blue.name if blue else "Blue" }} Zone:</label>
+          <select name="blue_zone" id="blue_zone" class="btn btn-secondary" style="padding: 10px; width: 100%; margin-top: 5px;">
+            <option value="None">None / Failed</option>
+            <option value="Zone Yellow">Zone Yellow</option>
+            <option value="Zone Pink">Zone Pink</option>
+            <option value="Zone Green">Zone Green</option>
+            <option value="Zone Orange">Zone Orange</option>
+            <option value="Zone Teal">Zone Teal</option>
+            <option value="Zone White">Zone White</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Match Duration Box -->
+      <div class="confirm-box" style="margin-bottom: 20px; text-align: left;">
+        <p class="selection-text" style="color: #fff; font-size: 1rem;">Match Duration:</p>
+        <div>
+          <label for="match_duration" style="font-size: 0.9rem; color: #fff;">Enter Duration (Minutes):</label>
+          <input type="number" step="0.1" min="0" class="btn btn-secondary" id="match_duration" name="match_duration" placeholder="e.g., 3.5" style="padding: 10px; width: 100%; margin-top: 5px; text-align: left; background-color: #212529; color: #fff; border: 1px solid #6c757d;" />
+        </div>
+      </div>
+
+      <!-- Confirmation Area -->
+      <div id="confirmArea" class="confirm-box" style="display: none;">
+        <p id="selectionText" class="selection-text"></p>
+        <button type="submit" class="btn btn-start">CONFIRM & SUBMIT RESULT</button>
+      </div>
+    </form>
+
+    <div class="actions" style="margin-top: 20px;">
+      <a href="{{ url_for('referee.current_match') }}" class="btn btn-secondary">Back to Match</a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  function selectOutcome(outcome) {
+    document.getElementById('selectedWinner').value = outcome;
+    
+    document.querySelectorAll('.btn-select').forEach(btn => btn.classList.remove('selected'));
+    
+    let displayText = "";
+    if (outcome === 'red') {
+      document.querySelector('.red-team').classList.add('selected');
+      displayText = "Selected: RED WIN";
+    } else if (outcome === 'blue') {
+      document.querySelector('.blue-team').classList.add('selected');
+      displayText = "Selected: BLUE WIN";
+    } else if (outcome === 'tie') {
+      displayText = "Selected: TIE MATCH";
+    } else if (outcome === 'double_dq') {
+      displayText = "Selected: DOUBLE DQ";
+    }
+    
+    document.getElementById('selectionText').textContent = displayText;
+    document.getElementById('confirmArea').style.display = 'block';
+
+    const startTime = localStorage.getItem("match_start_time");
+    let elapsedSeconds = 0;
+
+    if (startTime) {
+      const now = Math.floor(Date.now() / 1000);
+      elapsedSeconds = now - parseInt(startTime, 10);
+      if (elapsedSeconds < 0) elapsedSeconds = 0;
+    }
+
+    document.getElementById('winTimeInput').value = elapsedSeconds;
+    localStorage.removeItem("match_start_time");
+    document.getElementById('confirmArea').style.display = 'block';
+  }
+</script>
+{% endblock %}
