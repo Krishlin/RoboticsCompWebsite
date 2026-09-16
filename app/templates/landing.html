@@ -1,0 +1,528 @@
+{# owner: shared / lead
+   The public landing page. Deliberately does NOT extend base.html: that
+   layout is the chrome for the tournament tools, and this is the page a
+   family lands on before they know what SRC is.
+
+   Copy is taken from SRC_Website_Package/SRC_Website_Copy.md and from the
+   October 24 event brief. Link targets SRC has not supplied yet come in as
+   `links` from the route; when one is missing the page renders plain text
+   instead of a dead link. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit — STEMsters Robotics Competition</title>
+    <meta name="description" content="Summit is an autonomous robotics competition for middle and high school teams in Southern California. Two robots, one hill, three minutes. October 24, 2026 in Arcadia, CA.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav band" aria-label="Main">
+    <div class="nav-inner">
+        <a class="nav-logo" href="/" aria-label="Summit, home">
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
+        </a>
+        <ul class="nav-links">
+            <li><a href="#game">The game</a></li>
+            <li><a href="#hill">The Hill</a></li>
+            <li><a href="#manual">Rules</a></li>
+            <li><a href="#cost">Cost</a></li>
+            <li><a href="#event">October 24</a></li>
+        </ul>
+        <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
+    </div>
+</nav>
+
+<main id="main">
+
+    <!-- Hero. The logo and subline are the brief's; the Hill beside them is
+         the game itself, playable before you have read a word about it. -->
+    <section class="hero band dark">
+        <div class="hero-grid">
+            <div>
+                <img class="hero-wordmark"
+                     src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+                     alt="Summit">
+                <h1 class="display">Two robots. One hill. Three minutes.</h1>
+                <p class="lede">
+                    The STEMsters Robotics Competition. An autonomous robotics competition
+                    for middle and high school teams in Southern California.
+                </p>
+                <div class="btn-row">
+                    <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
+                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Read the game manual</a>
+                </div>
+                <p class="hero-meta">
+                    Next event <strong>Saturday, October 24, 2026</strong> at Arcadia High School, Arcadia, CA.
+                    Registration is open.
+                </p>
+            </div>
+
+            <figure class="hill-figure">
+                <div class="hill-stage" id="hill-stage">
+                    {# The Hill at true scale: 1 SVG unit = 1 mm, so 420 units
+                       across is 42 cm across. Radii are Appendix A of the manual. #}
+                    <svg id="hill-svg" viewBox="-25 -25 470 470" role="img"
+                         aria-label="The Hill, seen from above: five concentric coloured zones with a robot on it.">
+                        {# The Edge Band is black and so is this section, so the
+                           boundary — the single most consequential line on the
+                           field — is drawn rather than left to the fill. #}
+                        <circle cx="210" cy="210" r="210" fill="#141414"
+                                stroke="rgba(242,244,244,0.32)" stroke-width="2"></circle>
+                        <path d="M 210 30 A 180 180 0 0 0 210 390 Z" fill="#c0433b"></path>
+                        <path d="M 210 30 A 180 180 0 0 1 210 390 Z" fill="#4470d2"></path>
+                        <circle cx="210" cy="210" r="110" fill="#e5c32c" stroke="#141414" stroke-width="1.5"></circle>
+                        <circle cx="210" cy="210" r="80" fill="#4fae55" stroke="#141414" stroke-width="1.5"></circle>
+                        <circle cx="210" cy="210" r="50" fill="#f0f0f0" stroke="#141414" stroke-width="1.5"></circle>
+
+                        <g id="robot" tabindex="0" role="img" transform="translate(355 240)">
+                            {# 10 cm square, the legal starting footprint — which is
+                               exactly as wide as the Plateau it is trying to hold. #}
+                            <rect x="-50" y="-50" width="100" height="100"
+                                  fill="#1d1d1d" stroke="#5bcfdd" stroke-width="3"></rect>
+                            <circle cx="-18" cy="-30" r="10" fill="#4a4a4a"></circle>
+                            <circle cx="18" cy="-30" r="10" fill="#4a4a4a"></circle>
+                            <circle cx="0" cy="14" r="8" fill="#5bcfdd"></circle>
+                        </g>
+                    </svg>
+                </div>
+
+                <figcaption>
+                    <div class="hill-readout" aria-live="polite">
+                        <div class="readout-swatch" id="readout-swatch"></div>
+                        <div class="readout-zone" id="readout-zone">Zone 4  Flat Band</div>
+                        <div class="readout-detail" id="readout-detail">
+                            The sensor reads blue. Ground level, and where the blue robot starts.
+                        </div>
+                    </div>
+                    <p class="hill-hint">
+                        Drag the robot, or focus it and use the arrow keys. Each ring is a
+                        different colour so a colour sensor can tell the robot how high it is.
+                        That is the whole game.
+                    </p>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- The game -->
+    <section class="section band" id="game">
+        <div class="section-head">
+            <h2 class="display">Summit</h2>
+            <p class="lede">
+                Summit is the SRC game for 2026. Two autonomous robots, one red and one blue,
+                compete on a small raised hill. A robot wins by pushing its opponent off the Hill,
+                or by being higher on the Hill when time expires. Once a match begins, no one may
+                touch or control them.
+            </p>
+        </div>
+
+        <dl class="facts">
+            <div>
+                <dt>10 cm and 500 g</dt>
+                <dd>
+                    Robots fit within 10 cm by 10 cm at the start and weigh 500 g or less.
+                    No height limit, and after the start signal they may expand without restriction.
+                </dd>
+            </div>
+            <div>
+                <dt>A micro:bit, and your code</dt>
+                <dd>
+                    A micro:bit running the team's own code controls the robot. Every other
+                    part is the team's choice.
+                </dd>
+            </div>
+            <div>
+                <dt>Three minutes, by radio</dt>
+                <dd>
+                    Matches last three minutes. The referee's field controller starts and
+                    stops both robots at once.
+                </dd>
+            </div>
+            <div>
+                <dt>Quals, then a bracket</dt>
+                <dd>
+                    Every team plays the same number of qualification matches, then the
+                    field seeds into a single-elimination bracket.
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <!-- The Hill, to spec -->
+    <section class="section band" id="hill">
+        <div class="section-head">
+            <h2 class="display">The Hill</h2>
+            <p class="lede">
+                A 3D-printed PLA mound, 42 cm across, rising 2 cm to a flat top. Each ring is a
+                different colour so that a colour sensor can identify where the robot is.
+                Competition and practice fields are printed from the same filament.
+            </p>
+        </div>
+
+        <div class="spec">
+            <figure class="spec-figure">
+                <img src="{{ url_for('static', filename='img/summit_hill_named.png') }}"
+                     alt="The Hill, top and side view, with the five zones named">
+                <figcaption>
+                    The Plateau sits 2 cm above the Flat Band. The whole Hill is raised on a platform.
+                </figcaption>
+            </figure>
+
+            <table class="zones">
+                <caption>Zones, innermost first</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Zone</th>
+                        <th scope="col" class="num">Outer dia.</th>
+                        <th scope="col" class="num">Profile</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row"><span class="swatch" style="background:var(--z-plateau)"></span>1 Plateau</th>
+                        <td class="num">10 cm</td>
+                        <td class="num">flat, +2.0 cm</td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><span class="swatch" style="background:var(--z-inner)"></span>2 Inner Slope</th>
+                        <td class="num">16 cm</td>
+                        <td class="num">18.4°</td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><span class="swatch" style="background:var(--z-outer)"></span>3 Outer Slope</th>
+                        <td class="num">22 cm</td>
+                        <td class="num">18.4°</td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><span class="swatch split-swatch"></span>4 Flat Band</th>
+                        <td class="num">36 cm</td>
+                        <td class="num">flat, start zones</td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><span class="swatch" style="background:var(--edge)"></span>5 Edge Band</th>
+                        <td class="num">42 cm</td>
+                        <td class="num">flat, boundary</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- The manual, all of it. The claim SRC makes is that the rulebook is
+         nine pages; showing the nine pages is a stronger version of saying so.
+         Thumbnails come from tools/render_manual_thumbs.py — plain images, so
+         this costs a visitor nothing but the pictures. If they have not been
+         generated, the section is a link to the PDF instead. -->
+    <section class="section band dark" id="manual">
+        <div class="manual-head">
+            <div>
+                <h2 class="display">The entire rulebook</h2>
+                <p class="lede">
+                    {% if manual %}
+                        Not a summary. Every rule that governs a Summit match, in
+                        {{ manual.count_word }} pages. Open any page.
+                    {% else %}
+                        Not a summary. Every rule that governs a Summit match, and
+                        short enough to read before the event.
+                    {% endif %}
+                </p>
+            </div>
+            <a class="btn btn-primary" href="{{ url_for('main.manual') }}">Open the manual</a>
+        </div>
+
+        {% if manual %}
+            <div class="manual-sheet" style="--pages: {{ manual.count }}">
+                {% for page in manual.pages %}
+                    <a class="sheet-page"
+                       href="{{ url_for('main.manual') }}#page={{ page.page }}"
+                       target="_blank" rel="noopener"
+                       aria-label="Open the game manual at page {{ page.page }}">
+                        <img src="{{ url_for('static', filename='img/manual/' ~ page.file) }}"
+                             width="{{ page.width }}" height="{{ page.height }}"
+                             loading="lazy" decoding="async"
+                             alt="Game manual, page {{ page.page }}">
+                        <span class="sheet-number">{{ page.page }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="manual-fallback note">
+                <a href="{{ url_for('main.manual') }}">Open the game manual (PDF)</a> — the version
+                that governs the October 24 event.
+            </p>
+        {% endif %}
+
+        <div class="manual-foot">
+            <p class="note">
+                Rule questions that apply to every team are answered in the next version of the
+                manual. The address above always serves the current one.
+            </p>
+        </div>
+    </section>
+
+    <!-- Cost -->
+    <section class="section band" id="cost">
+        <div class="section-head">
+            <h2 class="display">Under $150, robot included</h2>
+            <p class="lede">
+                Most robotics competitions cost several hundred dollars per team before the first
+                match is played, and that cost decides who gets to take part. Teams may compete
+                with the kit, with a robot of their own design, or with a combination of the two.
+            </p>
+        </div>
+
+        <div class="cost">
+            <div class="receipt">
+                <dl>
+                    <dt>Registration<span>Per team. Pays for the fields and the awards.</span></dt>
+                    <dd>$20</dd>
+                    <dt>Official kit<span>Optional. A complete, competition-legal robot.</span></dt>
+                    <dd>$100</dd>
+                    <dt>micro:bit<span>Optional. Skip it if you already have one.</span></dt>
+                    <dd>$20</dd>
+                </dl>
+                <div class="receipt-total">
+                    <span>Everything</span>
+                    <span>$140</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="kit-images">
+                    <img src="{{ url_for('static', filename='img/kit_bot.png') }}" alt="The assembled kit robot">
+                    <img src="{{ url_for('static', filename='img/kit_parts.png') }}" alt="The parts included in the kit">
+                </div>
+                <p class="note" style="margin-top:1.5rem">
+                    The kit is a Wukong expansion board with a built-in battery, two continuous-rotation
+                    motors, an ultrasonic sensor for finding the opponent, a colour sensor for reading the
+                    zone, LEGO Technic chassis parts, and the starter code. It is programmed in MakeCode.
+                    You supply a micro:bit, a laptop, and a small screwdriver.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- The event -->
+    <section class="section band" id="event">
+        <div class="section-head">
+            <h2 class="display">Saturday, October 24, 2026</h2>
+            <p class="lede">
+                The gym at Arcadia High School, Arcadia, California. Parking and entrance details
+                are emailed to registered teams the week before.
+            </p>
+        </div>
+
+        <div class="event-grid">
+        <dl class="schedule">
+            <div>
+                <dt>8:00 AM</dt>
+                <dd>Volunteers arrive and set up. The gym is closed to teams until setup is done.</dd>
+            </div>
+            <div class="key">
+                <dt>9:00 AM</dt>
+                <dd>
+                    <b>Check-in and inspection open.</b> Both Hills are open for sensor calibration
+                    on the real fields under the real lights. Retry inspection as many times as you need.
+                </dd>
+            </div>
+            <div>
+                <dt>9:50 AM</dt>
+                <dd>Team meeting at the field. Ten minutes: the schedule, the Climb together rule, and questions.</dd>
+            </div>
+            <div class="key">
+                <dt>10:00 AM</dt>
+                <dd>
+                    <b>Qualification matches begin.</b> Every team plays the same number of matches against
+                    random opponents; the number is set by the team count and posted with the schedule.
+                    Excellence judges visit team tables during this block.
+                </dd>
+            </div>
+            <div>
+                <dt>11:30 AM</dt>
+                <dd>Inspection and calibration close. A robot that has not passed inspection forfeits matches until it does.</dd>
+            </div>
+            <div>
+                <dt>11:45 AM</dt>
+                <dd>Lunch. The bracket is posted at 12:00.</dd>
+            </div>
+            <div>
+                <dt>12:30 PM</dt>
+                <dd>Bracket begins. Single elimination, seeded from qualification. Every pairing is first to two wins.</dd>
+            </div>
+            <div class="key">
+                <dt>2:15 PM</dt>
+                <dd><b>Awards.</b></dd>
+            </div>
+            <div>
+                <dt>2:30 PM</dt>
+                <dd>Teardown. Teams clear their tables. Out of the gym by 3:00 PM.</dd>
+            </div>
+        </dl>
+
+        <aside class="event-aside block">
+            <h3>What to bring</h3>
+            <ul class="checklist">
+                <li>Your robot, with the official start/stop code loaded and your team number entered</li>
+                <li>A laptop with MakeCode and a USB cable</li>
+                <li>Your charger</li>
+                <li>A completed consent and release form for each student</li>
+                <li>Your team's adult, for the whole day</li>
+            </ul>
+        </aside>
+        </div>
+    </section>
+
+    <!-- Awards, exhibition, areas -->
+    <section class="section band dark">
+        <div class="section-head">
+            <h2 class="display">Awards</h2>
+            <p class="lede">
+                Every award winner receives a trophy, and the Champion takes home the Summit banner.
+                There are no cash prizes.
+            </p>
+        </div>
+
+        <dl class="awards">
+            <div>
+                <dt>Champion</dt>
+                <dd>The bracket winner, middle school or high school.</dd>
+            </div>
+            <div>
+                <dt>Middle School Champion</dt>
+                <dd>
+                    The middle school team that went furthest in the bracket, ties broken by
+                    qualification rank. If a middle school team wins the Championship, this goes
+                    to the next-best middle school team.
+                </dd>
+            </div>
+            <div>
+                <dt>Excellence</dt>
+                <dd>
+                    One at each level, for the team that best explains how it designed, tested, and
+                    improved its robot, and how it helped other teams. Judged by a short interview at
+                    your table. Nothing to write or submit.
+                </dd>
+            </div>
+            <div>
+                <dt>Sportsmanship</dt>
+                <dd>For the team that best lives the Climb together rule all day.</dd>
+            </div>
+        </dl>
+
+        <div class="duo" style="margin-top:clamp(2.5rem,5vw,4rem)">
+            <div>
+                <h3>The exhibition field</h3>
+                <p class="note">
+                    A second Hill runs king-of-the-hill all afternoon: the winner stays on and takes
+                    the next challenger. Open to any robot that has passed inspection, including teams
+                    knocked out of the bracket. Results don't count for anything. Bring a grudge.
+                </p>
+            </div>
+            <div>
+                <h3>Who goes where</h3>
+                <p class="note">
+                    <b>Team area:</b> rostered students and your adult only.
+                    <b>Spectator area:</b> everyone else, and everyone is welcome.
+                    <b>Field:</b> the two handlers and the referees.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Register -->
+    <section class="section band" id="register">
+        <div class="section-head">
+            <h2 class="display">Register your team</h2>
+        </div>
+
+        <div class="register">
+            <div class="block">
+                <h3>Before you arrive</h3>
+                <ul class="checklist">
+                    <li>Read the game manual</li>
+                    <li>Load the starter code and enter the team number we email you</li>
+                    <li>Get a signed consent and release form for each student</li>
+                </ul>
+                <p class="note" style="margin-top:1.5rem">
+                    {% if links.consent_form %}
+                        Every student needs a completed consent and release form.
+                        <a href="{{ links.consent_form }}">Download the form</a> and bring it to
+                        check-in if you haven't submitted it online.
+                    {% else %}
+                        Every student needs a completed consent and release form. The form is linked
+                        in your confirmation email — bring it to check-in if you haven't submitted it online.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="register-panel">
+                <h3>$20 per team</h3>
+                <p>
+                    Teams are one to four students plus one adult who stays the whole day. A team with
+                    any student in grades 9 through 12 competes as a high school team. You'll get your
+                    team number by email as soon as you register.
+                </p>
+                <p>
+                    Order the kit, a micro:bit, or a practice field on the same form. Practice fields
+                    are printed from the same filament as the competition fields.
+                </p>
+                <div class="btn-row">
+                    <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
+                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Game manual</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The conduct rule. Given the last word, and nothing else on the screen. -->
+    <section class="creed band dark">
+        <div>
+            <p class="display">Compete hard. Help the team that needs it. Treat a win and a loss the same way.</p>
+            <p class="note">
+                Climb together is the SRC conduct rule, and it applies to students and adults alike.
+                Respect the referees and the volunteers — most of them are high school students who
+                built this competition.
+            </p>
+        </div>
+    </section>
+
+</main>
+
+<footer class="footer band dark">
+    <div class="footer-inner">
+        <div>
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
+            <p>STEMsters Robotics Competition</p>
+            <p>A program of STEMsters, a student-led 501(c)(3) nonprofit organization.</p>
+        </div>
+        <div>
+            <ul>
+                <li><a href="{{ url_for('main.manual') }}">Game manual</a></li>
+                <li><a href="{{ url_for('registration.signup') }}">Register a team</a></li>
+                <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
+                <li><a href="#cost">The kit</a></li>
+            </ul>
+        </div>
+        <div>
+            <ul>
+                {% if links.email %}
+                    <li><a href="mailto:{{ links.email }}">{{ links.email }}</a></li>
+                {% endif %}
+                {% if links.instagram %}
+                    <li><a href="{{ links.instagram }}">Instagram</a></li>
+                {% endif %}
+            </ul>
+            <p class="footer-creed">Climb together.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/hill.js') }}" defer></script>
+</body>
+</html>

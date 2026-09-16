@@ -5,13 +5,12 @@
     <h1 class="page-title">Registered Teams</h1>
 
     <div class="btn-row" style="margin-bottom: 1rem;">
-        <a class="btn btn-secondary" href="#">Export CSV</a>
+        <a class="btn btn-secondary" href="{{ url_for('registration.team_list_csv') }}">Export CSV</a>
     </div>
 
     <table class="data-table">
         <thead>
             <tr>
-                <th>#</th>
                 <th>Team</th>
                 <th>Division</th>
                 <th>School</th>
@@ -23,7 +22,6 @@
         <tbody>
             {% for team in teams %}
                 <tr>
-                    <td>{{ team.team_number }}</td>
                     <td>{{ team.name }}</td>
                     <td>{{ team.division }}</td>
                     <td>{{ team.affiliation }}</td>

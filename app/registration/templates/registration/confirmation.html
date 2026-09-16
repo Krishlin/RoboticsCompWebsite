@@ -5,12 +5,15 @@
     <h1 class="page-title">You're registered!</h1>
 
     <div class="card">
-        <p><strong>Team number:</strong> {{ team.team_number }}</p>
         <p><strong>Team name:</strong> {{ team.name }}</p>
         <p><strong>Division:</strong> {{ team.division }}</p>
         <p><strong>School:</strong> {{ team.affiliation }}</p>
         <p><strong>Students:</strong> {{ team.students.splitlines() | join(", ") }}</p>
         <p><strong>Adult of record:</strong> {{ team.adult_name }} ({{ team.adult_email }})</p>
-        <p class="text-muted">A confirmation email would be sent to {{ team.adult_email }}.</p>
+        {# Only shown right after registering. A direct visit to this URL has
+           no flash, and so makes no claim about email either way. #}
+        {% for message in get_flashed_messages() %}
+            <p class="text-muted">{{ message }}</p>
+        {% endfor %}
     </div>
 {% endblock %}

@@ -1,0 +1,60 @@
+{
+  "source": "summit-manual-v1.0.pdf",
+  "count": 9,
+  "pages": [
+    {
+      "page": 1,
+      "file": "page-1.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 2,
+      "file": "page-2.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 3,
+      "file": "page-3.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 4,
+      "file": "page-4.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 5,
+      "file": "page-5.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 6,
+      "file": "page-6.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 7,
+      "file": "page-7.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 8,
+      "file": "page-8.webp",
+      "width": 440,
+      "height": 570
+    },
+    {
+      "page": 9,
+      "file": "page-9.webp",
+      "width": 440,
+      "height": 570
+    }
+  ]
+}

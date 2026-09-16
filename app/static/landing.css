@@ -1,0 +1,1037 @@
+/* owner: shared / lead
+   Styles for the public landing page only (app/templates/landing.html).
+   Deliberately separate from style.css: that sheet dresses the tournament
+   tools, this one dresses the competitor-facing site. Neither imports the
+   other, so changing one can't disturb the other. */
+
+/* ---------------------------------------------------------------
+   Tokens. Every colour here is measured off the real field art in
+   SRC_Website_Package/images, not picked by eye, so the page and the
+   printed Hill agree.
+   --------------------------------------------------------------- */
+
+:root {
+    --edge: #141414;          /* Edge Band. The boundary, and the page's dark ground. */
+    --edge-soft: #242424;     /* hairlines on the dark ground */
+    --paper: #f2f4f4;         /* Plateau white under gym light */
+    --paper-deep: #e4e8e8;    /* recessed panels on the light ground */
+    --ink: #141414;
+    --ink-soft: #5d6668;
+
+    --cyan: #5bcfdd;          /* the wordmark's dark end */
+    --cyan-pale: #b7e9f0;     /* the wordmark's light end */
+    --cyan-deep: #1d7f8d;     /* cyan that passes contrast on white */
+
+    /* Zone hues. These are data, never decoration: a swatch of one of
+       these on this page always means that zone of the Hill. */
+    --z-plateau: #f0f0f0;
+    --z-inner: #4fae55;
+    --z-outer: #e5c32c;
+    --z-red: #c0433b;
+    --z-blue: #4470d2;
+
+    --measure: 66ch;
+    --spine: clamp(1.25rem, 5vw, 5.5rem);
+    --rule: 1px solid rgba(20, 20, 20, 0.14);
+    --rule-dark: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Display type is the same superfamily one width wider. The width jump,
+   not a second typeface, is what separates headline from body here. */
+.display,
+.facts dt,
+.awards dt,
+.zones caption,
+.readout-zone,
+.schedule dt,
+.receipt-total,
+.duo h3,
+.block h3,
+.register-panel h3,
+.footer-creed {
+    font-family: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-stretch: 125%; /* Archivo is variable; the wide cut is the display voice. */
+    font-weight: 800;
+}
+
+.display {
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+
+a {
+    color: var(--cyan-deep);
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--cyan-deep);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.dark :where(a, button, summary, [tabindex]):focus-visible {
+    outline-color: var(--cyan);
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--cyan);
+    color: var(--edge);
+    padding: 0.75rem 1.25rem;
+    font-weight: 700;
+    z-index: 100;
+}
+
+.skip-link:focus {
+    left: 0;
+}
+
+/* ---------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------- */
+
+/* The band holds the measure in its own padding rather than constraining
+   each child. Capping children instead would hand every narrow one an
+   `auto` margin and quietly centre it, which this left-aligned page does
+   not want. */
+.band {
+    padding-inline: max(var(--spine), calc((100% - 1340px) / 2));
+}
+
+/* The nav is sticky, so an anchored section has to stop clear of it or
+   its heading lands underneath. */
+.section,
+.hero,
+.creed {
+    scroll-margin-top: 5rem;
+}
+
+.dark {
+    background: var(--edge);
+    color: var(--paper);
+}
+
+.dark .lede,
+.dark .note {
+    color: rgba(242, 244, 244, 0.72);
+}
+
+/* ---------------------------------------------------------------
+   Navigation
+   --------------------------------------------------------------- */
+
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--edge);
+    border-bottom: var(--rule-dark);
+}
+
+.nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-block: 0.85rem;
+}
+
+.nav-logo img {
+    display: block;
+    height: 26px;
+    width: auto;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    margin-left: auto;
+    list-style: none;
+    margin-block: 0;
+    padding-left: 0;
+}
+
+.nav-links a {
+    color: rgba(242, 244, 244, 0.78);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    color: var(--cyan);
+}
+
+/* ---------------------------------------------------------------
+   Buttons. Square corners: this whole page borrows the vocabulary of
+   a dimensioned drawing, and drawings don't have rounded corners.
+   The only round things on the page are the things that are round.
+   --------------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.4rem;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-primary {
+    background: var(--cyan);
+    color: var(--edge);
+}
+
+.btn-primary:hover {
+    background: var(--cyan-pale);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--paper);
+    border-color: rgba(242, 244, 244, 0.4);
+}
+
+.btn-ghost:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.btn-dark {
+    background: var(--edge);
+    color: var(--paper);
+}
+
+.btn-dark:hover {
+    background: #2e2e2e;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border-color: rgba(20, 20, 20, 0.35);
+}
+
+.btn-outline:hover {
+    border-color: var(--ink);
+}
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+/* ---------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------- */
+
+.hero {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3rem, 7vw, 5.5rem);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+}
+
+.hero-wordmark {
+    width: min(100%, 420px);
+    margin-bottom: 1.75rem;
+}
+
+.hero h1 {
+    font-size: clamp(2.6rem, 6.2vw, 4.25rem);
+    margin: 0 0 1.25rem;
+}
+
+.hero .lede {
+    font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+    max-width: 34ch;
+    color: rgba(242, 244, 244, 0.78);
+    margin: 0 0 2rem;
+}
+
+.hero .btn-row {
+    margin-bottom: 1.5rem;
+}
+
+.hero-meta {
+    font-size: 0.95rem;
+    color: rgba(242, 244, 244, 0.6);
+    margin: 0;
+}
+
+.hero-meta strong {
+    color: var(--paper);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------
+   The interactive Hill. Drawn from the field spec: 42 / 36 / 22 / 16 /
+   10 cm diameters, 2 cm of rise. Drag the robot and the readout tells
+   you what the colour sensor sees, which is the whole game.
+   --------------------------------------------------------------- */
+
+.hill-figure {
+    margin: 0;
+}
+
+.hill-stage {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin-inline: auto;
+    aspect-ratio: 1;
+    touch-action: none;
+    cursor: grab;
+}
+
+.hill-stage:active {
+    cursor: grabbing;
+}
+
+.hill-stage svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#robot {
+    cursor: grab;
+    transition: opacity 0.2s ease;
+}
+
+.hill-stage.is-out #robot {
+    opacity: 0.35;
+}
+
+.hill-readout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1rem;
+    align-items: center;
+    max-width: 480px;
+    margin: 1.5rem auto 0;
+    padding-top: 1.25rem;
+    border-top: var(--rule-dark);
+}
+
+.readout-swatch {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    background: var(--z-outer);
+    grid-row: span 2;
+    transition: background-color 0.18s ease;
+}
+
+.readout-zone {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.readout-detail {
+    font-size: 0.95rem;
+    color: rgba(242, 244, 244, 0.7);
+    line-height: 1.35;
+}
+
+.hill-hint {
+    max-width: 480px;
+    margin: 0.85rem auto 0;
+    font-size: 0.875rem;
+    color: rgba(242, 244, 244, 0.62);
+}
+
+/* ---------------------------------------------------------------
+   Sections
+   --------------------------------------------------------------- */
+
+.section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+
+.section + .section {
+    border-top: var(--rule);
+}
+
+.dark.section + .dark.section {
+    border-top: var(--rule-dark);
+}
+
+.section-head {
+    max-width: var(--measure);
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.section-head h2 {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    margin: 0 0 1rem;
+}
+
+.lede {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+}
+
+.note {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+}
+
+/* Rules of the match: a plain measured list. No cards, no icons — the
+   four facts are short enough that anything around them is packaging. */
+.facts {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    margin: 0;
+    padding: 0;
+}
+
+.facts > div {
+    border-top: 2px solid var(--ink);
+    padding-top: 1rem;
+}
+
+.facts dt {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+}
+
+.facts dd {
+    margin: 0;
+    font-size: 0.975rem;
+    color: var(--ink-soft);
+}
+
+/* --- The Hill section: figure opposite its legend, as on the spec sheet --- */
+
+.spec {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.spec-figure {
+    margin: 0;
+    background: #fff;
+    padding: 1.5rem;
+    border: var(--rule);
+}
+
+.spec-figure figcaption {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+}
+
+.zones {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.975rem;
+}
+
+.zones caption {
+    text-align: left;
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding-bottom: 0.75rem;
+}
+
+.zones th,
+.zones td {
+    text-align: left;
+    padding: 0.7rem 0.6rem 0.7rem 0;
+    border-bottom: var(--rule);
+    vertical-align: middle;
+}
+
+.zones thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+}
+
+.zones tbody th {
+    font-weight: 600;
+}
+
+.zones .num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.swatch {
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid rgba(20, 20, 20, 0.25);
+    vertical-align: -0.18em;
+    margin-right: 0.55rem;
+}
+
+.split-swatch {
+    background: linear-gradient(90deg, var(--z-red) 0 50%, var(--z-blue) 50% 100%);
+}
+
+/* --- Cost: a receipt, because the argument is a price --- */
+
+.cost {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.receipt {
+    background: #fff;
+    border: 2px solid var(--ink);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    max-width: 30rem;
+}
+
+.receipt dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.9rem 1rem;
+}
+
+.receipt dt {
+    font-weight: 500;
+}
+
+.receipt dt span {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-weight: 400;
+}
+
+.receipt dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 600;
+}
+
+.receipt-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--ink);
+    font-stretch: 125%;
+    font-weight: 800;
+}
+
+.receipt-total span:last-child {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.kit-images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.kit-images img {
+    width: 100%;
+}
+
+/* --- Schedule: a real day, set as a time column, with the kit list the
+       day requires beside it rather than sections away --- */
+
+.event-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+}
+
+.event-aside {
+    position: sticky;
+    top: 6rem;
+}
+
+.schedule {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 0 clamp(1rem, 3vw, 2.5rem);
+}
+
+.schedule > div {
+    display: contents;
+}
+
+.schedule dt {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 1.1rem 0;
+    border-top: var(--rule);
+    white-space: nowrap;
+}
+
+.schedule dd {
+    margin: 0;
+    padding: 1.1rem 0;
+    border-top: var(--rule);
+    color: var(--ink-soft);
+    max-width: 60ch;
+}
+
+.schedule dd b {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+/* The three moments a team actually has to hit. Weight, not an icon. */
+.schedule .key dt,
+.schedule .key dd {
+    border-top: 2px solid var(--ink);
+}
+
+.schedule .key dd {
+    color: var(--ink);
+}
+
+/* --- Awards --- */
+
+.awards {
+    display: grid;
+    gap: 0;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin: 0;
+}
+
+.awards > div {
+    padding: 1.4rem 1.5rem 1.4rem 0;
+    border-top: 2px solid var(--ink);
+    margin-right: 1.5rem;
+}
+
+.awards dt {
+    font-stretch: 125%;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+}
+
+.awards dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+}
+
+.dark .awards > div {
+    border-top-color: var(--cyan);
+}
+
+.dark .awards dd {
+    color: rgba(242, 244, 244, 0.72);
+}
+
+/* --- Two-up prose blocks (exhibition / areas, bring / register) --- */
+
+.duo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: clamp(2rem, 4vw, 3.5rem);
+}
+
+.duo h3,
+.block h3 {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem;
+}
+
+.checklist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.checklist li {
+    padding: 0.6rem 0 0.6rem 1.75rem;
+    border-bottom: var(--rule);
+    position: relative;
+    color: var(--ink-soft);
+}
+
+.dark .checklist li {
+    border-bottom-color: rgba(255, 255, 255, 0.14);
+    color: rgba(242, 244, 244, 0.72);
+}
+
+/* A drawn tick, so the list needs no icon font and no emoji. */
+.checklist li::before {
+    content: "";
+    position: absolute;
+    left: 0.15rem;
+    top: 1.05rem;
+    width: 0.65rem;
+    height: 0.35rem;
+    border-left: 2px solid var(--cyan-deep);
+    border-bottom: 2px solid var(--cyan-deep);
+    transform: rotate(-45deg);
+}
+
+.dark .checklist li::before {
+    border-color: var(--cyan);
+}
+
+/* --- Register --- */
+
+.register {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.register-panel {
+    background: var(--edge);
+    color: var(--paper);
+    padding: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+.register-panel h3 {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.35rem;
+    margin: 0 0 1rem;
+}
+
+.register-panel p {
+    color: rgba(242, 244, 244, 0.75);
+    font-size: 0.975rem;
+}
+
+.register-panel .btn-row {
+    margin-top: 1.5rem;
+}
+
+/* --- Climb together --- */
+
+.creed {
+    padding-block: clamp(4rem, 9vw, 7rem);
+}
+
+.creed .display {
+    font-size: clamp(1.6rem, 3.6vw, 2.6rem);
+    line-height: 1.15;
+    max-width: 22ch;
+    margin: 0 0 1.75rem;
+}
+
+.creed .note {
+    max-width: 52ch;
+    font-size: 1.05rem;
+    color: rgba(242, 244, 244, 0.7);
+}
+
+/* --- Footer --- */
+
+.footer {
+    padding-block: clamp(2.5rem, 5vw, 3.5rem);
+    border-top: var(--rule-dark);
+    font-size: 0.95rem;
+}
+
+.footer-inner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+    align-items: start;
+}
+
+.footer img {
+    height: 24px;
+    width: auto;
+    margin-bottom: 1rem;
+}
+
+.footer p {
+    color: rgba(242, 244, 244, 0.6);
+    margin: 0 0 0.4rem;
+    max-width: 38ch;
+}
+
+.footer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.footer li {
+    margin-bottom: 0.5rem;
+}
+
+.footer a {
+    color: rgba(242, 244, 244, 0.85);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: var(--cyan);
+    text-decoration: underline;
+}
+
+.footer-creed {
+    font-stretch: 125%;
+    font-weight: 800;
+    color: var(--cyan) !important;
+    font-size: 1.05rem;
+}
+
+/* ---------------------------------------------------------------
+   Responsive. Everything above is a two-column grid; below 880px the
+   page becomes one column and the figures lead.
+   --------------------------------------------------------------- */
+
+@media (max-width: 880px) {
+    .event-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .event-aside {
+        position: static;
+    }
+
+    .hero-grid,
+    .spec,
+    .cost,
+    .register {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-grid {
+        gap: 2.5rem;
+    }
+
+    /* The headline leads on a phone: the Hill is the most characteristic
+       thing on the page but it explains nothing on its own, and the nav
+       already carries the wordmark, so the hero's copy of it goes. */
+    .hero-wordmark {
+        display: none;
+    }
+
+    .nav-links {
+        display: none;
+    }
+}
+
+@media (max-width: 560px) {
+    body {
+        font-size: 1rem;
+    }
+
+    .schedule {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .schedule dd {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .schedule .key dd {
+        border-top: 0;
+    }
+
+    .kit-images {
+        grid-template-columns: 1fr;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Where a light section meets a dark one the change of ground is the
+   division; a rule there as well would be a second, weaker one.
+   --------------------------------------------------------------- */
+
+.section.dark + .section:not(.dark),
+.section:not(.dark) + .section.dark {
+    border-top: 0;
+}
+
+/* ---------------------------------------------------------------
+   The manual as a contact sheet.
+
+   The argument for SRC is that the rulebook is nine pages, so the page
+   shows all nine rather than claiming it. The thumbnails are ordinary
+   images built by tools/render_manual_thumbs.py; with none generated the
+   section falls back to a plain link.
+   --------------------------------------------------------------- */
+
+.manual-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem clamp(2rem, 5vw, 4rem);
+    align-items: end;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.manual-head h2 {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    margin: 0 0 1rem;
+}
+
+.manual-head .lede {
+    max-width: 48ch;
+}
+
+/* One column per page, however many pages the manual runs to: the whole
+   rulebook laid out in a single row is the point being made. */
+.manual-sheet {
+    display: grid;
+    grid-template-columns: repeat(var(--pages, 9), minmax(0, 1fr));
+    gap: clamp(0.5rem, 1.2vw, 1rem);
+}
+
+/* One page. The lift on hover is the affordance for "this opens" — the
+   thumbnails are too small to read, so the target has to say it is one. */
+.sheet-page {
+    display: block;
+    position: relative;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.sheet-page:hover,
+.sheet-page:focus-visible {
+    border-color: var(--cyan);
+    transform: translateY(-4px);
+}
+
+.sheet-page img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.sheet-number {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--paper);
+    background: var(--edge);
+}
+
+.manual-fallback {
+    border-top: var(--rule-dark);
+    padding-top: 1.5rem;
+}
+
+.manual-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    margin-top: clamp(1.5rem, 3vw, 2.25rem);
+    padding-top: 1.5rem;
+    border-top: var(--rule-dark);
+}
+
+.manual-foot .note {
+    margin: 0;
+    max-width: 44ch;
+}
+
+@media (max-width: 1000px) {
+    .manual-sheet {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 880px) {
+    .manual-head {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+}
+
+@media (max-width: 560px) {
+    .manual-sheet {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

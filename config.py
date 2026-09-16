@@ -28,6 +28,16 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Registration is the only module finished enough to publish, so every
+    # other blueprint is left unregistered — those paths 404 rather than
+    # showing a half-built page. Set REGISTRATION_ONLY=0 in your .env (or
+    # your shell) to get the whole app back while working locally.
+    REGISTRATION_ONLY = os.environ.get("REGISTRATION_ONLY", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+    )
+
     # Supabase project credentials. Not used by any route yet — nobody has
     # designed what Supabase is for in this app (extra Postgres database?
     # auth? file storage?). Whoever picks that up next reads these from
@@ -37,3 +47,13 @@ class Config:
     SUPABASE_PUBLISHABLE_KEY = os.environ.get("SUPABASE_PUBLISHABLE_KEY")
     SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
     SUPABASE_JWKS_URL = os.environ.get("SUPABASE_JWKS_URL")
+
+    # Outbound email, via Resend. With no key the app still runs and
+    # registrations still save — the confirmation email is skipped and the
+    # confirmation page says so rather than promising one.
+    RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+
+    # Must be an address on a domain verified in Resend. The shared
+    # onboarding@resend.dev sender only delivers to the Resend account's own
+    # address, so it is good for a smoke test and nothing else.
+    MAIL_FROM = os.environ.get("MAIL_FROM", "SRC Tournament <onboarding@resend.dev>")

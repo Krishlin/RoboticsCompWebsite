@@ -9,7 +9,11 @@
 # exists. When a module's real logic is ready, it should start reading from
 # the database instead of this file.
 
-DIVISIONS = ["Elementary", "Middle School"]
+# The competition runs a single division, so DIVISION is the canonical name
+# and nothing asks anyone to pick one. DIVISIONS stays a list because the
+# schedule, rankings and bracket pages loop over it.
+DIVISION = "High School"
+DIVISIONS = [DIVISION]
 
 _SCHOOLS = [
     "Lincoln Elementary", "Oakwood Middle School", "Riverside STEM Academy",

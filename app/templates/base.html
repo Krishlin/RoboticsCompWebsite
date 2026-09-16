@@ -15,12 +15,16 @@
         <a href="{{ url_for('main.home') }}" class="site-nav-brand">SRC Tournament</a>
         <div class="site-nav-links">
             <a href="/register/">Register</a>
+            {# Hidden while REGISTRATION_ONLY is on: these blueprints aren't
+               registered, so the links would 404. #}
+            {% if not config.REGISTRATION_ONLY %}
             <a href="/checkin/">Check-in</a>
             <a href="/schedule/">Schedule</a>
             <a href="/referee/">Referee</a>
-            <a href="/rankings/Middle_School">Rankings</a>
-            <a href="/bracket/Middle_School">Bracket</a>
+            <a href="/rankings/High_School">Rankings</a>
+            <a href="/bracket/High_School">Bracket</a>
             <a href="/admin/">Admin</a>
+            {% endif %}
         </div>
     </nav>
 

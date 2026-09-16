@@ -25,15 +25,6 @@
         </div>
 
         <div class="form-group">
-            <label for="division">Division</label>
-            <select id="division" name="division">
-                {% for division in divisions %}
-                    <option value="{{ division }}" {% if form_data.division == division %}selected{% endif %}>{{ division }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
             <label>Students (1 to 4)</label>
             <input type="text" name="student_1" placeholder="Student 1 name" value="{{ form_data.student_1 }}">
             <input type="text" name="student_2" placeholder="Student 2 name (optional)" value="{{ form_data.student_2 }}">
@@ -53,7 +44,7 @@
         </div>
 
         <div class="form-group">
-            <label for="adult_phone">Adult phone (optional)</label>
+            <label for="adult_phone">Adult phone</label>
             <input type="tel" id="adult_phone" name="adult_phone" value="{{ form_data.adult_phone }}">
         </div>
 

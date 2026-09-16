@@ -19,20 +19,26 @@ def create_app():
 
     from app.routes import main_bp
     from app.registration import registration_bp
-    from app.checkin import checkin_bp
-    from app.scheduler import scheduler_bp
-    from app.referee import referee_bp
-    from app.rankings import rankings_bp
-    from app.bracket import bracket_bp
-    from app.admin import admin_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(registration_bp)
-    app.register_blueprint(checkin_bp)
-    app.register_blueprint(scheduler_bp)
-    app.register_blueprint(referee_bp)
-    app.register_blueprint(rankings_bp)
-    app.register_blueprint(bracket_bp)
-    app.register_blueprint(admin_bp)
+
+    # The unfinished modules are not imported at all when REGISTRATION_ONLY is
+    # on: an unregistered blueprint has no routes, so its paths 404 instead of
+    # being merely unlinked from the nav.
+    if not app.config["REGISTRATION_ONLY"]:
+        from app.checkin import checkin_bp
+        from app.scheduler import scheduler_bp
+        from app.referee import referee_bp
+        from app.rankings import rankings_bp
+        from app.bracket import bracket_bp
+        from app.admin import admin_bp
+
+        app.register_blueprint(checkin_bp)
+        app.register_blueprint(scheduler_bp)
+        app.register_blueprint(referee_bp)
+        app.register_blueprint(rankings_bp)
+        app.register_blueprint(bracket_bp)
+        app.register_blueprint(admin_bp)
 
     return app

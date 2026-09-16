@@ -1,0 +1,8 @@
+# Tooling only — the site does not import these at runtime, so they are
+# deliberately kept out of the top-level requirements.txt. Install them when
+# you need to regenerate the manual thumbnails:
+#
+#   pip install -r tools/requirements.txt
+#   python tools/render_manual_thumbs.py
+pypdfium2==5.13.0
+pillow==12.3.0

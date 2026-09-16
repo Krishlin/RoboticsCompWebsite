@@ -19,7 +19,7 @@ class Team(db.Model):
     team_number = db.Column(db.Integer, unique=True, nullable=False)
     name = db.Column(db.String(120), nullable=False)
     affiliation = db.Column(db.String(120), nullable=False)  # school name, or "Independent"
-    division = db.Column(db.String(50), nullable=False)  # e.g. "Middle School", "Elementary"
+    division = db.Column(db.String(50), nullable=False)  # single division: "High School"
 
     # Stored as a single string with one student name per line. SQLite/Postgres
     # don't have a native "list of strings" column, so this is the simplest

@@ -1,10 +1,47 @@
-from flask import render_template, request, redirect, url_for, abort
+import csv
+import io
+import re
 
-from app.fake_data import DIVISIONS
+from flask import render_template, request, redirect, url_for, abort, flash, Response
+from markupsafe import escape
+
+from app.fake_data import DIVISION
+from app.mail import send_email
 from app.registration import registration_bp
 from app.db import db
 from app.models import Team
 from sqlalchemy.exc import IntegrityError
+
+# Deliberately loose: this catches typos like a missing "@" or a trailing
+# comma, not every RFC 5322 edge case. The real check is that a confirmation
+# email actually arrives.
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _send_confirmation_email(team):
+    """Best-effort confirmation email. The team is saved either way.
+
+    Everything interpolated below is escaped: team and student names come
+    straight from a public form, and this is HTML going into someone's inbox.
+    """
+    students = ", ".join(team.students.splitlines())
+    html = (
+        f"<p>Hi {escape(team.adult_name)},</p>"
+        f"<p><strong>{escape(team.name)}</strong> is registered for the SRC Tournament.</p>"
+        f"<ul>"
+        f"<li>School: {escape(team.affiliation)}</li>"
+        f"<li>Students: {escape(students)}</li>"
+        f"</ul>"
+        f"<p>Give your team name at the check-in desk on the day.</p>"
+    )
+    # Collapse whitespace: a newline pasted into the team name would otherwise
+    # end up inside a header value.
+    subject_name = " ".join(team.name.split())
+    return send_email(
+        to=team.adult_email,
+        subject=f"You are registered - {subject_name}",
+        html=html,
+    )
 
 
 @registration_bp.route("/", methods=["GET", "POST"])
@@ -14,7 +51,6 @@ def signup():
     form_data = {
         "team_name": "",
         "affiliation": "",
-        "division": "",
         "student_1": "",
         "student_2": "",
         "student_3": "",
@@ -28,7 +64,6 @@ def signup():
     if request.method == "POST":
         team_name = request.form.get("team_name", "").strip()
         affiliation = request.form.get("affiliation", "").strip() or "Independent"
-        division = request.form.get("division", "").strip()
 
         student_names = [
             request.form.get(f"student_{i}", "").strip() for i in range(1, 5)
@@ -36,7 +71,10 @@ def signup():
         student_names = [name for name in student_names if name]
 
         adult_name = request.form.get("adult_name", "").strip()
-        adult_email = request.form.get("adult_email", "").strip()
+        # Stored and compared lowercased: the uniqueness rule is meant to be
+        # "one adult, one team", and Coach.Diaz@x.com is the same mailbox as
+        # coach.diaz@x.com. Comparing raw input let the same adult register twice.
+        adult_email = request.form.get("adult_email", "").strip().lower()
         adult_phone = request.form.get("adult_phone", "").strip() or None
         kit_ordered = request.form.get("kit_ordered") is not None
 
@@ -46,7 +84,6 @@ def signup():
         form_data.update(
             team_name=team_name,
             affiliation=request.form.get("affiliation", "").strip(),
-            division=division,
             student_1=request.form.get("student_1", ""),
             student_2=request.form.get("student_2", ""),
             student_3=request.form.get("student_3", ""),
@@ -60,12 +97,16 @@ def signup():
         # --- Validation (Week 3) ---
         if not team_name:
             errors.append("Team name is required.")
-        if not division:
-            errors.append("Please choose a division.")
         if not adult_name:
             errors.append("Adult of record is required.")
         if not adult_email:
             errors.append("Adult email is required.")
+        elif not EMAIL_RE.match(adult_email):
+            errors.append("Enter a valid email address for the adult of record.")
+        # Presence only - phone formats vary too much to validate usefully, and
+        # a rejected-but-correct number is worse than an odd-looking one.
+        if not adult_phone:
+            errors.append("Adult phone number is required.")
 
         if len(student_names) < 1:
             errors.append("Enter at least 1 student.")
@@ -73,19 +114,22 @@ def signup():
             errors.append("You can only enter up to 4 students.")
 
         # --- Email uniqueness (Week 4) ---
-        if adult_email:
+        if adult_email and EMAIL_RE.match(adult_email):
             existing_team = Team.query.filter_by(adult_email=adult_email).first()
             if existing_team:
                 errors.append(
-                    f"That email is already registered on Team "
-                    f"#{existing_team.team_number} ({existing_team.name}). "
+                    f"That email is already registered to {existing_team.name}. "
                     f"Each adult of record can only be used once."
                 )
 
         if not errors:
             students_text = "\n".join(student_names)
 
-            # --- Team numbering (Week 4: safer than before) ---
+            # --- Team numbering (internal only) ---
+            # Nothing shows this to a registrant any more, but team_number is
+            # still unique and non-null on the model, and check-in, the
+            # schedule, rankings and the bracket all join on it - so it keeps
+            # being assigned here.
             # Retry a couple times in case two people submit at the exact
             # same instant and both try to grab the same next number —
             # the database's unique constraint on team_number will reject
@@ -102,7 +146,10 @@ def signup():
                     team_number=next_number,
                     name=team_name,
                     affiliation=affiliation,
-                    division=division,
+                    # Not taken from the form: there is only one division, and a
+                    # team filed under anything else is invisible to the schedule,
+                    # rankings and bracket pages.
+                    division=DIVISION,
                     students=students_text,
                     adult_name=adult_name,
                     adult_email=adult_email,
@@ -118,6 +165,17 @@ def signup():
                     # loop again and try the next number
 
             if saved_team_number is not None:
+                # Flashed either way, so the confirmation page can tell the
+                # truth about whether an email actually went out — and so a
+                # later visit to that URL claims nothing about email at all.
+                if _send_confirmation_email(new_team):
+                    flash(f"A confirmation email is on its way to {new_team.adult_email}.")
+                else:
+                    flash(
+                        "We could not send a confirmation email just now - "
+                        "write your team number down, you will need it at check-in."
+                    )
+
                 # Send them to the confirmation page, which is the only place
                 # they are told their team number.
                 return redirect(
@@ -130,7 +188,6 @@ def signup():
 
     return render_template(
         "registration/signup.html",
-        divisions=DIVISIONS,
         errors=errors,
         form_data=form_data,
     )
@@ -150,3 +207,36 @@ def team_list():
     """Full team list, used as the check-in reference."""
     teams = Team.query.order_by(Team.team_number).all()
     return render_template("registration/team_list.html", teams=teams)
+
+
+@registration_bp.route("/teams.csv")
+def team_list_csv():
+    """The team list as a CSV download, for check-in desks working off paper."""
+    teams = Team.query.order_by(Team.team_number).all()
+
+    # StringIO rather than writing a file: the response is built in memory and
+    # streamed straight back, so there is no temp file to clean up.
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "name", "division", "affiliation", "students",
+        "adult_name", "adult_email", "adult_phone", "kit_ordered", "checked_in",
+    ])
+    for team in teams:
+        writer.writerow([
+            team.name,
+            team.division,
+            team.affiliation,
+            "; ".join(team.students.splitlines()),
+            team.adult_name,
+            team.adult_email,
+            team.adult_phone or "",
+            "yes" if team.kit_ordered else "no",
+            "yes" if team.checked_in else "no",
+        ])
+
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=teams.csv"},
+    )
