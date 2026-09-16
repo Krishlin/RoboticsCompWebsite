@@ -1,19 +1,163 @@
-{# owner: Emily — shown after a team registers, and mirrors the confirmation email #}
-{% extends "base.html" %}
-{% block title %}Registration Confirmed{% endblock %}
-{% block content %}
-    <h1 class="page-title">You're registered!</h1>
+{# owner: Emily — shown after a team registers, and mirrors the confirmation email.
+   Standalone rather than extending base.html: base.html is the chrome for the
+   tournament tools, and this is the last page a coach sees on the public site,
+   so it wears the same clothes as the landing page they arrived from.
 
-    <div class="card">
-        <p><strong>Team name:</strong> {{ team.name }}</p>
-        <p><strong>Division:</strong> {{ team.division }}</p>
-        <p><strong>School:</strong> {{ team.affiliation }}</p>
-        <p><strong>Students:</strong> {{ team.students.splitlines() | join(", ") }}</p>
-        <p><strong>Adult of record:</strong> {{ team.adult_name }} ({{ team.adult_email }})</p>
-        {# Only shown right after registering. A direct visit to this URL has
-           no flash, and so makes no claim about email either way. #}
-        {% for message in get_flashed_messages() %}
-            <p class="text-muted">{{ message }}</p>
-        {% endfor %}
+   Two jobs, in this order: tell them their team number, and get them to pay.
+   The registration is already saved by the time this renders — payment is a
+   separate step, and the page says so rather than implying they are done. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team {{ team.team_number }} is registered — Summit</title>
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+</head>
+<body>
+
+<nav class="nav band" aria-label="Main">
+    <div class="nav-inner">
+        <a class="nav-logo" href="/" aria-label="Summit, home">
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
+        </a>
+        <a class="btn btn-ghost" href="/">Back to the site</a>
     </div>
-{% endblock %}
+</nav>
+
+<main>
+    <section class="band dark confirm-hero">
+        <div>
+            <p class="confirm-kicker">Registered for Summit, October 24, 2026</p>
+            <h1 class="display confirm-title">You're in.</h1>
+
+            {# The number is the point of this page: it goes on the robot, the
+               pit sign, the match schedule and the starter code, so it is the
+               one thing sized to be read across a room and written down. #}
+            <div class="team-badge">
+                <span class="team-badge-label">Your team number</span>
+                <span class="team-badge-number">{{ team.team_number }}</span>
+            </div>
+
+            <p class="lede confirm-lede">
+                Write it down. You'll enter it in the starter code so the field
+                controller can start and stop your robot, and you'll give it at check-in.
+            </p>
+        </div>
+    </section>
+
+    <!-- Payment. Registration is saved but not paid, and this is the only
+         action on the page, so nothing competes with it. -->
+    <section class="band section pay-section">
+        <div class="pay-panel">
+            <div class="pay-copy">
+                <h2 class="display pay-title">One step left: pay the $20</h2>
+                <p>
+                    Your team is saved and your number is yours. Registration is complete
+                    once the $20 team fee is paid, which covers the competition fields and
+                    the awards. The form asks for your team number — it's
+                    <strong>{{ team.team_number }}</strong>.
+                </p>
+                <p class="note pay-note">
+                    Ordering the kit, a micro:bit, or a practice field? Add them on the same form.
+                </p>
+            </div>
+            <div class="pay-action">
+                <a class="btn btn-primary pay-btn"
+                   href="{{ payment_url }}" target="_blank" rel="noopener">
+                    Pay the $20 team fee
+                </a>
+                <p class="pay-caption">Opens the payment form in a new tab.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="band section">
+        <div class="confirm-grid">
+            <div>
+                <h2 class="display confirm-h2">What we have on file</h2>
+                <dl class="summary">
+                    <div>
+                        <dt>Team number</dt>
+                        <dd>{{ team.team_number }}</dd>
+                    </div>
+                    <div>
+                        <dt>Team name</dt>
+                        <dd>{{ team.name }}</dd>
+                    </div>
+                    <div>
+                        <dt>School</dt>
+                        <dd>{{ team.affiliation }}</dd>
+                    </div>
+                    <div>
+                        <dt>Level</dt>
+                        <dd>{{ team.division }}</dd>
+                    </div>
+                    <div>
+                        <dt>Students</dt>
+                        <dd>{{ team.students.splitlines() | join(", ") }}</dd>
+                    </div>
+                    <div>
+                        <dt>Adult of record</dt>
+                        <dd>{{ team.adult_name }}<br>{{ team.adult_email }}</dd>
+                    </div>
+                    {% if team.kit_ordered %}
+                        <div>
+                            <dt>Kit</dt>
+                            <dd>Ordered</dd>
+                        </div>
+                    {% endif %}
+                </dl>
+                <p class="note">
+                    Something wrong? Reply to your confirmation email and we'll fix it.
+                </p>
+            </div>
+
+            <div class="block">
+                <h2 class="display confirm-h2">Before October 24</h2>
+                <ul class="checklist">
+                    <li>Pay the $20 team fee using the form above</li>
+                    <li>Read the game manual — it's nine pages</li>
+                    <li>Load the starter code and enter team number {{ team.team_number }}</li>
+                    <li>Get a signed consent and release form for each student</li>
+                </ul>
+                <div class="btn-row" style="margin-top:1.5rem">
+                    <a class="btn btn-dark" href="{{ url_for('main.manual') }}">Game manual</a>
+                    <a class="btn btn-outline" href="/#event">The day's schedule</a>
+                </div>
+
+                {# Only present right after registering. A direct visit to this
+                   URL has no flash, and so claims nothing about email either way. #}
+                {% for message in get_flashed_messages() %}
+                    <p class="note confirm-flash">{{ message }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer band dark">
+    <div class="footer-inner">
+        <div>
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
+            <p>STEMsters Robotics Competition</p>
+        </div>
+        <div>
+            <ul>
+                <li><a href="{{ url_for('main.manual') }}">Game manual</a></li>
+                <li><a href="/#event">October 24 details</a></li>
+                <li><a href="{{ payment_url }}" target="_blank" rel="noopener">Pay the team fee</a></li>
+            </ul>
+        </div>
+        <div>
+            <p class="footer-creed">Climb together.</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

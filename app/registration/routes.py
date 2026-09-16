@@ -2,7 +2,16 @@ import csv
 import io
 import re
 
-from flask import render_template, request, redirect, url_for, abort, flash, Response
+from flask import (
+    current_app,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    abort,
+    flash,
+    Response,
+)
 from markupsafe import escape
 
 from app.fake_data import DIVISION
@@ -17,6 +26,11 @@ from sqlalchemy.exc import IntegrityError
 # email actually arrives.
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# Team numbers start here rather than at 1. Three digits reads as a team
+# number at a glance on a pit sign, a match schedule and a bracket, and it
+# leaves 1-99 free for anything that needs a reserved number later.
+FIRST_TEAM_NUMBER = 100
+
 
 def _send_confirmation_email(team):
     """Best-effort confirmation email. The team is saved either way.
@@ -25,14 +39,25 @@ def _send_confirmation_email(team):
     straight from a public form, and this is HTML going into someone's inbox.
     """
     students = ", ".join(team.students.splitlines())
+    # config, not a literal: the same URL is on the confirmation page, and one
+    # of the two going stale when the form changes is worse than neither.
+    payment_url = current_app.config["PAYMENT_FORM_URL"]
     html = (
         f"<p>Hi {escape(team.adult_name)},</p>"
-        f"<p><strong>{escape(team.name)}</strong> is registered for the SRC Tournament.</p>"
+        f"<p><strong>{escape(team.name)}</strong> is registered for Summit on "
+        f"October 24, 2026.</p>"
+        f"<p>Your team number is <strong>{team.team_number}</strong>. Enter it in the "
+        f"starter code so the field controller can start and stop your robot, and "
+        f"give it at check-in.</p>"
         f"<ul>"
+        f"<li>Team number: {team.team_number}</li>"
         f"<li>School: {escape(team.affiliation)}</li>"
         f"<li>Students: {escape(students)}</li>"
         f"</ul>"
-        f"<p>Give your team name at the check-in desk on the day.</p>"
+        f"<p><strong>One step left:</strong> registration is complete once the $20 team "
+        f'fee is paid. <a href="{escape(payment_url)}">Pay here</a> — the form asks for '
+        f"your team number, which is {team.team_number}.</p>"
+        f"<p>Climb together.</p>"
     )
     # Collapse whitespace: a newline pasted into the team name would otherwise
     # end up inside a header value.
@@ -140,7 +165,14 @@ def signup():
             while attempts < 3 and saved_team_number is None:
                 attempts += 1
                 last_team = Team.query.order_by(Team.team_number.desc()).first()
-                next_number = (last_team.team_number + 1) if last_team else 1
+                # Never below FIRST_TEAM_NUMBER, even if rows already exist
+                # with lower numbers from before the floor was introduced —
+                # otherwise the first real team after a test row would be
+                # numbered 3 rather than 100.
+                next_number = max(
+                    (last_team.team_number + 1) if last_team else FIRST_TEAM_NUMBER,
+                    FIRST_TEAM_NUMBER,
+                )
 
                 new_team = Team(
                     team_number=next_number,
@@ -199,7 +231,11 @@ def confirmation(team_number):
     team = Team.query.filter_by(team_number=team_number).first()
     if team is None:
         abort(404)
-    return render_template("registration/confirmation.html", team=team)
+    return render_template(
+        "registration/confirmation.html",
+        team=team,
+        payment_url=current_app.config["PAYMENT_FORM_URL"],
+    )
 
 
 @registration_bp.route("/teams")

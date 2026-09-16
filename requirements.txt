@@ -1,3 +1,8 @@
 Flask==3.0.3
 Flask-SQLAlchemy==3.1.1
 python-dotenv==1.0.1
+
+# Postgres driver. Only used when DATABASE_URL names a Postgres database —
+# local development on the default SQLite file never imports it, but it has
+# to be installed for the deployed app to connect at all.
+psycopg2-binary==2.9.10

@@ -1035,3 +1035,184 @@ a {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* ---------------------------------------------------------------
+   Registration confirmation.
+
+   Two jobs: hand over the team number, and get the fee paid. The
+   number is sized to be read across a room and copied down; the
+   payment panel is the only call to action on the page.
+   --------------------------------------------------------------- */
+
+.confirm-hero {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3rem, 6vw, 4.5rem);
+}
+
+.confirm-kicker {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+.confirm-title {
+    font-size: clamp(2.4rem, 5.5vw, 3.75rem);
+    margin: 0 0 2rem;
+}
+
+/* The number, as it will appear on the pit sign. */
+.team-badge {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.25rem 2rem 1.4rem;
+    border: 2px solid var(--cyan);
+    margin-bottom: 1.75rem;
+}
+
+.team-badge-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--cyan);
+}
+
+.team-badge-number {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: clamp(3.5rem, 9vw, 5.5rem);
+    line-height: 0.9;
+    color: var(--paper);
+    font-variant-numeric: tabular-nums;
+}
+
+.confirm-lede {
+    max-width: 46ch;
+}
+
+/* --- Payment --- */
+
+.pay-section {
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+
+.pay-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+    background: #fff;
+    border: 2px solid var(--ink);
+    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+}
+
+.pay-title {
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    margin: 0 0 0.85rem;
+}
+
+.pay-copy p {
+    margin: 0 0 0.6rem;
+    max-width: 58ch;
+    color: var(--ink-soft);
+}
+
+.pay-copy strong {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.pay-note {
+    margin-top: 0.9rem !important;
+}
+
+.pay-action {
+    text-align: center;
+}
+
+.pay-btn {
+    font-size: 1.05rem;
+    padding: 1rem 1.75rem;
+    white-space: nowrap;
+}
+
+.pay-caption {
+    margin: 0.7rem 0 0;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+}
+
+/* --- Summary --- */
+
+.confirm-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.confirm-h2 {
+    font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+    margin: 0 0 1.5rem;
+}
+
+.summary {
+    margin: 0 0 1.25rem;
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 0;
+}
+
+.summary > div {
+    display: contents;
+}
+
+.summary dt {
+    padding: 0.75rem 1rem 0.75rem 0;
+    border-top: var(--rule);
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.summary dd {
+    margin: 0;
+    padding: 0.75rem 0;
+    border-top: var(--rule);
+    font-weight: 500;
+}
+
+.confirm-flash {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: var(--rule);
+}
+
+@media (max-width: 880px) {
+    .pay-panel,
+    .confirm-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pay-action {
+        text-align: left;
+    }
+
+    .pay-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 560px) {
+    .summary {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .summary dd {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .team-badge {
+        display: flex;
+        width: 100%;
+    }
+}
