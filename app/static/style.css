@@ -149,6 +149,9 @@ body {
     margin-bottom: 0.25rem;
 }
 
+/* 1rem is not a preference here. Safari zooms the page in on any field whose
+   text is under 16px, and it does not zoom back out, so a referee entering a
+   score ends up scrolled sideways on a magnified page mid-match. */
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="tel"],
@@ -156,7 +159,7 @@ body {
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 0.5rem;
+    padding: 0.6rem 0.5rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     font-size: 1rem;
@@ -248,4 +251,89 @@ table.data-table tr:hover td {
 
 .text-muted {
     color: var(--color-muted);
+}
+
+/* ---------------------------------------------------------------
+   Phones.
+
+   These pages are not a desktop tool that happens to work on a phone.
+   Check-in, the schedule, the referee's result entry and the pit lookup
+   are all used standing up in a gym, one-handed, on whatever the
+   volunteer has in their pocket. What follows is for that.
+   --------------------------------------------------------------- */
+
+html {
+    /* Safari inflates body text when the phone turns sideways otherwise. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+@media (max-width: 720px) {
+    .page-container {
+        padding: 1rem;
+    }
+
+    /* The links wrapped into a ragged block under the brand and each one
+       was a line of text to hit. One scrolling row of real targets
+       instead, which also keeps the bar one line tall however many
+       blueprints are switched on. */
+    .site-nav {
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem;
+    }
+
+    .site-nav-brand {
+        flex: 0 0 auto;
+    }
+
+    .site-nav-links {
+        display: flex;
+        gap: 0.25rem;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .site-nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .site-nav-links a {
+        margin-left: 0;
+        padding: 0.6rem 0.6rem;
+        white-space: nowrap;
+    }
+
+    /* A results table has more columns than a phone has width. Letting the
+       table scroll inside itself keeps the whole page from sliding sideways
+       every time a thumb drifts, which is what happens when the table is
+       simply allowed to overflow. display:block on the table leaves the rows
+       to form their own anonymous table box, so the columns still line up. */
+    table.data-table {
+        display: block;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        white-space: nowrap;
+    }
+
+    table.data-table th,
+    table.data-table td {
+        padding: 0.7rem 0.6rem;
+    }
+
+    /* Room for a thumb rather than a cursor. */
+    .btn {
+        padding: 0.7rem 1.1rem;
+    }
+
+    .btn-row .btn {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .card-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

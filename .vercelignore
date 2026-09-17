@@ -6,3 +6,7 @@ __pycache__/
 seed/
 migrate_add_replaces_match_id.py
 seed_for_testing.py
+
+# The 20 MB of source CAD renders. tools/render_bot_views.py cuts them down
+# to the WebP in app/static/img/bot, and the deployed app never reads these.
+Stemsters bod renders/

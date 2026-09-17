@@ -44,6 +44,10 @@
 
 html {
     scroll-behavior: smooth;
+    /* Stops iOS inflating body text when a phone is turned sideways, which
+       on this page reflows a measured column into something else. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,12 +147,13 @@ a {
     padding-inline: max(var(--spine), calc((100% - 1340px) / 2));
 }
 
-/* The nav is sticky, so an anchored section has to stop clear of it or
-   its heading lands underneath. */
+/* The nav is sticky, so an anchored section has to stop clear of it or its
+   heading lands underneath. The bar measures 83 px on a desktop and 71 on a
+   phone; this clears the taller of the two and leaves a little air. */
 .section,
 .hero,
 .creed {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: 6rem;
 }
 
 .dark {
@@ -171,13 +176,16 @@ a {
     z-index: 50;
     background: var(--edge);
     border-bottom: var(--rule-dark);
-}
-
-.nav-inner {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
     padding-block: 0.85rem;
+}
+
+.nav-logo {
+    display: flex;
+    padding-block: 0.4rem; /* part of the tap target, not decoration */
 }
 
 .nav-logo img {
@@ -188,7 +196,7 @@ a {
 
 .nav-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 0 1.5rem;
     margin-left: auto;
     list-style: none;
     margin-block: 0;
@@ -196,6 +204,8 @@ a {
 }
 
 .nav-links a {
+    display: block;
+    padding-block: 0.4rem;
     color: rgba(242, 244, 244, 0.78);
     text-decoration: none;
     font-size: 0.95rem;
@@ -204,6 +214,62 @@ a {
 
 .nav-links a:hover {
     color: var(--cyan);
+}
+
+.nav-cta {
+    padding: 0.62rem 1.15rem;
+    font-size: 0.95rem;
+}
+
+/* The short label is for the phone bar, where the long one does not fit
+   beside a menu button. Both are hidden from assistive tech; see the
+   template. */
+.nav-cta-short {
+    display: none;
+}
+
+/* Hidden until the script that operates it has run, and gone again above the
+   breakpoint where the links are shown in full. [hidden] is spelled out
+   because the media query below would otherwise out-specify it. */
+.nav-toggle,
+.nav-toggle[hidden] {
+    display: none;
+}
+
+.nav-bars,
+.nav-bars::before,
+.nav-bars::after {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.nav-bars::before,
+.nav-bars::after {
+    content: "";
+    position: absolute;
+}
+
+.nav-bars::before {
+    transform: translateY(-6px);
+}
+
+.nav-bars::after {
+    transform: translateY(6px);
+}
+
+.is-open .nav-bars {
+    background: transparent;
+}
+
+.is-open .nav-bars::before {
+    transform: rotate(45deg);
+}
+
+.is-open .nav-bars::after {
+    transform: rotate(-45deg);
 }
 
 /* ---------------------------------------------------------------
@@ -334,8 +400,11 @@ a {
     max-width: 480px;
     margin-inline: auto;
     aspect-ratio: 1;
-    touch-action: none;
     cursor: grab;
+    /* The figure is most of a phone screen, so the page has to stay
+       scrollable through it. Vertical panning belongs to the browser here;
+       only the robot below claims the gesture outright. */
+    touch-action: pan-y;
 }
 
 .hill-stage:active {
@@ -351,6 +420,9 @@ a {
 #robot {
     cursor: grab;
     transition: opacity 0.2s ease;
+    /* The one place on the Hill a finger takes the robot rather than the
+       page. js/hill.js tests for this same element, so the two agree. */
+    touch-action: none;
 }
 
 .hill-stage.is-out #robot {
@@ -595,15 +667,143 @@ a {
     font-size: clamp(1.5rem, 3vw, 2rem);
 }
 
-.kit-images {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    align-items: center;
+/* --- The kit robot, turned over ---
+
+   One view at a time in a scroll-snap row, which is a swipe on a phone and a
+   trackpad flick or a tap on the rail everywhere else. No JavaScript is
+   involved in moving it: js/landing.js only marks which view you are on. */
+
+.bot-gallery {
+    margin: 0;
 }
 
-.kit-images img {
+.bot-stage {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain; /* a swipe past the last view is not a Back */
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    background: #fff;
+    border: var(--rule);
+    /* The rail underneath says how many views there are and where you are in
+       them, so a scrollbar would be saying it a second time and worse. */
+    scrollbar-width: none;
+}
+
+.bot-stage::-webkit-scrollbar {
+    display: none;
+}
+
+/* Every slide is the full width of the stage and they are all laid out, so
+   the stage settles at the height of the tallest caption once and then holds
+   it. Sizing to the current slide instead would make the page jump on every
+   swipe. */
+.bot-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.bot-slide img {
+    display: block;
     width: 100%;
+    max-width: 24rem;
+    height: auto;
+    margin-inline: auto;
+}
+
+/* Pinned to the bottom so the captions line up across slides however long
+   each one runs. */
+.bot-caption {
+    margin: 0;
+    padding-top: 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    margin-top: auto;
+}
+
+.bot-caption b {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.bot-rail {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: 0.4rem;
+    scrollbar-width: thin;
+}
+
+.bot-thumb {
+    flex: 0 0 auto;
+    display: block;
+    width: 4.5rem;
+    padding: 0.2rem;
+    background: #fff;
+    border: 1px solid rgba(20, 20, 20, 0.16);
+    transition: border-color 0.15s ease;
+    /* Not decoration: it makes this the containing block for the hidden
+       label below. Left to position against the page instead, the label of
+       the last thumbnail sits 500 px out — past the rail, which cannot clip
+       what it is not the containing block of — and the whole page acquires a
+       sideways scroll. */
+    position: relative;
+}
+
+.bot-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.bot-thumb:hover {
+    border-color: var(--ink-soft);
+}
+
+/* Two pixels of ink rather than a tint: the swatches on this page are data
+   and a coloured highlight here would read as one of them. */
+.bot-thumb.is-current {
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.kit-still,
+.kit-parts img {
+    display: block;
+    width: 100%;
+}
+
+.bot-note {
+    margin-top: 1.5rem;
+}
+
+.kit-parts {
+    margin: 1.5rem 0 0;
+}
+
+.kit-parts figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+}
+
+/* The rail's labels name each view for assistive tech; on screen the
+   thumbnail is the label. */
+.bot-thumb span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 /* --- Schedule: a real day, set as a time column, with the kit list the
@@ -885,14 +1085,152 @@ a {
         display: none;
     }
 
-    .nav-links {
+    /* --- The nav on a phone ---
+
+       Logo, Register, Menu on one line; the five section links on a second
+       line that the button opens and closes. Without the script the button
+       is not there and the links are simply always shown, which is why the
+       nav stops being sticky in that case — five open links plus the bar
+       would otherwise hold a third of a phone screen hostage for the whole
+       page. */
+    .nav {
+        padding-block: 0.55rem;
+        gap: 0 0.6rem;
+    }
+
+    .nav:not(.nav-has-js) {
+        position: static;
+    }
+
+    .nav-logo {
+        margin-right: auto;
+    }
+
+    /* The wordmark is 7.6 times as wide as it is tall, so every pixel of
+       height costs eight of the bar. Three things have to fit on one line
+       here and this is the one that can give — but the link around it still
+       has to be a thumb tall, which is what the min-height is for. */
+    .nav-logo {
+        align-items: center;
+        min-height: 2.75rem;
+    }
+
+    .nav-logo img {
+        height: 20px;
+    }
+
+    .nav-cta {
+        order: 2;
+        padding: 0.7rem 1rem;
+    }
+
+    .nav-cta-long {
         display: none;
+    }
+
+    .nav-cta-short {
+        display: inline;
+    }
+
+    .nav-toggle {
+        order: 3;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-height: 2.75rem;
+        padding-inline: 0.85rem;
+        background: transparent;
+        border: 2px solid rgba(242, 244, 244, 0.32);
+        color: var(--paper);
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .nav-bars {
+        position: relative;
+    }
+
+    .nav-links {
+        order: 4;
+        flex-basis: 100%;
+        flex-direction: column;
+        margin-left: 0;
+        margin-top: 0.6rem;
+        border-top: var(--rule-dark);
+    }
+
+    .nav-has-js .nav-links {
+        display: none;
+    }
+
+    .nav-has-js.is-open .nav-links {
+        display: flex;
+    }
+
+    .nav-links li + li {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* A full-width row a thumb can hit without aiming. */
+    .nav-links a {
+        padding-block: 0.8rem;
+        font-size: 1.05rem;
+    }
+}
+
+/* Below this the bar runs out of room for three things and starts wrapping,
+   so the word next to the bars goes and the logo shrinks again. The button
+   keeps its name in aria-label. */
+@media (max-width: 420px) {
+    .nav-logo img {
+        height: 18px;
+    }
+
+    .nav-toggle-text {
+        display: none;
+    }
+
+    .nav-toggle {
+        padding-inline: 0.75rem;
+        min-width: 2.75rem;
+        justify-content: center;
+    }
+
+    .nav-cta {
+        padding-inline: 0.85rem;
+    }
+}
+
+/* The last tier, for a 320 px phone. Everything gives a little rather than
+   any one thing giving a lot, because the alternative is the bar wrapping to
+   two rows and taking a seventh of the screen with it for the whole page. */
+@media (max-width: 360px) {
+    .nav {
+        gap: 0 0.45rem;
+    }
+
+    .nav-logo img {
+        height: 15px;
+    }
+
+    .nav-cta {
+        padding-inline: 0.7rem;
+        font-size: 0.9rem;
     }
 }
 
 @media (max-width: 560px) {
     body {
         font-size: 1rem;
+    }
+
+    /* The clamp floor above is set for the desktop ramp and overflows a
+       360 px screen; below that width the headline has to scale with the
+       viewport instead. */
+    .hero h1 {
+        font-size: clamp(2.05rem, 9.5vw, 2.6rem);
     }
 
     .schedule {
@@ -909,12 +1247,45 @@ a {
         border-top: 0;
     }
 
-    .kit-images {
-        grid-template-columns: 1fr;
+    .awards > div {
+        margin-right: 0;
     }
 
-    .btn {
+    /* Full-width buttons, but only the ones in a row of them: the nav's
+       Register is a button too and stretching it breaks the bar. */
+    .btn-row .btn {
         width: 100%;
+    }
+
+    /* Thumb-sized rows rather than lines of text with a hairline between. */
+    .footer li {
+        margin-bottom: 0;
+    }
+
+    .footer li a {
+        display: inline-block;
+        padding-block: 0.55rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .zones {
+        font-size: 0.9rem;
+    }
+
+    .zones th,
+    .zones td {
+        padding: 0.65rem 0.4rem 0.65rem 0;
+    }
+
+    /* nowrap keeps "flat, start zones" on one line, which at this width
+       pushes the table wider than the screen. */
+    .zones .num {
+        white-space: normal;
+    }
+
+    .swatch {
+        margin-right: 0.4rem;
     }
 }
 
@@ -1030,9 +1401,33 @@ a {
     }
 }
 
-@media (max-width: 560px) {
+/* Nine columns on a phone is nine illegible slivers, and so is three. Below
+   this the sheet stops being a sheet and becomes something you swipe: a page
+   and a half at a time, wide enough to see that these are pages of rules,
+   with the half page at the edge saying there are more. */
+@media (max-width: 700px) {
     .manual-sheet {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        display: flex;
+        gap: 0.6rem;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x proximity;
+        padding-bottom: 0.5rem;
+    }
+
+    .sheet-page {
+        flex: 0 0 min(62%, 15rem);
+        scroll-snap-align: start;
+    }
+
+    /* The lift said "this opens" to a cursor. A finger has already tapped. */
+    .sheet-page:hover,
+    .sheet-page:focus-visible {
+        transform: none;
+    }
+
+    .manual-head .btn {
+        width: 100%;
     }
 }
 

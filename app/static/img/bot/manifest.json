@@ -1,0 +1,154 @@
+{
+  "source": "Stemsters bod renders",
+  "widths": [
+    200,
+    440,
+    561
+  ],
+  "aspect": {
+    "width": 561,
+    "height": 596
+  },
+  "views": [
+    {
+      "slug": "three-quarter-left",
+      "sizes": {
+        "200": {
+          "file": "three-quarter-left-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "three-quarter-left-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "three-quarter-left-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    },
+    {
+      "slug": "front",
+      "sizes": {
+        "200": {
+          "file": "front-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "front-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "front-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    },
+    {
+      "slug": "three-quarter-right",
+      "sizes": {
+        "200": {
+          "file": "three-quarter-right-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "three-quarter-right-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "three-quarter-right-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    },
+    {
+      "slug": "left",
+      "sizes": {
+        "200": {
+          "file": "left-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "left-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "left-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    },
+    {
+      "slug": "right",
+      "sizes": {
+        "200": {
+          "file": "right-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "right-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "right-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    },
+    {
+      "slug": "above-tilted",
+      "sizes": {
+        "200": {
+          "file": "above-tilted-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "above-tilted-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "above-tilted-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    },
+    {
+      "slug": "above",
+      "sizes": {
+        "200": {
+          "file": "above-200.webp",
+          "width": 200,
+          "height": 212
+        },
+        "440": {
+          "file": "above-440.webp",
+          "width": 440,
+          "height": 467
+        },
+        "561": {
+          "file": "above-561.webp",
+          "width": 561,
+          "height": 596
+        }
+      }
+    }
+  ]
+}

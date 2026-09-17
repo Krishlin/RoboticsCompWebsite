@@ -7,6 +7,28 @@
    October 24 event brief. Link targets SRC has not supplied yet come in as
    `links` from the route; when one is missing the page renders plain text
    instead of a dead link. #}
+{# One <img> for a piece of flat artwork, in WebP at the sizes
+   tools/convert_site_art.py wrote, or the original PNG if it has not been
+   run. `sizes` is the CSS width the image is shown at, which is what lets a
+   phone pick the small file.
+
+   `art` is passed in rather than read from the page's context: a macro does
+   not inherit it. #}
+{% macro art_img(art, name, alt, sizes, klass="") -%}
+    {%- set variants = art.get(name) -%}
+    {%- if variants -%}
+        <img {% if klass %}class="{{ klass }}" {% endif %}
+             src="{{ url_for('static', filename='img/' ~ variants[-1].file) }}"
+             srcset="{% for v in variants %}{{ url_for('static', filename='img/' ~ v.file) }} {{ v.width }}w{% if not loop.last %}, {% endif %}{% endfor %}"
+             sizes="{{ sizes }}"
+             width="{{ variants[-1].width }}" height="{{ variants[-1].height }}"
+             alt="{{ alt }}" loading="lazy" decoding="async">
+    {%- else -%}
+        <img {% if klass %}class="{{ klass }}" {% endif %}
+             src="{{ url_for('static', filename='img/' ~ name) }}"
+             alt="{{ alt }}" loading="lazy" decoding="async">
+    {%- endif -%}
+{%- endmacro %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +36,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Summit — STEMsters Robotics Competition</title>
     <meta name="description" content="Summit is an autonomous robotics competition for middle and high school teams in Southern California. Two robots, one hill, three minutes. October 24, 2026 in Arcadia, CA.">
+    {# Matches the nav, so a phone's browser chrome continues the dark band
+       instead of drawing a white seam above it. #}
+    <meta name="theme-color" content="#141414">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
@@ -22,20 +47,44 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
-<nav class="nav band" aria-label="Main">
-    <div class="nav-inner">
-        <a class="nav-logo" href="/" aria-label="Summit, home">
-            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
-        </a>
-        <ul class="nav-links">
-            <li><a href="#game">The game</a></li>
-            <li><a href="#hill">The Hill</a></li>
-            <li><a href="#manual">Rules</a></li>
-            <li><a href="#cost">Cost</a></li>
-            <li><a href="#event">October 24</a></li>
-        </ul>
-        <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
-    </div>
+{# The section links collapse behind a button on a phone, but only once the
+   script has run: the button ships hidden and the list ships visible, so a
+   visitor without JavaScript gets every link as a wrapped row rather than a
+   dead button. landing.js flips that round on load. #}
+<nav class="nav band" id="site-nav" aria-label="Main">
+    <a class="nav-logo" href="/" aria-label="Summit, home">
+        {# 987x130 in the file; these are that ratio at the height the
+           stylesheet sets, so the bar does not resize once the logo
+           arrives. #}
+        <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+             width="197" height="26" alt="Summit">
+    </a>
+
+    <ul class="nav-links" id="nav-links">
+        <li><a href="#game">The game</a></li>
+        <li><a href="#hill">The Hill</a></li>
+        <li><a href="#manual">Rules</a></li>
+        <li><a href="#cost">Cost</a></li>
+        <li><a href="#event">October 24</a></li>
+    </ul>
+
+    {# Two labels, because "Register a team" will not sit beside a menu button
+       on a 360 px screen. Both are hidden from assistive tech and the link
+       carries the full name itself, so collapsing the visible one never
+       leaves the link unnamed. #}
+    <a class="btn btn-primary nav-cta" href="{{ url_for('registration.signup') }}"
+       aria-label="Register a team">
+        <span class="nav-cta-long" aria-hidden="true">Register a team</span>
+        <span class="nav-cta-short" aria-hidden="true">Register</span>
+    </a>
+
+    {# The name is on the button, so the visible word beside the bars is
+       decoration and the narrowest phones can drop it. #}
+    <button class="nav-toggle" type="button" id="nav-toggle"
+            aria-controls="nav-links" aria-expanded="true" aria-label="Menu" hidden>
+        <span class="nav-bars" aria-hidden="true"></span>
+        <span class="nav-toggle-text" aria-hidden="true">Menu</span>
+    </button>
 </nav>
 
 <main id="main">
@@ -47,7 +96,7 @@
             <div>
                 <img class="hero-wordmark"
                      src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
-                     alt="Summit">
+                     width="987" height="130" alt="Summit">
                 <h1 class="display">Two robots. One hill. Three minutes.</h1>
                 <p class="lede">
                     The STEMsters Robotics Competition. An autonomous robotics competition
@@ -167,8 +216,9 @@
 
         <div class="spec">
             <figure class="spec-figure">
-                <img src="{{ url_for('static', filename='img/summit_hill_named.png') }}"
-                     alt="The Hill, top and side view, with the five zones named">
+                {{ art_img(art, 'summit_hill_named.png',
+                           'The Hill, top and side view, with the five zones named',
+                           '(max-width: 880px) 84vw, min(48vw, 620px)') }}
                 <figcaption>
                     The Plateau sits 2 cm above the Flat Band. The whole Hill is raised on a platform.
                 </figcaption>
@@ -294,16 +344,69 @@
             </div>
 
             <div>
-                <div class="kit-images">
-                    <img src="{{ url_for('static', filename='img/kit_bot.png') }}" alt="The assembled kit robot">
-                    <img src="{{ url_for('static', filename='img/kit_parts.png') }}" alt="The parts included in the kit">
-                </div>
-                <p class="note" style="margin-top:1.5rem">
+                {# The kit robot, turned over. Renders are cut out by
+                   tools/render_bot_views.py; if they have not been generated
+                   the section falls back to the single still photograph, so
+                   the page never shows an empty frame. #}
+                {% if bot %}
+                    <figure class="bot-gallery">
+                        {# A scroll-snap row, so a phone swipes it with no
+                           JavaScript at all. The rail below is ordinary
+                           in-page links to each slide, which means it works
+                           the same way. #}
+                        <div class="bot-stage" id="bot-stage"
+                             style="--bot-w: {{ bot.aspect.width }}; --bot-h: {{ bot.aspect.height }}">
+                            {% for view in bot.views %}
+                                {% set lead = loop.first %}
+                                <div class="bot-slide" id="bot-{{ view.slug }}">
+                                    <img src="{{ url_for('static', filename='img/bot/' ~ view.largest.file) }}"
+                                         srcset="{% for size in view.sizes %}{{ url_for('static', filename='img/bot/' ~ size.file) }} {{ size.width }}w{% if not loop.last %}, {% endif %}{% endfor %}"
+                                         sizes="(max-width: 880px) 78vw, min(42vw, 480px)"
+                                         width="{{ view.largest.width }}"
+                                         height="{{ view.largest.height }}"
+                                         alt="The kit robot, {{ view.label|lower }}."
+                                         loading="{{ 'eager' if lead else 'lazy' }}"
+                                         decoding="async"
+                                         {% if lead %}fetchpriority="high"{% endif %}>
+                                    <p class="bot-caption">
+                                        <b>{{ view.label }}.</b> {{ view.caption }}
+                                    </p>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <nav class="bot-rail" aria-label="Views of the kit robot">
+                            {% for view in bot.views %}
+                                <a class="bot-thumb" href="#bot-{{ view.slug }}"
+                                   data-slide="bot-{{ view.slug }}">
+                                    <img src="{{ url_for('static', filename='img/bot/' ~ view.sizes[0].file) }}"
+                                         width="{{ view.sizes[0].width }}"
+                                         height="{{ view.sizes[0].height }}"
+                                         loading="lazy" decoding="async" alt="">
+                                    <span>{{ view.label }}</span>
+                                </a>
+                            {% endfor %}
+                        </nav>
+                    </figure>
+                {% else %}
+                    <img class="kit-still"
+                         src="{{ url_for('static', filename='img/kit_bot.png') }}"
+                         alt="The assembled kit robot" loading="lazy" decoding="async">
+                {% endif %}
+
+                <p class="note bot-note">
                     The kit is a Wukong expansion board with a built-in battery, two continuous-rotation
                     motors, an ultrasonic sensor for finding the opponent, a colour sensor for reading the
                     zone, LEGO Technic chassis parts, and the starter code. It is programmed in MakeCode.
                     You supply a micro:bit, a laptop, and a small screwdriver.
                 </p>
+
+                <figure class="kit-parts">
+                    {{ art_img(art, 'kit_parts.png',
+                               'The parts included in the kit, laid out',
+                               '(max-width: 880px) 84vw, min(42vw, 480px)') }}
+                    <figcaption>Everything in the box, before you build anything.</figcaption>
+                </figure>
             </div>
         </div>
     </section>
@@ -497,7 +600,8 @@
 <footer class="footer band dark">
     <div class="footer-inner">
         <div>
-            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+                 width="182" height="24" alt="Summit" loading="lazy" decoding="async">
             <p>STEMsters Robotics Competition</p>
             <p>A program of STEMsters, a student-led 501(c)(3) nonprofit organization.</p>
         </div>
@@ -523,6 +627,7 @@
     </div>
 </footer>
 
+<script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/hill.js') }}" defer></script>
 </body>
 </html>

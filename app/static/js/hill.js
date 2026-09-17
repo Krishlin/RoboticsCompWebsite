@@ -153,6 +153,19 @@
         if (!p) {
             return;
         }
+        /* A finger on the Hill is usually a finger trying to scroll past it:
+           the figure is most of a phone screen, and swallowing that gesture
+           strands the visitor in the hero. So a touch has to land on the
+           robot itself to take control, while a mouse or a pen — neither of
+           which scrolls by pressing — may still place it anywhere.
+
+           The test is the robot element rather than a radius, because the
+           stylesheet has to hand the browser the same answer in advance:
+           touch-action is none on the robot and pan-y on the Hill around it,
+           and a radius would not line up with either. */
+        if (evt.pointerType === "touch" && !evt.target.closest("#robot")) {
+            return;
+        }
         dragging = true;
         cancelDemo();
         stage.setPointerCapture(evt.pointerId);

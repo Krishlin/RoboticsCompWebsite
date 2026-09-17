@@ -6,3 +6,8 @@
 #   python tools/render_manual_thumbs.py
 pypdfium2==5.13.0
 pillow==12.3.0
+
+# Cutting the robot renders out of their studio background
+# (tools/render_bot_views.py) is the only thing that needs these.
+numpy==2.4.5
+scipy==1.17.1

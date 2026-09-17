@@ -1,0 +1,32 @@
+{
+  "summit_hill_named.png": {
+    "source": "summit_hill_named.png",
+    "sizes": [
+      {
+        "file": "summit_hill_named-640.webp",
+        "width": 640,
+        "height": 532
+      },
+      {
+        "file": "summit_hill_named-1100.webp",
+        "width": 1100,
+        "height": 914
+      }
+    ]
+  },
+  "kit_parts.png": {
+    "source": "kit_parts.png",
+    "sizes": [
+      {
+        "file": "kit_parts-520.webp",
+        "width": 520,
+        "height": 545
+      },
+      {
+        "file": "kit_parts-900.webp",
+        "width": 900,
+        "height": 943
+      }
+    ]
+  }
+}
