@@ -221,6 +221,14 @@ a {
     font-size: 0.95rem;
 }
 
+/* The confirmation page's bar carries no section links, so nothing else is
+   pushing its one button to the right. */
+.nav-back {
+    margin-left: auto;
+    padding: 0.62rem 1.15rem;
+    font-size: 0.95rem;
+}
+
 /* The short label is for the phone bar, where the long one does not fit
    beside a menu button. Both are hidden from assistive tech; see the
    template. */
@@ -371,17 +379,6 @@ a {
 
 .hero .btn-row {
     margin-bottom: 1.5rem;
-}
-
-.hero-meta {
-    font-size: 0.95rem;
-    color: rgba(242, 244, 244, 0.6);
-    margin: 0;
-}
-
-.hero-meta strong {
-    color: var(--paper);
-    font-weight: 600;
 }
 
 /* ---------------------------------------------------------------
@@ -551,12 +548,6 @@ a {
     background: #fff;
     padding: 1.5rem;
     border: var(--rule);
-}
-
-.spec-figure figcaption {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
 }
 
 .zones {
@@ -785,12 +776,6 @@ a {
 
 .kit-parts {
     margin: 1.5rem 0 0;
-}
-
-.kit-parts figcaption {
-    margin-top: 0.6rem;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
 }
 
 /* The rail's labels name each view for assistive tech; on screen the
@@ -1373,21 +1358,6 @@ a {
     padding-top: 1.5rem;
 }
 
-.manual-foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 1.5rem;
-    margin-top: clamp(1.5rem, 3vw, 2.25rem);
-    padding-top: 1.5rem;
-    border-top: var(--rule-dark);
-}
-
-.manual-foot .note {
-    margin: 0;
-    max-width: 44ch;
-}
-
 @media (max-width: 1000px) {
     .manual-sheet {
         grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1528,12 +1498,6 @@ a {
     font-size: 1.05rem;
     padding: 1rem 1.75rem;
     white-space: nowrap;
-}
-
-.pay-caption {
-    margin: 0.7rem 0 0;
-    font-size: 0.8rem;
-    color: var(--ink-soft);
 }
 
 /* --- Summary --- */

@@ -106,10 +106,6 @@
                     <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Read the game manual</a>
                 </div>
-                <p class="hero-meta">
-                    Next event <strong>Saturday, October 24, 2026</strong> at Arcadia High School, Arcadia, CA.
-                    Registration is open.
-                </p>
             </div>
 
             <figure class="hill-figure">
@@ -149,11 +145,10 @@
                             The sensor reads blue. Ground level, and where the blue robot starts.
                         </div>
                     </div>
-                    <p class="hill-hint">
-                        Drag the robot, or focus it and use the arrow keys. Each ring is a
-                        different colour so a colour sensor can tell the robot how high it is.
-                        That is the whole game.
-                    </p>
+                    {# An affordance, not an explanation: a drag target has to
+                       say it is one. What the colours are for is the next
+                       section's job. #}
+                    <p class="hill-hint">Drag the robot, or press the arrow keys.</p>
                 </figcaption>
             </figure>
         </div>
@@ -210,7 +205,6 @@
             <p class="lede">
                 A 3D-printed PLA mound, 42 cm across, rising 2 cm to a flat top. Each ring is a
                 different colour so that a colour sensor can identify where the robot is.
-                Competition and practice fields are printed from the same filament.
             </p>
         </div>
 
@@ -219,9 +213,6 @@
                 {{ art_img(art, 'summit_hill_named.png',
                            'The Hill, top and side view, with the five zones named',
                            '(max-width: 880px) 84vw, min(48vw, 620px)') }}
-                <figcaption>
-                    The Plateau sits 2 cm above the Flat Band. The whole Hill is raised on a platform.
-                </figcaption>
             </figure>
 
             <table class="zones">
@@ -303,17 +294,9 @@
             </div>
         {% else %}
             <p class="manual-fallback note">
-                <a href="{{ url_for('main.manual') }}">Open the game manual (PDF)</a> — the version
-                that governs the October 24 event.
+                <a href="{{ url_for('main.manual') }}">Open the game manual (PDF)</a>
             </p>
         {% endif %}
-
-        <div class="manual-foot">
-            <p class="note">
-                Rule questions that apply to every team are answered in the next version of the
-                manual. The address above always serves the current one.
-            </p>
-        </div>
     </section>
 
     <!-- Cost -->
@@ -369,7 +352,7 @@
                                          decoding="async"
                                          {% if lead %}fetchpriority="high"{% endif %}>
                                     <p class="bot-caption">
-                                        <b>{{ view.label }}.</b> {{ view.caption }}
+                                        <b>{{ view.label }}.</b>{% if view.caption %} {{ view.caption }}{% endif %}
                                     </p>
                                 </div>
                             {% endfor %}
@@ -405,7 +388,6 @@
                     {{ art_img(art, 'kit_parts.png',
                                'The parts included in the kit, laid out',
                                '(max-width: 880px) 84vw, min(42vw, 480px)') }}
-                    <figcaption>Everything in the box, before you build anything.</figcaption>
                 </figure>
             </div>
         </div>

@@ -20,13 +20,13 @@
 </head>
 <body>
 
+{# The bar is laid out by .nav itself; its children are direct children. #}
 <nav class="nav band" aria-label="Main">
-    <div class="nav-inner">
-        <a class="nav-logo" href="/" aria-label="Summit, home">
-            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" alt="Summit">
-        </a>
-        <a class="btn btn-ghost" href="/">Back to the site</a>
-    </div>
+    <a class="nav-logo" href="/" aria-label="Summit, home">
+        <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+             width="197" height="26" alt="Summit">
+    </a>
+    <a class="btn btn-ghost nav-back" href="/">Back to the site</a>
 </nav>
 
 <main>
@@ -71,7 +71,6 @@
                    href="{{ payment_url }}" target="_blank" rel="noopener">
                     Pay the $20 team fee
                 </a>
-                <p class="pay-caption">Opens the payment form in a new tab.</p>
             </div>
         </div>
     </section>
