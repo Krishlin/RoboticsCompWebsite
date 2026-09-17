@@ -685,10 +685,9 @@ a {
     display: none;
 }
 
-/* Every slide is the full width of the stage and they are all laid out, so
-   the stage settles at the height of the tallest caption once and then holds
-   it. Sizing to the current slide instead would make the page jump on every
-   swipe. */
+/* Every slide is the full width of the stage. All seven renders share one
+   canvas, so every slide is the same height and the stage holds it without
+   being told to. */
 .bot-slide {
     flex: 0 0 100%;
     scroll-snap-align: center;
@@ -703,22 +702,6 @@ a {
     max-width: 24rem;
     height: auto;
     margin-inline: auto;
-}
-
-/* Pinned to the bottom so the captions line up across slides however long
-   each one runs. */
-.bot-caption {
-    margin: 0;
-    padding-top: 1.25rem;
-    font-size: 0.9rem;
-    line-height: 1.45;
-    color: var(--ink-soft);
-    margin-top: auto;
-}
-
-.bot-caption b {
-    color: var(--ink);
-    font-weight: 600;
 }
 
 .bot-rail {

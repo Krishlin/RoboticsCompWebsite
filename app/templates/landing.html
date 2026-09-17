@@ -351,9 +351,6 @@
                                          loading="{{ 'eager' if lead else 'lazy' }}"
                                          decoding="async"
                                          {% if lead %}fetchpriority="high"{% endif %}>
-                                    <p class="bot-caption">
-                                        <b>{{ view.label }}.</b>{% if view.caption %} {{ view.caption }}{% endif %}
-                                    </p>
                                 </div>
                             {% endfor %}
                         </div>

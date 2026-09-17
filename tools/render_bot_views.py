@@ -23,15 +23,26 @@ polynomial surface is least-squares fitted per channel to the outer frame of
 the image, which is background by construction. Every pixel is then judged by
 how far it sits from that model.
 
-One threshold is not enough. A pixel far from the model is certainly the robot
-(black tyres, red plastic, the yellow board). A pixel a little way from it is
-either a pale grey LEGO beam or the soft contact shadow the robot casts, and
-those two have to be told apart or the cutout either loses the chassis or
-keeps a dirty halo. They are separated by shape rather than by colour: the
-shadow is a thin ring hugging the silhouette, so eroding the weak mask deletes
-it, while the beam is thick enough to survive. Eroding alone would also delete
-genuinely thin parts, so the strong mask -- which the shadow never reaches --
-is unioned back in, and that is what saves the micro:bit's aerial.
+One threshold does the whole job, and that is a deliberate retreat. An earlier
+version took a second, higher threshold as "certainly the robot" and eroded
+the lower one by ten pixels to shave off the contact shadow. The shadow does
+not survive that, but neither does anything else thin and close to the
+background grey. The ultrasonic sensor is the casualty: it is lit to within
+0.005 of the backdrop's own level and hangs off the chassis on a pale beam a
+few pixels wide, so both side views shipped with the sensor floating in space,
+its barrel bitten into, and the chassis plates chewed along their edges.
+
+Measured across the seven renders there is no threshold that parts the shadow
+from those parts -- near the body the residual runs continuously from 0.02 to
+0.20 with no gap -- and no erosion narrow enough to keep the beam is wide
+enough to lose the shadow. Reachability does not part them either: a flood
+from the frame that is loose enough to cross the shadow is loose enough to
+walk into the tyres, which are as smooth as it is.
+
+What rescues the picture is that the shadow only just clears the threshold, so
+it hugs the silhouette a few pixels deep instead of pooling on the ground. A
+closing folds that depth into the outline, and what is left reads as a soft
+edge rather than a halo. Nothing is eroded, so nothing thin is lost.
 """
 
 from __future__ import annotations
@@ -60,20 +71,26 @@ VIEWS = [
 ]
 
 # The stage tops out near 600 CSS px on a desktop and near 360 on a phone, so
-# 1120 covers a 2x phone and a large desktop alike. 200 is the thumbnail rail.
+# these would cover a 2x phone and a large desktop alike -- but the robot only
+# occupies about 570 px of the 1920 px render, and render() never upscales, so
+# the top two collapse onto that native width and the files actually written
+# are 200, 440 and 570. They are kept because a future set of renders that
+# frames the robot tighter would fill them in without a code change. 200 is
+# the thumbnail rail.
 WIDTHS = [200, 440, 760, 1120]
 
 # Distance from the fitted background at which a pixel stops being background.
 # Measured: across all seven renders the fit's own error never exceeds 0.019
 # on the frame that was fitted, so 0.045 clears the noise floor with room to
-# spare. STRONG is the level only the robot reaches, never its shadow.
+# spare. Raising it past about 0.06 starts opening holes in the pale grey
+# front plate, which is the first real part to go.
 WEAK = 0.045
-STRONG = 0.15
 
-# Pixels of the weak mask to shave off. The cast shadow is a soft ring a few
-# pixels wide; this is comfortably wider than it and far narrower than any
-# real part of the robot.
-ERODE = 10
+# Closing applied to the thresholded mask, in pixels. Wide enough to swallow
+# the shadow's few-pixel skirt and to bridge the threshold's speckle across a
+# wheel's spokes; narrow enough not to bridge the gap between a wheel and the
+# chassis, which is a hole the eye expects to see through.
+CLOSE = 9
 
 # Fitted on the outer frame of the image, which no render's robot comes near.
 FRAME = 120
@@ -81,7 +98,7 @@ POLY_DEGREE = 5
 
 # Skirt of bled colour kept around the silhouette, in source pixels. Has to
 # exceed the reach of the resampling kernel at the largest downscale on offer
-# (744 -> 200 is 3.7x, and Lanczos reaches three output pixels, so eleven
+# (570 -> 200 is 2.9x, and Lanczos reaches three output pixels, so nine
 # source pixels); 24 is that with room to spare.
 MARGIN = 24
 
@@ -154,15 +171,11 @@ def _silhouette(rgb):
 
     residual = _background_residual(rgb)
 
-    weak = ndimage.binary_closing(residual > WEAK, np.ones((7, 7)))
-    weak = ndimage.binary_fill_holes(weak)
-
-    strong = ndimage.binary_closing(residual > STRONG, np.ones((5, 5)))
-    strong = ndimage.binary_fill_holes(strong)
-
-    mask = ndimage.binary_erosion(weak, iterations=ERODE) | strong
-    mask = ndimage.binary_fill_holes(ndimage.binary_closing(mask, np.ones((5, 5))))
-    return _largest_parts(mask)
+    # Close before filling. The threshold alone leaves the spokes of a wheel as
+    # separate islands; filling that would punch the gaps between them straight
+    # through the wheel, where closing first joins them into one rim to fill.
+    mask = ndimage.binary_closing(residual > WEAK, np.ones((CLOSE, CLOSE)))
+    return _largest_parts(ndimage.binary_fill_holes(mask))
 
 
 def _bleed_colour(rgb, mask):

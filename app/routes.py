@@ -64,33 +64,18 @@ ROUTE_INDEX = [
 # A slug with no rendered images is skipped, so the gallery shrinks rather
 # than breaking if a view is dropped from the renders.
 #
-# The caption is optional and most views do not have one. A photograph of a
-# robot does not need a paragraph telling you it is a robot; the ones here
-# are the facts the picture cannot show you on its own.
+# Nothing prints the label: the picture is its own caption, and the paragraph
+# under it was only ever saying what the reader could already see. It names
+# the view for the image's alt text and for the thumbnail rail, both of which
+# assistive tech reads and neither of which is on screen.
 BOT_VIEWS = [
     {"slug": "three-quarter-left", "label": "Three-quarter"},
-    {
-        "slug": "front",
-        "label": "Front",
-        "caption": "The two barrels are the ultrasonic sensor.",
-    },
-    {
-        "slug": "three-quarter-right",
-        "label": "Three-quarter, right",
-        "caption": "Nothing is glued or soldered.",
-    },
-    {
-        "slug": "left",
-        "label": "Left side",
-        "caption": "Drive the two wheels opposite ways and it turns on the spot.",
-    },
+    {"slug": "front", "label": "Front"},
+    {"slug": "three-quarter-right", "label": "Three-quarter, right"},
+    {"slug": "left", "label": "Left side"},
     {"slug": "right", "label": "Right side"},
     {"slug": "above-tilted", "label": "From above, tilted"},
-    {
-        "slug": "above",
-        "label": "From above",
-        "caption": "Everything starts inside a 10 cm square.",
-    },
+    {"slug": "above", "label": "From above"},
 ]
 
 
