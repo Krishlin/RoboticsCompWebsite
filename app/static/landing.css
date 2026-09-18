@@ -1289,8 +1289,13 @@ a {
     margin: 0 0 1rem;
 }
 
+/* Balanced because this one runs to exactly two lines at desktop widths, and
+   the natural break leaves a full line above a short one. Balancing evens
+   them; the non-breaking space in the template is what stops "in nine pages"
+   being split across whichever break the browser picks. */
 .manual-head .lede {
     max-width: 48ch;
+    text-wrap: balance;
 }
 
 /* One column per page, however many pages the manual runs to: the whole

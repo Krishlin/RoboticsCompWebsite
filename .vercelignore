@@ -4,6 +4,15 @@ __pycache__/
 *.db
 .git/
 seed/
+
+# Secrets. git already ignores this, but the CLI uploads by this file and not
+# by .gitignore, so a `vercel deploy` from a developer's machine would put the
+# real .env in the bundle. Vercel holds the deployed values itself, under
+# Settings -> Environment Variables.
+.env
+.env.*
+!.env.example
+
 migrate_add_replaces_match_id.py
 seed_for_testing.py
 

@@ -266,8 +266,10 @@
                 <h2 class="display">The entire rulebook</h2>
                 <p class="lede">
                     {% if manual %}
-                        Not a summary. Every rule that governs a Summit match, in
-                        {{ manual.count_word }} pages. Open any page.
+                        {# The count is glued to "in" and "pages" so the page
+                           count never lands alone on a line of its own. #}
+                        Not a summary. Every rule that governs a Summit match,
+                        in&nbsp;{{ manual.count_word }}&nbsp;pages. Open any page.
                     {% else %}
                         Not a summary. Every rule that governs a Summit match, and
                         short enough to read before the event.
