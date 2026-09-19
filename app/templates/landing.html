@@ -357,6 +357,11 @@
                             {% endfor %}
                         </div>
 
+                        {# Only once there is something to choose between. A
+                           rail of one thumbnail is a control that cannot do
+                           anything, and landing.js stands down on its own
+                           when the rail is absent. #}
+                        {% if bot.views|length > 1 %}
                         <nav class="bot-rail" aria-label="Views of the kit robot">
                             {% for view in bot.views %}
                                 <a class="bot-thumb" href="#bot-{{ view.slug }}"
@@ -369,6 +374,7 @@
                                 </a>
                             {% endfor %}
                         </nav>
+                        {% endif %}
                     </figure>
                 {% else %}
                     <img class="kit-still"
@@ -384,9 +390,14 @@
                 </p>
 
                 <figure class="kit-parts">
+                    {# 670px is what this column actually measures once the
+                       band hits its 1340px ceiling: 1.1 of 2.1 columns, less
+                       the 4rem gap. The old 480 was a guess, and under-
+                       declaring is the one error `sizes` punishes — the
+                       browser downloads a file too small and upscales it. #}
                     {{ art_img(art, 'kit_parts.png',
                                'The parts included in the kit, laid out',
-                               '(max-width: 880px) 84vw, min(42vw, 480px)') }}
+                               '(max-width: 880px) 84vw, min(52vw, 670px)') }}
                 </figure>
             </div>
         </div>
@@ -584,7 +595,17 @@
             <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
                  width="182" height="24" alt="Summit" loading="lazy" decoding="async">
             <p>STEMsters Robotics Competition</p>
-            <p>A program of STEMsters, a student-led 501(c)(3) nonprofit organization.</p>
+
+            {# The organiser's own mark, against the line that names it.
+               Summit keeps the nav and the hero to itself — it is the
+               competition, and it is what a family arrives looking for.
+               STEMsters is who runs it, and the footer is the one place on
+               the page that says so. #}
+            <div class="footer-org">
+                {{ art_img(art, 'stemsters_logo.png', 'STEMsters',
+                           '180px', 'footer-org-mark') }}
+                <p>A program of STEMsters, a student-led 501(c)(3) nonprofit organization.</p>
+            </div>
         </div>
         <div>
             <ul>

@@ -1021,6 +1021,22 @@ a {
     font-size: 1.05rem;
 }
 
+/* The organiser's mark, set apart from the competition's own so the two
+   wordmarks are not read as one lockup. */
+.footer-org {
+    margin-top: 1.75rem;
+}
+
+/* Taller than the Summit wordmark above it, and the one place on the page
+   that overrides `.footer img`. It is a drawn wordmark — the letters carry
+   glasses, eyes and legs — and at 24px those details collapse into specks.
+   The selector is doubled because `.footer img` would otherwise outrank a
+   bare class. */
+.footer img.footer-org-mark {
+    height: 34px;
+    margin-bottom: 0.6rem;
+}
+
 /* ---------------------------------------------------------------
    Responsive. Everything above is a two-column grid; below 880px the
    page becomes one column and the figures lead.

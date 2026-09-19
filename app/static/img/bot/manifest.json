@@ -3,150 +3,30 @@
   "widths": [
     200,
     440,
-    570
+    814
   ],
   "aspect": {
-    "width": 570,
-    "height": 608
+    "width": 814,
+    "height": 793
   },
   "views": [
     {
-      "slug": "three-quarter-left",
+      "slug": "three-quarter-rear",
       "sizes": {
         "200": {
-          "file": "three-quarter-left-200.webp",
+          "file": "three-quarter-rear-200.webp",
           "width": 200,
-          "height": 213
+          "height": 195
         },
         "440": {
-          "file": "three-quarter-left-440.webp",
+          "file": "three-quarter-rear-440.webp",
           "width": 440,
-          "height": 469
+          "height": 429
         },
-        "570": {
-          "file": "three-quarter-left-570.webp",
-          "width": 570,
-          "height": 608
-        }
-      }
-    },
-    {
-      "slug": "front",
-      "sizes": {
-        "200": {
-          "file": "front-200.webp",
-          "width": 200,
-          "height": 213
-        },
-        "440": {
-          "file": "front-440.webp",
-          "width": 440,
-          "height": 469
-        },
-        "570": {
-          "file": "front-570.webp",
-          "width": 570,
-          "height": 608
-        }
-      }
-    },
-    {
-      "slug": "three-quarter-right",
-      "sizes": {
-        "200": {
-          "file": "three-quarter-right-200.webp",
-          "width": 200,
-          "height": 213
-        },
-        "440": {
-          "file": "three-quarter-right-440.webp",
-          "width": 440,
-          "height": 469
-        },
-        "570": {
-          "file": "three-quarter-right-570.webp",
-          "width": 570,
-          "height": 608
-        }
-      }
-    },
-    {
-      "slug": "left",
-      "sizes": {
-        "200": {
-          "file": "left-200.webp",
-          "width": 200,
-          "height": 213
-        },
-        "440": {
-          "file": "left-440.webp",
-          "width": 440,
-          "height": 469
-        },
-        "570": {
-          "file": "left-570.webp",
-          "width": 570,
-          "height": 608
-        }
-      }
-    },
-    {
-      "slug": "right",
-      "sizes": {
-        "200": {
-          "file": "right-200.webp",
-          "width": 200,
-          "height": 213
-        },
-        "440": {
-          "file": "right-440.webp",
-          "width": 440,
-          "height": 469
-        },
-        "570": {
-          "file": "right-570.webp",
-          "width": 570,
-          "height": 608
-        }
-      }
-    },
-    {
-      "slug": "above-tilted",
-      "sizes": {
-        "200": {
-          "file": "above-tilted-200.webp",
-          "width": 200,
-          "height": 213
-        },
-        "440": {
-          "file": "above-tilted-440.webp",
-          "width": 440,
-          "height": 469
-        },
-        "570": {
-          "file": "above-tilted-570.webp",
-          "width": 570,
-          "height": 608
-        }
-      }
-    },
-    {
-      "slug": "above",
-      "sizes": {
-        "200": {
-          "file": "above-200.webp",
-          "width": 200,
-          "height": 213
-        },
-        "440": {
-          "file": "above-440.webp",
-          "width": 440,
-          "height": 469
-        },
-        "570": {
-          "file": "above-570.webp",
-          "width": 570,
-          "height": 608
+        "814": {
+          "file": "three-quarter-rear-814.webp",
+          "width": 814,
+          "height": 793
         }
       }
     }

@@ -1,11 +1,10 @@
 """Re-encode the landing page's flat artwork as WebP at web sizes.
 
 The art arrives from SRC as full-resolution PNG — the Hill spec sheet is
-1950 px wide and 198 KB, the kit photograph 1381 px and 434 KB — and the page
-never shows either above about 600 CSS px. Serving the originals means a
-phone on a gym's cell signal downloads roughly six hundred kilobytes it
-cannot use a pixel of, which on this page is more than everything else put
-together.
+1950 px wide and 198 KB, the kit render 3282 px and 1.5 MB — and the page
+never shows either above about 670 CSS px. Serving the originals means a
+phone on a gym's cell signal downloads well over a megabyte it cannot use a
+pixel of, which on this page is more than everything else put together.
 
 Run this when the art in app/static/img is replaced:
 
@@ -34,10 +33,52 @@ MANIFEST = IMG_DIR / "art-manifest.json"
 # 2x phone and a desktop; the smaller is what a 1x phone actually downloads.
 ART = {
     "summit_hill_named.png": [640, 1100],
-    "kit_parts.png": [520, 900],
+    # The kit layout is the one piece of art with fine detail in it — pin
+    # legends, board silkscreen — and it is shown at 668 CSS px on a desktop,
+    # so it carries a third size a 2x screen can actually use. 104 KB, and
+    # only a retina desktop ever asks for it.
+    "kit_parts.png": [520, 900, 1340],
+    # The footer shows this at 180 CSS px, so 320 is the 1x file and 640
+    # covers a 2x screen with room to spare. It is 10 KB and 23 KB.
+    "stemsters_logo.png": [320, 640],
 }
 
 QUALITY = 84
+
+# Art that arrives on a canvas larger than the artwork on it. The kit render
+# is drawn with about 400 px of empty space to either side, which on the page
+# is not framing: it is a quarter of the column spent on nothing, and it makes
+# the same layout read a quarter smaller than the render it replaced. Cropped
+# back to the artwork here rather than in the source file, so the original
+# stays the original.
+TRIM = {"kit_parts.png"}
+
+# Margin left around trimmed art, as a fraction of its width. 1.5% is what the
+# kit render carried before its canvas grew, so trimming to it lands the new
+# art on the old one's proportions and the section's layout does not move.
+TRIM_MARGIN = 0.015
+
+
+def _trim(image):
+    """Crop transparent canvas back to the artwork, leaving an even margin.
+
+    The crop is taken flush and the margin added back afterwards, rather than
+    widening the crop box and clamping it at the edges: artwork that already
+    sits against one side would otherwise come out with a margin on three.
+
+    Returns the image unchanged when there is nothing to trim — fully opaque,
+    or fully transparent, which getbbox reports as None.
+    """
+    from PIL import ImageOps
+
+    box = image.getchannel("A").getbbox()
+    if box is None or box == (0, 0, image.width, image.height):
+        return image
+
+    content = image.crop(box)
+    return ImageOps.expand(
+        content, round(content.width * TRIM_MARGIN), (0, 0, 0, 0)
+    )
 
 
 def convert(img_dir: Path) -> dict:
@@ -59,6 +100,8 @@ def convert(img_dir: Path) -> dict:
             # RGBA WebP is meaningfully larger, so only keep it if a pixel
             # is actually transparent.
             image = source.convert("RGBA")
+            if name in TRIM:
+                image = _trim(image)
             if image.getchannel("A").getextrema()[0] == 255:
                 image = image.convert("RGB")
 

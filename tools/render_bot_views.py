@@ -43,11 +43,20 @@ What rescues the picture is that the shadow only just clears the threshold, so
 it hugs the silhouette a few pixels deep instead of pooling on the ground. A
 closing folds that depth into the outline, and what is left reads as a soft
 edge rather than a halo. Nothing is eroded, so nothing thin is lost.
+
+Renders that arrive already cut out
+-----------------------------------
+A source with its own alpha channel skips all of the above: the CAD tool cut
+it, and a fit against transparent black would only eat the robot's own dark
+parts. It is scale-matched to the studio set instead -- see _match_scale --
+because it was framed by a different camera and would otherwise change size
+the moment the visitor swiped onto it.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import sys
 from pathlib import Path
@@ -60,24 +69,40 @@ MANIFEST = OUT_DIR / "manifest.json"
 # Source filename -> slug. Only these are published, and in this order, so
 # dropping an extra experiment in the folder doesn't quietly ship it. The
 # labels and captions live in app/routes.py with the rest of the page's copy.
+#
+# The site shows one render. It is the only one with the micro:bit's display
+# facing the visitor — the face a competitor recognises — and the only one
+# that arrived already cut out, so its edges are the CAD tool's rather than
+# this file's, and the ultrasonic sensor survives intact where the fit below
+# bites into it.
+#
+# The seven studio renders are still in the source folder and everything
+# needed to publish them is still in this file. To bring the gallery back,
+# add them here and to BOT_VIEWS in app/routes.py; the rail reappears on its
+# own once there is more than one view:
+#
+#     ("Top View Left Tilted.png", "three-quarter-left"),
+#     ("Front View.png", "front"),
+#     ("Top View Right Tilted.png", "three-quarter-right"),
+#     ("Left View.png", "left"),
+#     ("Right View 1.png", "right"),
+#     ("Top View Tilted.png", "above-tilted"),
+#     ("Top View.png", "above"),
 VIEWS = [
-    ("Top View Left Tilted.png", "three-quarter-left"),
-    ("Front View.png", "front"),
-    ("Top View Right Tilted.png", "three-quarter-right"),
-    ("Left View.png", "left"),
-    ("Right View 1.png", "right"),
-    ("Top View Tilted.png", "above-tilted"),
-    ("Top View.png", "above"),
+    ("Three Quarter Rear View.png", "three-quarter-rear"),
 ]
 
-# The stage tops out near 600 CSS px on a desktop and near 360 on a phone, so
-# these would cover a 2x phone and a large desktop alike -- but the robot only
-# occupies about 570 px of the 1920 px render, and render() never upscales, so
-# the top two collapse onto that native width and the files actually written
-# are 200, 440 and 570. They are kept because a future set of renders that
-# frames the robot tighter would fill them in without a code change. 200 is
-# the thumbnail rail.
-WIDTHS = [200, 440, 760, 1120]
+# The stage tops out at 384 CSS px, so 440 is the 1x file and the top entry
+# is what a 2x screen asks for. render() never upscales, so that entry
+# collapses onto whatever the render's own width is -- 814 for the cut-out
+# render, 570 for the studio set, both of which clear 768. 200 is the
+# thumbnail rail, and it is kept for the day the rail comes back.
+#
+# There is deliberately no rung between 440 and native. At this subject size
+# a Lanczos downscale costs more bytes than it saves -- 760 measured 38 KB
+# against the untouched 814's 34 KB -- so the middle rung was a file that
+# was bigger than the original and sharper than nothing.
+WIDTHS = [200, 440, 1120]
 
 # Distance from the fitted background at which a pixel stops being background.
 # Measured: across all seven renders the fit's own error never exceeds 0.019
@@ -195,16 +220,86 @@ def _bleed_colour(rgb, mask):
 
 
 def _cut_out(path: Path):
-    """Return (RGBA array, mask) for one render, still at source size."""
+    """Return (RGBA array, mask, precut) for one render, at source size.
+
+    A source that already carries transparency was cut by the CAD tool, so its
+    own alpha is kept -- both the silhouette and its anti-aliased edge, which
+    is finer than the threshold here produces. Such a source is padded first:
+    its robot runs nearly to the frame, and _bounds needs MARGIN of slack
+    outside the silhouette to crop for the same reason it does anywhere else.
+    """
+    import numpy as np
+    from PIL import Image, ImageOps
+
+    with Image.open(path) as handle:
+        source = handle.convert("RGBA")
+        precut = source.getchannel("A").getextrema()[0] < 255
+        if precut:
+            source = ImageOps.expand(source, MARGIN, (0, 0, 0, 0))
+        alpha = np.asarray(source.getchannel("A"))
+        rgb = np.asarray(source.convert("RGB"), dtype=np.float64) / 255.0
+
+    # >127 rather than >0: an edge pixel that is mostly background belongs to
+    # the background for the purpose of finding the robot's bounds, even
+    # though its alpha is kept verbatim in the file.
+    mask = (alpha > 127) if precut else _silhouette(rgb)
+    bled = _bleed_colour((rgb * 255).round().astype(np.uint8), mask)
+    out_alpha = alpha if precut else (mask * 255).astype(np.uint8)
+    return np.dstack([bled, out_alpha]), mask, precut
+
+
+def _extent(mask) -> float:
+    """The diagonal of the robot's bounding box, in pixels."""
+    rows = mask.any(axis=1).nonzero()[0]
+    cols = mask.any(axis=0).nonzero()[0]
+    return math.hypot(cols[-1] - cols[0] + 1, rows[-1] - rows[0] + 1)
+
+
+def _rescale(rgba, factor: float):
+    """Resample one cut-out view, alpha and all. Returns (array, mask).
+
+    Safe to run before the crop because _cut_out has already bled the robot's
+    colour outwards, so there is no background left for the kernel to mix in.
+    """
     import numpy as np
     from PIL import Image
 
-    with Image.open(path) as handle:
-        rgb = np.asarray(handle.convert("RGB"), dtype=np.float64) / 255.0
+    image = Image.fromarray(rgba, "RGBA")
+    size = (
+        max(1, round(image.width * factor)),
+        max(1, round(image.height * factor)),
+    )
+    scaled = np.asarray(image.resize(size, Image.LANCZOS))
+    return scaled, scaled[..., 3] > 127
 
-    mask = _silhouette(rgb)
-    bled = _bleed_colour((rgb * 255).round().astype(np.uint8), mask)
-    return np.dstack([bled, (mask * 255).astype(np.uint8)]), mask
+
+def _match_scale(cut):
+    """Bring a pre-cut view to the size the studio camera renders the robot.
+
+    The studio renders share a camera, so their robots are already the same
+    size and the shared canvas keeps them that way. A render that arrives cut
+    out came from a different session: the rear three-quarter is framed about
+    1.6x tighter, and dropped in untouched it would tower over its neighbours
+    and pump the stage every time the visitor swiped.
+
+    There is no pose-independent measure of "the same robot" to match on --
+    a profile view's bounding box is a third smaller than a three-quarter's
+    for the very same robot, because less of it faces the lens. Matching the
+    mean extent of the studio set puts the newcomer in the middle of that
+    spread, which is as close as one number gets and lands within a few per
+    cent for a three-quarter pose, the case this is used for.
+    """
+    studio = [_extent(mask) for _, mask, precut in cut if not precut]
+    if not studio:
+        return cut
+
+    target = sum(studio) / len(studio)
+    matched = []
+    for rgba, mask, precut in cut:
+        if precut:
+            rgba, mask = _rescale(rgba, target / _extent(mask))
+        matched.append((rgba, mask, precut))
+    return matched
 
 
 def _bounds(mask):
@@ -257,8 +352,9 @@ def render(src_dir: Path, out_dir: Path) -> dict:
     if missing:
         raise FileNotFoundError(src_dir / missing[0])
 
-    cut = [(_cut_out(src_dir / name), slug) for name, slug in VIEWS]
-    bounds = [_bounds(mask) for (_, mask), _ in cut]
+    cut = _match_scale([_cut_out(src_dir / name) for name, _ in VIEWS])
+    slugs = [slug for _, slug in VIEWS]
+    bounds = [_bounds(mask) for _, mask, _ in cut]
     canvas = _canvas_size(bounds)
 
     # Clear first: a slug that goes away should not leave its files behind for
@@ -268,7 +364,7 @@ def render(src_dir: Path, out_dir: Path) -> dict:
     out_dir.mkdir(parents=True)
 
     views = []
-    for ((rgba, _), slug), box in zip(cut, bounds):
+    for (rgba, _, _), slug, box in zip(cut, slugs, bounds):
         content = Image.fromarray(rgba, "RGBA").crop(box)
         full = Image.new("RGBA", canvas, (0, 0, 0, 0))
         full.paste(

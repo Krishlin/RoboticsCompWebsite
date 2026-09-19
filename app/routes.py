@@ -68,14 +68,11 @@ ROUTE_INDEX = [
 # under it was only ever saying what the reader could already see. It names
 # the view for the image's alt text and for the thumbnail rail, both of which
 # assistive tech reads and neither of which is on screen.
+# One view, so the label is only ever read by assistive tech on the image
+# itself; the thumbnail rail it also names does not render below two views.
+# The rest of the set is listed in tools/render_bot_views.py.
 BOT_VIEWS = [
-    {"slug": "three-quarter-left", "label": "Three-quarter"},
-    {"slug": "front", "label": "Front"},
-    {"slug": "three-quarter-right", "label": "Three-quarter, right"},
-    {"slug": "left", "label": "Left side"},
-    {"slug": "right", "label": "Right side"},
-    {"slug": "above-tilted", "label": "From above, tilted"},
-    {"slug": "above", "label": "From above"},
+    {"slug": "three-quarter-rear", "label": "Three-quarter"},
 ]
 
 

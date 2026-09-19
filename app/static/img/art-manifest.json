@@ -20,12 +20,32 @@
       {
         "file": "kit_parts-520.webp",
         "width": 520,
-        "height": 545
+        "height": 544
       },
       {
         "file": "kit_parts-900.webp",
         "width": 900,
-        "height": 943
+        "height": 942
+      },
+      {
+        "file": "kit_parts-1340.webp",
+        "width": 1340,
+        "height": 1403
+      }
+    ]
+  },
+  "stemsters_logo.png": {
+    "source": "stemsters_logo.png",
+    "sizes": [
+      {
+        "file": "stemsters_logo-320.webp",
+        "width": 320,
+        "height": 61
+      },
+      {
+        "file": "stemsters_logo-640.webp",
+        "width": 640,
+        "height": 121
       }
     ]
   }
