@@ -18,6 +18,7 @@ ROUTE_INDEX = [
     {"owner": "Shivani", "label": "Inspection history (team 102)", "path": "/checkin/history/102"},
 
     {"owner": "Shaurya", "label": "Full qualification schedule", "path": "/schedule/"},
+    {"owner": "Shaurya", "label": "Schedule generator admin", "path": "/schedule/admin"},
     {"owner": "Shaurya", "label": "Schedule by arena", "path": "/schedule/arena/Arena_1"},
     {"owner": "Shaurya", "label": "Schedule by team (team 101)", "path": "/schedule/team/101"},
 

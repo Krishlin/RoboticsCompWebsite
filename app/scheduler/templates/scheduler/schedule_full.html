@@ -4,6 +4,17 @@
 {% block content %}
     <h1 class="page-title">Qualification Schedule</h1>
 
+    {% if not matches %}
+        <div class="admin-section" style="margin-bottom: 1rem;">
+            <p><strong>No qualification matches yet.</strong></p>
+            <p>1) Register teams first, then 2) generate the schedule from Scheduler Admin.</p>
+            <p>
+                <a class="btn btn-primary" href="/schedule/admin">Open Scheduler Admin</a>
+                <a class="btn btn-secondary" href="/register/">Open Registration</a>
+            </p>
+        </div>
+    {% endif %}
+
     <table class="data-table">
         <thead>
             <tr>

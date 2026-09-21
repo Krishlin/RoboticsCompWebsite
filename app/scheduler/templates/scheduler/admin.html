@@ -1,0 +1,237 @@
+{# owner: Shaurya — admin schedule generation #}
+{% extends "base.html" %}
+{% block title %}Schedule Admin{% endblock %}
+{% block content %}
+    <h1 class="page-title">Schedule Generation Admin</h1>
+
+    <div class="admin-section">
+        <h2>Generate Schedule</h2>
+        <p>Generate a new qualification schedule.</p>
+        
+        <div style="margin-bottom: 1rem;">
+            <label for="algorithm-select">Algorithm:</label>
+            <select id="algorithm-select" style="padding: 0.5rem; margin-left: 0.5rem;">
+                <option value="random">Week 2: Random (Baseline - No Constraints)</option>
+                <option value="balanced">Week 3: Balanced (Equal Matches + Red/Blue Balance)</option>
+                <option value="advanced" selected>Weeks 4-5: Advanced (No Back-to-Back + Min Repeat Pairs)</option>
+            </select>
+        </div>
+        
+        <button id="generate-btn" class="btn btn-primary">Generate Schedule</button>
+        <button id="validate-btn" class="btn btn-secondary">Validate Current</button>
+        
+        <div id="status-message" class="status-message" style="display: none;"></div>
+        <div id="violations-message" class="violations-message" style="display: none;"></div>
+    </div>
+
+    <div class="admin-section" id="schedule-preview" style="display: none;">
+        <h2>Schedule Preview</h2>
+        <p>Generated matches: <span id="match-count">0</span></p>
+        
+        <h3>Full Schedule</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Match #</th>
+                    <th>Division</th>
+                    <th>Arena</th>
+                    <th>Time</th>
+                    <th>Red Team</th>
+                    <th>Blue Team</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-table">
+            </tbody>
+        </table>
+        
+        <h3>Printable Views</h3>
+        <ul>
+            <li><a href="{{ url_for('scheduler.schedule_full') }}" target="_blank">Full Schedule</a></li>
+            <li id="arena-links"></li>
+        </ul>
+    </div>
+
+    <style>
+        .admin-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .status-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .violations-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+    </style>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', async function() {
+            const statusEl = document.getElementById('status-message');
+            const violationsEl = document.getElementById('violations-message');
+            const algorithmSelect = document.getElementById('algorithm-select');
+            const algorithm = algorithmSelect.value;
+            
+            statusEl.textContent = 'Generating schedule...';
+            statusEl.className = 'status-message';
+            statusEl.style.display = 'block';
+            violationsEl.style.display = 'none';
+            
+            try {
+                const response = await fetch('{{ url_for("scheduler.api_generate_schedule") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        use_advanced: algorithm === 'advanced',
+                        use_balanced: algorithm === 'balanced',
+                        use_random: algorithm === 'random',
+                        matches_per_team: 5,
+                        clear_existing: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusEl.textContent = `✓ Schedule generated! ${data.matches_generated} matches created across arenas: ${data.arenas.join(', ')}`;
+                    statusEl.className = 'status-message success';
+                    
+                    // Show preview
+                    document.getElementById('schedule-preview').style.display = 'block';
+                    document.getElementById('match-count').textContent = data.matches_generated;
+                    
+                    // Build arena links
+                    const arenaLinks = document.getElementById('arena-links');
+                    arenaLinks.innerHTML = data.arenas.map(arena => {
+                        const arenaUrl = '/schedule/arena/' + arena.replace(' ', '_');
+                        return `<li><a href="${arenaUrl}" target="_blank">Schedule - ${arena}</a></li>`;
+                    }).join('');
+                    
+                    // Reload schedule preview
+                    await loadSchedulePreview();
+                } else {
+                    statusEl.textContent = `✗ Error: ${data.error}`;
+                    statusEl.className = 'status-message error';
+                    if (data.violations) {
+                        violationsEl.textContent = formatViolations(data.violations);
+                        violationsEl.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                statusEl.textContent = `✗ Error: ${error.message}`;
+                statusEl.className = 'status-message error';
+            }
+        });
+        
+        document.getElementById('validate-btn').addEventListener('click', async function() {
+            const statusEl = document.getElementById('status-message');
+            const violationsEl = document.getElementById('violations-message');
+            
+            statusEl.textContent = 'Validating schedule...';
+            statusEl.className = 'status-message';
+            statusEl.style.display = 'block';
+            violationsEl.style.display = 'none';
+            
+            try {
+                const response = await fetch('{{ url_for("scheduler.api_validate_current_schedule") }}', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.valid) {
+                    statusEl.textContent = '✓ Schedule is valid!';
+                    statusEl.className = 'status-message success';
+                } else {
+                    statusEl.textContent = '✗ Schedule has violations';
+                    statusEl.className = 'status-message error';
+                    violationsEl.textContent = data.details;
+                    violationsEl.style.display = 'block';
+                }
+            } catch (error) {
+                statusEl.textContent = `✗ Error: ${error.message}`;
+                statusEl.className = 'status-message error';
+            }
+        });
+        
+        function formatViolations(violations) {
+            let result = '';
+            for (const [rule, issues] of Object.entries(violations)) {
+                result += `\n${rule}:\n`;
+                issues.slice(0, 5).forEach(issue => {
+                    result += `  - ${issue}\n`;
+                });
+                if (issues.length > 5) {
+                    result += `  ... and ${issues.length - 5} more\n`;
+                }
+            }
+            return result;
+        }
+        
+        async function loadSchedulePreview() {
+            try {
+                const response = await fetch('{{ url_for("scheduler.schedule_full") }}');
+                // In production, we'd parse the table and display it
+                // For now, just show a link to view full schedule
+                console.log('Schedule preview loaded');
+            } catch (error) {
+                console.error('Error loading preview:', error);
+            }
+        }
+    </script>
+{% endblock %}
