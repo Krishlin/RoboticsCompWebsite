@@ -1,23 +1,15 @@
-# Tooling config. The app itself is not packaged; this file exists so ruff and
-# pytest behave the same for everyone instead of depending on each person's
-# editor settings.
+# Tooling config for ruff. This lives here rather than in pyproject.toml
+# because Vercel's Python builder treats the presence of a root
+# pyproject.toml as "this is a uv-managed project" and runs `uv lock`
+# against it. Our pyproject.toml only ever held [tool.*] config, so uv found
+# no [project] table and failed the build before installing anything from
+# requirements.txt. Keeping ruff and pytest config in their own files keeps
+# the deploy on the pip path.
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-# So `from tests.conftest import staff_auth` resolves when pytest is run from
-# the project root.
-pythonpath = ["."]
-filterwarnings = [
-    # SQLAlchemy calls datetime.utcnow() internally on 3.13. Our own use is
-    # fixed (app/models.py:utcnow) and this stops that being drowned out.
-    "ignore:datetime.datetime.utcnow:DeprecationWarning",
-]
-
-[tool.ruff]
 line-length = 100
 exclude = ["venv", "migrations", "__pycache__"]
 
-[tool.ruff.lint]
+[lint]
 # E402 is enabled deliberately: several modules import after sys.path setup or
 # after a blueprint is defined, and each carries a `# noqa: E402` explaining
 # why. Enabling the rule is what makes those comments mean something.
