@@ -53,7 +53,7 @@ def render(pdf_path: Path, out_dir: Path, target_width: int) -> dict:
     try:
         pages = []
         for index, page in enumerate(pdf, start=1):
-            width, height = page.get_size()
+            width, _height = page.get_size()
             image = page.render(scale=target_width / width).to_pil()
             name = f"page-{index}.webp"
             image.save(out_dir / name, "WEBP", quality=88, method=6)

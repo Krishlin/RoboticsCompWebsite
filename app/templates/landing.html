@@ -72,7 +72,7 @@
        on a 360 px screen. Both are hidden from assistive tech and the link
        carries the full name itself, so collapsing the visible one never
        leaves the link unnamed. #}
-    <a class="btn btn-primary nav-cta" href="{{ url_for('registration.signup') }}"
+    <a class="btn btn-primary nav-cta" href="{{ config.REGISTRATION_FORM_URL }}"
        aria-label="Register a team">
         <span class="nav-cta-long" aria-hidden="true">Register a team</span>
         <span class="nav-cta-short" aria-hidden="true">Register</span>
@@ -103,7 +103,7 @@
                     for middle and high school teams in Southern California.
                 </p>
                 <div class="btn-row">
-                    <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
+                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Read the game manual</a>
                 </div>
             </div>
@@ -154,6 +154,30 @@
         </div>
     </section>
 
+    <!-- The teaser. First thing after the hero, and the only moving picture
+         on the page. preload="none" is the whole trick: the poster is 32 KB
+         and the video is 5.4 MB, so a visitor on a phone pays for the still
+         and nothing else until they ask to watch. Encoded by
+         tools/encode_teaser.py — the .mov it comes from is HEVC, which half
+         the browsers this page is built for cannot play. -->
+    <section class="teaser-band band dark" id="teaser">
+        <figure class="teaser">
+            <video controls playsinline preload="none"
+                   poster="{{ url_for('static', filename='img/summit_teaser_poster.webp') }}"
+                   width="1180" height="642">
+                <source src="{{ url_for('static', filename='video/summit-teaser.mp4') }}"
+                        type="video/mp4">
+                {# Shown only where <video> itself is unsupported, which by now
+                   means a text browser or a very old phone. A link is the one
+                   thing that still works there. #}
+                <p class="note">
+                    <a href="{{ url_for('static', filename='video/summit-teaser.mp4') }}">
+                        Download the Summit teaser (5 MB)</a>.
+                </p>
+            </video>
+        </figure>
+    </section>
+
     <!-- The game -->
     <section class="section band" id="game">
         <div class="section-head">
@@ -166,30 +190,39 @@
             </p>
         </div>
 
+        {# The game as an object rather than a diagram: two legal robots on
+           the Hill, facing each other across the Plateau. The hero's SVG is
+           the rules; this is what a team actually builds toward. #}
+        <figure class="game-photo">
+            {{ art_img(art, 'RobotsOnField.png',
+                       'Two micro:bit robots on the Hill, one on the red half and one on the blue, facing each other across the white Plateau',
+                       '(max-width: 880px) 88vw, min(86vw, 1100px)') }}
+        </figure>
+
         <dl class="facts">
             <div>
-                <dt>10 cm and 500 g</dt>
+                <dt>Constraints</dt>
                 <dd>
                     Robots fit within 10 cm by 10 cm at the start and weigh 500 g or less.
                     No height limit, and after the start signal they may expand without restriction.
                 </dd>
             </div>
             <div>
-                <dt>A micro:bit, and your code</dt>
+                <dt>Controller</dt>
                 <dd>
                     A micro:bit running the team's own code controls the robot. Every other
                     part is the team's choice.
                 </dd>
             </div>
             <div>
-                <dt>Three minutes, by radio</dt>
+                <dt>Match</dt>
                 <dd>
                     Matches last three minutes. The referee's field controller starts and
                     stops both robots at once.
                 </dd>
             </div>
             <div>
-                <dt>Quals, then a bracket</dt>
+                <dt>Tournament</dt>
                 <dd>
                     Every team plays the same number of qualification matches, then the
                     field seeds into a single-elimination bracket.
@@ -317,9 +350,9 @@
                 <dl>
                     <dt>Registration<span>Per team. Pays for the fields and the awards.</span></dt>
                     <dd>$20</dd>
-                    <dt>Official kit<span>Optional. A complete, competition-legal robot.</span></dt>
+                    <dt>Official kit<span>Optional. A complete, competition-legal robot, and a field to practice on. No micro:bit.</span></dt>
                     <dd>$100</dd>
-                    <dt>micro:bit<span>Optional. Skip it if you already have one.</span></dt>
+                    <dt>micro:bit<span>Optional, and not in the kit. Skip it if you already have one.</span></dt>
                     <dd>$20</dd>
                 </dl>
                 <div class="receipt-total">
@@ -417,38 +450,27 @@
         <dl class="schedule">
             <div>
                 <dt>8:00 AM</dt>
-                <dd>Volunteers arrive and set up. The gym is closed to teams until setup is done.</dd>
+                <dd>Volunteers arrive and set up.</dd>
             </div>
             <div class="key">
                 <dt>9:00 AM</dt>
-                <dd>
-                    <b>Check-in and inspection open.</b> Both Hills are open for sensor calibration
-                    on the real fields under the real lights. Retry inspection as many times as you need.
-                </dd>
+                <dd><b>Check-in and inspection open.</b></dd>
             </div>
             <div>
                 <dt>9:50 AM</dt>
-                <dd>Team meeting at the field. Ten minutes: the schedule, the Climb together rule, and questions.</dd>
+                <dd>Team meeting at the field.</dd>
             </div>
             <div class="key">
                 <dt>10:00 AM</dt>
-                <dd>
-                    <b>Qualification matches begin.</b> Every team plays the same number of matches against
-                    random opponents; the number is set by the team count and posted with the schedule.
-                    Excellence judges visit team tables during this block.
-                </dd>
-            </div>
-            <div>
-                <dt>11:30 AM</dt>
-                <dd>Inspection and calibration close. A robot that has not passed inspection forfeits matches until it does.</dd>
+                <dd><b>Qualification matches begin.</b></dd>
             </div>
             <div>
                 <dt>11:45 AM</dt>
-                <dd>Lunch. The bracket is posted at 12:00.</dd>
+                <dd>Lunch.</dd>
             </div>
             <div>
                 <dt>12:30 PM</dt>
-                <dd>Bracket begins. Single elimination, seeded from qualification. Every pairing is first to two wins.</dd>
+                <dd>Bracket begins.</dd>
             </div>
             <div class="key">
                 <dt>2:15 PM</dt>
@@ -456,7 +478,7 @@
             </div>
             <div>
                 <dt>2:30 PM</dt>
-                <dd>Teardown. Teams clear their tables. Out of the gym by 3:00 PM.</dd>
+                <dd>Teardown.</dd>
             </div>
         </dl>
 
@@ -496,38 +518,7 @@
                     to the next-best middle school team.
                 </dd>
             </div>
-            <div>
-                <dt>Excellence</dt>
-                <dd>
-                    One at each level, for the team that best explains how it designed, tested, and
-                    improved its robot, and how it helped other teams. Judged by a short interview at
-                    your table. Nothing to write or submit.
-                </dd>
-            </div>
-            <div>
-                <dt>Sportsmanship</dt>
-                <dd>For the team that best lives the Climb together rule all day.</dd>
-            </div>
         </dl>
-
-        <div class="duo" style="margin-top:clamp(2.5rem,5vw,4rem)">
-            <div>
-                <h3>The exhibition field</h3>
-                <p class="note">
-                    A second Hill runs king-of-the-hill all afternoon: the winner stays on and takes
-                    the next challenger. Open to any robot that has passed inspection, including teams
-                    knocked out of the bracket. Results don't count for anything. Bring a grudge.
-                </p>
-            </div>
-            <div>
-                <h3>Who goes where</h3>
-                <p class="note">
-                    <b>Team area:</b> rostered students and your adult only.
-                    <b>Spectator area:</b> everyone else, and everyone is welcome.
-                    <b>Field:</b> the two handlers and the referees.
-                </p>
-            </div>
-        </div>
     </section>
 
     <!-- Register -->
@@ -568,7 +559,7 @@
                     are printed from the same filament as the competition fields.
                 </p>
                 <div class="btn-row">
-                    <a class="btn btn-primary" href="{{ url_for('registration.signup') }}">Register a team</a>
+                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Game manual</a>
                 </div>
             </div>
@@ -610,7 +601,7 @@
         <div>
             <ul>
                 <li><a href="{{ url_for('main.manual') }}">Game manual</a></li>
-                <li><a href="{{ url_for('registration.signup') }}">Register a team</a></li>
+                <li><a href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a></li>
                 <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
                 <li><a href="#cost">The kit</a></li>
             </ul>

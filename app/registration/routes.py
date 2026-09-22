@@ -19,6 +19,7 @@ from app.mail import send_email
 from app.registration import registration_bp
 from app.db import db
 from app.models import Team
+from app.security import staff_required
 from sqlalchemy.exc import IntegrityError
 
 # Deliberately loose: this catches typos like a missing "@" or a trailing
@@ -200,7 +201,14 @@ def signup():
                 # Flashed either way, so the confirmation page can tell the
                 # truth about whether an email actually went out — and so a
                 # later visit to that URL claims nothing about email at all.
-                if _send_confirmation_email(new_team):
+                # Two different questions: did Resend accept the message, and
+                # can it actually reach this person. The shared sender answers
+                # yes to the first and no to the second, so promising an email
+                # needs both — otherwise we tell a coach to watch an inbox
+                # nothing was ever going to arrive in.
+                accepted = _send_confirmation_email(new_team)
+                deliverable = not current_app.config["MAIL_SENDER_IS_SHARED"]
+                if accepted and deliverable:
                     flash(f"A confirmation email is on its way to {new_team.adult_email}.")
                 else:
                     flash(
@@ -239,27 +247,41 @@ def confirmation(team_number):
 
 
 @registration_bp.route("/teams")
+@staff_required
 def team_list():
-    """Full team list, used as the check-in reference."""
+    """Full team list, used as the check-in reference.
+
+    Staff only: this page carries every student's name and the school they
+    attend, which is not something to publish to anyone holding the URL.
+    """
     teams = Team.query.order_by(Team.team_number).all()
     return render_template("registration/team_list.html", teams=teams)
 
 
 @registration_bp.route("/teams.csv")
+@staff_required
 def team_list_csv():
-    """The team list as a CSV download, for check-in desks working off paper."""
+    """The team list as a CSV download, for check-in desks working off paper.
+
+    Staff only, and the stricter of the two: this adds the adult of record's
+    name, email address and phone number to the student names above.
+    """
     teams = Team.query.order_by(Team.team_number).all()
 
     # StringIO rather than writing a file: the response is built in memory and
     # streamed straight back, so there is no temp file to clean up.
     buffer = io.StringIO()
     writer = csv.writer(buffer)
+    # team_number leads, because it is the field every other system joins on -
+    # check-in, the schedule, rankings and the bracket all key off it, and a
+    # paper list without it cannot be reconciled with any of them.
     writer.writerow([
-        "name", "division", "affiliation", "students",
+        "team_number", "name", "division", "affiliation", "students",
         "adult_name", "adult_email", "adult_phone", "kit_ordered", "checked_in",
     ])
     for team in teams:
         writer.writerow([
+            team.team_number,
             team.name,
             team.division,
             team.affiliation,

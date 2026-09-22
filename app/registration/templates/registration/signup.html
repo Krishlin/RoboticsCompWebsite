@@ -14,6 +14,7 @@
     {# Every field is re-filled from form_data so a validation error doesn't
        make the registrant retype the whole form. #}
     <form class="card" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="team_name">Team name</label>
             <input type="text" id="team_name" name="team_name" placeholder="e.g. The Sumo Squad" value="{{ form_data.team_name }}">

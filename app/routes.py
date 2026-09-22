@@ -3,9 +3,18 @@
 # at "/". The index moved to /routes so the front door can be the real site.
 
 import json
+import logging
 import os
 
-from flask import Blueprint, current_app, render_template, send_from_directory
+from flask import Blueprint, current_app, jsonify, render_template, send_from_directory
+from sqlalchemy import text
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
+
+from app.db import db
+from app.security import staff_required
+
+logger = logging.getLogger(__name__)
 
 main_bp = Blueprint("main", __name__)
 
@@ -215,8 +224,58 @@ def manual():
     )
 
 
+@main_bp.route("/healthz")
+def healthz():
+    """Is this deployment actually wired up?
+
+    Answers the three questions that a deploy gets wrong silently: can we reach
+    the database, is a Stripe key present, is a Resend key present. Booleans
+    only for the keys, and the database host without its credentials — this is
+    an unauthenticated route and must never become a way to read secrets.
+
+    503 rather than 500 when the database is down, so an uptime check can tell
+    "configured but unreachable" apart from "the app is broken".
+    """
+    try:
+        url = make_url(current_app.config["SQLALCHEMY_DATABASE_URI"])
+        # SQLite has no host, only a path — and the full path is somebody's home
+        # directory, so report just the filename.
+        db_host = url.host or os.path.basename(url.database or "") or "unknown"
+    except (ArgumentError, ValueError):
+        # A URI SQLAlchemy cannot parse is a configuration error, but it must
+        # not take the health check itself down — that is the one route that
+        # has to answer when everything else is wrong.
+        db_host = "unparseable"
+
+    body = {
+        "database_host": db_host,
+        "stripe_key_present": bool(current_app.config.get("STRIPE_SECRET_KEY")),
+        "resend_key_present": bool(current_app.config.get("RESEND_API_KEY")),
+        "mail_sender_is_shared": bool(current_app.config.get("MAIL_SENDER_IS_SHARED")),
+    }
+
+    try:
+        db.session.execute(text("SELECT 1"))
+    except Exception as exc:
+        # Deliberately broad: anything at all that stops a trivial query is a
+        # failed health check, and the caller wants the class of failure rather
+        # than a traceback. The full exception goes to the log, not the body.
+        logger.exception("healthz: database unreachable")
+        body["database"] = "unreachable"
+        body["error"] = type(exc).__name__
+        return jsonify(body), 503
+
+    body["database"] = "ok"
+    return jsonify(body), 200
+
+
 @main_bp.route("/routes")
+@staff_required
 def route_index():
     # The build-status index. Lists every page in the app and who owns it,
     # including the ones that 404 while REGISTRATION_ONLY is on.
+    #
+    # Staff only. Published, this is a directory of every endpoint in the app
+    # - including the unfinished ones - annotated with the first name of the
+    # student who owns each. Neither half belongs on the public internet.
     return render_template("home.html", routes=ROUTE_INDEX)

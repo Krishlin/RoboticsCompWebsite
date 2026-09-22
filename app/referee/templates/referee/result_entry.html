@@ -28,6 +28,7 @@
             </div>
         {% else %}
             <form class="card" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
 
                 {# Filled in by the match timer. See TODO(Serena) in routes.py. #}

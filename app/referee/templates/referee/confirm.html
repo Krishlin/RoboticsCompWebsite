@@ -36,6 +36,7 @@
                 </p>
 
                 <form method="POST" action="{{ url_for('referee.submit_result', match_id=match.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="outcome" value="{{ values.outcome }}">
                     <input type="hidden" name="red_final_zone" value="{{ values.red_final_zone }}">
                     <input type="hidden" name="blue_final_zone" value="{{ values.blue_final_zone }}">

@@ -41,6 +41,10 @@ ART = {
     # The footer shows this at 180 CSS px, so 320 is the 1x file and 640
     # covers a 2x screen with room to spare. It is 10 KB and 23 KB.
     "stemsters_logo.png": [320, 640],
+    # The studio photograph under the game section, shown at up to 1100 CSS
+    # px. 700 is the 1x phone file; 1448 is the source width, which is all a
+    # 2x desktop can ask for before it starts upscaling.
+    "RobotsOnField.png": [700, 1100, 1448],
 }
 
 QUALITY = 84
@@ -51,7 +55,7 @@ QUALITY = 84
 # the same layout read a quarter smaller than the render it replaced. Cropped
 # back to the artwork here rather than in the source file, so the original
 # stays the original.
-TRIM = {"kit_parts.png"}
+TRIM = {"kit_parts.png", "RobotsOnField.png"}
 
 # Margin left around trimmed art, as a fraction of its width. 1.5% is what the
 # kit render carried before its canvas grew, so trimming to it lands the new

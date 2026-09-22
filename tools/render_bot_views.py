@@ -364,7 +364,7 @@ def render(src_dir: Path, out_dir: Path) -> dict:
     out_dir.mkdir(parents=True)
 
     views = []
-    for (rgba, _, _), slug, box in zip(cut, slugs, bounds):
+    for (rgba, _, _), slug, box in zip(cut, slugs, bounds, strict=False):
         content = Image.fromarray(rgba, "RGBA").crop(box)
         full = Image.new("RGBA", canvas, (0, 0, 0, 0))
         full.paste(

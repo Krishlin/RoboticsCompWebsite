@@ -19,3 +19,10 @@ seed_for_testing.py
 # The 20 MB of source CAD renders. tools/render_bot_views.py cuts them down
 # to the WebP in app/static/img/bot, and the deployed app never reads these.
 Stemsters bod renders/
+
+# Source media, same reasoning. The teaser arrives as a 66 MB HEVC .mov that
+# no deployed page links to and half the browsers cannot play;
+# tools/encode_teaser.py writes the 5.4 MB MP4 that actually ships.
+SUMMIT_robotics_teaser.mov
+RobotsOnField.png
+updated game manual.pdf

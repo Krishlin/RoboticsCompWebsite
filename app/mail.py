@@ -31,6 +31,20 @@ def send_email(to: str, subject: str, html: str, timeout: float = 10.0) -> bool:
     A False return means the message did not go out and the caller should tell
     the user so — it does not mean anything else failed.
     """
+    if current_app.config.get("MAIL_SENDER_IS_SHARED"):
+        # Not fatal, and deliberately not a reason to skip the send: the one
+        # address this does reach is the Resend account owner's, which is what
+        # makes it useful for a smoke test. But it is logged at every send,
+        # because the alternative is a deployment that looks healthy while no
+        # registrant receives anything.
+        logger.error(
+            "MAIL_FROM is still Resend's shared sender (%s). Resend will accept "
+            "this message and deliver it only to the Resend account owner - %s "
+            "will not receive it. Verify a domain in Resend and set MAIL_FROM.",
+            current_app.config["MAIL_FROM"],
+            to,
+        )
+
     api_key = current_app.config.get("RESEND_API_KEY")
     if not api_key:
         # Normal on a laptop, where nobody has the key. Logged so that "why
@@ -73,7 +87,7 @@ def send_email(to: str, subject: str, html: str, timeout: float = 10.0) -> bool:
     except (TimeoutError, ValueError) as exc:
         # ValueError covers a 200 whose body isn't the JSON we expect.
         logger.error("Unexpected reply from Resend emailing %s: %s", to, exc)
-    except Exception:  # noqa: BLE001 - see the module docstring
+    except Exception:  # deliberately blind - see the module docstring
         # Wider than usual on purpose: the promise this module makes is that
         # sending mail cannot break the caller, and that promise is worth more
         # than surfacing an unforeseen urllib/ssl error to a registrant who is

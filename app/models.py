@@ -7,9 +7,25 @@
 #
 # All datetimes are stored in UTC.
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.db import db
+
+
+def utcnow():
+    """Naive UTC, the way this file has always stored time.
+
+    datetime.utcnow() is deprecated on 3.12+ and scheduled for removal, but
+    its replacement — datetime.now(timezone.utc) — returns an *aware* value.
+    Handing that to these naive DateTime columns would mix aware and naive
+    datetimes in the same column, and comparing the two raises TypeError, so
+    the failure would surface later and somewhere else.
+
+    Stripping the tzinfo keeps the stored value byte-for-byte what it was
+    while dropping the deprecation. The module docstring's promise — every
+    datetime here is UTC — still holds.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Team(db.Model):
@@ -33,7 +49,7 @@ class Team(db.Model):
     kit_ordered = db.Column(db.Boolean, default=False, nullable=False)
     checked_in = db.Column(db.Boolean, default=False, nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
 
 
 class Inspection(db.Model):
@@ -54,7 +70,7 @@ class Inspection(db.Model):
 
     # A team may have several Inspections (re-inspection is allowed and both
     # attempts are kept). The one with the latest inspected_at is current.
-    inspected_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    inspected_at = db.Column(db.DateTime, default=utcnow, nullable=False)
 
 
 class Match(db.Model):
@@ -95,7 +111,7 @@ class MatchResult(db.Model):
     red_final_zone = db.Column(db.String(50), nullable=False)
     blue_final_zone = db.Column(db.String(50), nullable=False)
 
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     submitted_by = db.Column(db.String(120), nullable=False)  # referee name or arena id
 
     # Rule: a MatchResult is created once, by the referee blueprint. After
@@ -109,10 +125,100 @@ class AuditEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     match_id = db.Column(db.Integer, db.ForeignKey("match.id"), nullable=False)
     changed_by = db.Column(db.String(120), nullable=False)
-    changed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    changed_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     field = db.Column(db.String(50), nullable=False)
     old_value = db.Column(db.String(200), nullable=True)
     new_value = db.Column(db.String(200), nullable=True)
+
+
+class Order(db.Model):
+    """One trip through Stripe Checkout.
+
+    Deliberately not hung off Team: an order may be placed before a team
+    exists, may never be tied to one (a coach buying a spare micro:bit), and a
+    team may place several over the season. Money and registration are
+    separate records that reference each other, not one record wearing two
+    hats.
+    """
+
+    __tablename__ = "order"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # What goes in URLs and what a coach reads down the phone. Random, not
+    # sequential: /store/success?order=4 invites walking the integers, and the
+    # page names what somebody bought and where it ships.
+    public_id = db.Column(db.String(32), unique=True, nullable=False, index=True)
+
+    team_id = db.Column(db.Integer, db.ForeignKey("team.id"), nullable=True)
+    email = db.Column(db.String(200), nullable=False)
+
+    # pending -> paid -> fulfilled, or -> cancelled / refunded.
+    # "paid" means a signed webhook said so. Nothing else may set it.
+    status = db.Column(db.String(20), default="pending", nullable=False, index=True)
+
+    # Unique, so a replayed webhook that slips past the StripeEvent guard
+    # still cannot create a second paid order for one checkout session.
+    stripe_checkout_session_id = db.Column(db.String(120), unique=True, nullable=True)
+    stripe_payment_intent_id = db.Column(db.String(120), nullable=True)
+
+    currency = db.Column(db.String(3), default="usd", nullable=False)
+    # What we intended to charge, computed from the catalog before redirecting.
+    amount_expected_cents = db.Column(db.Integer, nullable=False)
+    # What Stripe says it actually took. The two are compared on fulfilment
+    # and a mismatch is logged loudly rather than quietly accepted.
+    amount_total_cents = db.Column(db.Integer, nullable=True)
+
+    school_name = db.Column(db.String(120), nullable=True)
+    ship_name = db.Column(db.String(120), nullable=True)
+    ship_line1 = db.Column(db.String(200), nullable=True)
+    ship_line2 = db.Column(db.String(200), nullable=True)
+    ship_city = db.Column(db.String(120), nullable=True)
+    ship_state = db.Column(db.String(60), nullable=True)
+    ship_postal_code = db.Column(db.String(20), nullable=True)
+    ship_country = db.Column(db.String(2), nullable=True)
+
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    paid_at = db.Column(db.DateTime, nullable=True)
+    fulfilled_at = db.Column(db.DateTime, nullable=True)
+
+    items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan")
+
+
+class OrderItem(db.Model):
+    """One line of an order, with the price frozen at purchase time.
+
+    label and unit_amount_cents are copies, not lookups. When the practice
+    field finally gets a price, or the kit goes up, every order placed before
+    that must still show what its buyer was actually charged.
+    """
+
+    __tablename__ = "order_item"
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+
+    sku = db.Column(db.String(40), nullable=False)
+    label = db.Column(db.String(120), nullable=False)
+    unit_amount_cents = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)
+
+
+class StripeEvent(db.Model):
+    """Every webhook Stripe has delivered, by its event id.
+
+    The unique constraint is the whole idempotency mechanism. Stripe retries
+    on any non-2xx and on timeouts, so the same checkout.session.completed
+    arrives more than once as a matter of course, not as an edge case. The
+    handler inserts here first and treats the IntegrityError as "already done".
+    """
+
+    __tablename__ = "stripe_event"
+
+    id = db.Column(db.Integer, primary_key=True)
+    stripe_event_id = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    type = db.Column(db.String(80), nullable=False)
+    received_at = db.Column(db.DateTime, default=utcnow, nullable=False)
 
 
 class ScheduleState(db.Model):
@@ -121,7 +227,7 @@ class ScheduleState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     is_paused = db.Column(db.Boolean, default=False, nullable=False)
     changed_by = db.Column(db.String(120), nullable=True)  # who paused/resumed the schedule
-    changed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)  # when the state last changed
+    changed_at = db.Column(db.DateTime, default=utcnow, nullable=False)  # when the state last changed
 
     # Use single-row design: always maintain exactly one row with id=1
     # for global schedule state.

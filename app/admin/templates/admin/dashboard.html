@@ -11,14 +11,17 @@
     <div class="btn-row" style="margin-bottom: 1rem;">
         {% if schedule_state.is_paused %}
             <form method="POST" action="{{ url_for('admin.resume_schedule') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-secondary">Resume schedule</button>
             </form>
         {% else %}
             <form method="POST" action="{{ url_for('admin.pause_schedule') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-secondary">Pause schedule</button>
             </form>
         {% endif %}
         <form method="POST" action="{{ url_for('admin.insert_replay_match') }}" style="display: inline; margin-left: 0.5rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="original_match_id" style="padding: 0.5rem; margin-right: 0.5rem;">
                 <option value="">-- Select match to replay --</option>
                 {% for row in match_rows if row.replayable %}

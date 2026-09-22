@@ -48,5 +48,25 @@
         "height": 121
       }
     ]
+  },
+  "RobotsOnField.png": {
+    "source": "RobotsOnField.png",
+    "sizes": [
+      {
+        "file": "RobotsOnField-700.webp",
+        "width": 700,
+        "height": 523
+      },
+      {
+        "file": "RobotsOnField-1100.webp",
+        "width": 1100,
+        "height": 822
+      },
+      {
+        "file": "RobotsOnField-1447.webp",
+        "width": 1447,
+        "height": 1081
+      }
+    ]
   }
 }

@@ -6,3 +6,11 @@ python-dotenv==1.0.1
 # local development on the default SQLite file never imports it, but it has
 # to be installed for the deployed app to connect at all.
 psycopg2-binary==2.9.10
+
+# Payments. Stripe Checkout is hosted on Stripe's domain, so no card data ever
+# reaches this app — the SDK only creates sessions and verifies webhooks.
+stripe==15.6.1
+
+# CSRF protection for every POST form. Used for CSRFProtect only; the existing
+# hand-rolled request.form validation stays as it is.
+Flask-WTF==1.2.1

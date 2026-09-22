@@ -1,6 +1,6 @@
 {
   "source": "summit-manual-v1.0.pdf",
-  "count": 9,
+  "count": 8,
   "pages": [
     {
       "page": 1,
@@ -47,12 +47,6 @@
     {
       "page": 8,
       "file": "page-8.webp",
-      "width": 440,
-      "height": 570
-    },
-    {
-      "page": 9,
-      "file": "page-9.webp",
       "width": 440,
       "height": 570
     }

@@ -5,13 +5,13 @@
 import csv
 import io
 import math
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from flask import render_template, request, redirect, url_for, abort, Response
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.db import db
-from app.models import AuditEntry, Match, MatchResult, ScheduleState
+from app.models import utcnow, AuditEntry, Match, MatchResult, ScheduleState
 from app.admin import admin_bp
 
 # How far after the end of a division's schedule a replay is slotted. The
@@ -222,7 +222,7 @@ def pause_schedule():
     state = _get_or_create_schedule_state()
     state.is_paused = True
     state.changed_by = _current_admin_name()
-    state.changed_at = datetime.utcnow()
+    state.changed_at = utcnow()
     db.session.commit()
     return redirect(url_for("admin.dashboard"))
 
@@ -233,7 +233,7 @@ def resume_schedule():
     state = _get_or_create_schedule_state()
     state.is_paused = False
     state.changed_by = _current_admin_name()
-    state.changed_at = datetime.utcnow()
+    state.changed_at = utcnow()
     db.session.commit()
     return redirect(url_for("admin.dashboard"))
 
@@ -251,7 +251,7 @@ def _next_replay_time(original_match):
         .filter(Match.division == original_match.division)
         .scalar()
     )
-    anchor = last_time or original_match.scheduled_time or datetime.utcnow()
+    anchor = last_time or original_match.scheduled_time or utcnow()
     return anchor + timedelta(minutes=REPLAY_GAP_MINUTES)
 
 

@@ -1,0 +1,26 @@
+{% extends "store/_base.html" %}
+{% block content %}
+<section class="band section">
+    {# Says what the record shows, never "you have paid". The webhook that
+       confirms payment may not have landed yet, and this page is reachable
+       by typing the URL. #}
+    <h1 class="display">Thanks — we've got your order</h1>
+    {% if order %}
+        <p class="lede">Your order reference is <strong>{{ order.public_id }}</strong>. Keep it for any questions.</p>
+        <div class="receipt">
+            <dl>
+            {% for item in order.items %}
+                <dt>{{ item.label }}{% if item.quantity > 1 %} × {{ item.quantity }}{% endif %}</dt>
+                <dd>${{ "%.2f"|format(item.unit_amount_cents * item.quantity / 100) }}</dd>
+            {% endfor %}
+            </dl>
+            <div class="receipt-total">
+                <span>Total</span>
+                <span>${{ "%.2f"|format(order.amount_expected_cents / 100) }}</span>
+            </div>
+        </div>
+    {% endif %}
+    <p class="note">A receipt is on its way by email. If anything looks wrong, reply to it and we'll sort it out.</p>
+    <a class="btn btn-dark" href="/">Back to the site</a>
+</section>
+{% endblock %}

@@ -506,6 +506,45 @@ a {
     max-width: 62ch;
 }
 
+/* --- The teaser ---------------------------------------------------------
+
+   Runs straight on from the hero rather than opening a band of its own: both
+   are dark, and a rule between them would cut the page in two before it has
+   said anything. Less top padding than a .section for the same reason. */
+
+.teaser-band {
+    padding-block: 0 clamp(3.5rem, 8vw, 6rem);
+}
+
+.teaser {
+    margin: 0;
+}
+
+/* The video carries its own 1180x642 in the markup, so the box is the right
+   shape before the poster arrives and the page below it does not jump. */
+.teaser video {
+    display: block;
+    width: 100%;
+    max-width: 1100px;
+    height: auto;
+    margin: 0 auto;
+    background: #000;
+    border: var(--rule-dark);
+}
+
+/* The one photograph on the page. Capped rather than full-bleed: the art
+   is cut out on transparency, so past about 1100px it stops reading as a
+   field on a table and starts reading as two robots floating on the band. */
+.game-photo {
+    margin: 0 0 clamp(2.5rem, 5vw, 3.5rem);
+    text-align: center;
+}
+
+.game-photo img {
+    width: 100%;
+    max-width: 1100px;
+}
+
 /* Rules of the match: a plain measured list. No cards, no icons — the
    four facts are short enough that anything around them is packaging. */
 .facts {

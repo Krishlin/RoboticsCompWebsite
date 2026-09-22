@@ -1,0 +1,21 @@
+{# owner: shared / lead — chrome for the store pages.
+   Uses landing.css, not style.css: the store is part of the public site a
+   coach walks through, so it wears the same clothes as the landing page and
+   the registration confirmation, not the tournament tools. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Store — Summit{% endblock %}</title>
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+</head>
+<body>
+<nav class="nav band" aria-label="Main">
+    <a class="nav-logo" href="/" aria-label="Summit, home">Summit</a>
+    <a class="btn btn-ghost nav-back" href="/">Back to the site</a>
+</nav>
+<main>{% block content %}{% endblock %}</main>
+</body>
+</html>

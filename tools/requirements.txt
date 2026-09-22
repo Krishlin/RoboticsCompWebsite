@@ -11,3 +11,8 @@ pillow==12.3.0
 # (tools/render_bot_views.py) is the only thing that needs these.
 numpy==2.4.5
 scipy==1.17.1
+
+# A static ffmpeg build, for tools/encode_teaser.py. The wheel carries the
+# binary, so re-encoding the teaser needs no system install and nothing on
+# PATH.
+imageio-ffmpeg==0.6.0
