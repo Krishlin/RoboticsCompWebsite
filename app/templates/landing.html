@@ -61,11 +61,11 @@
     </a>
 
     <ul class="nav-links" id="nav-links">
-        <li><a href="#game">The game</a></li>
-        <li><a href="#hill">The Hill</a></li>
+        <li><a href="#game">Game</a></li>
+        <li><a href="#hill">Field</a></li>
         <li><a href="#manual">Rules</a></li>
-        <li><a href="#cost">Cost</a></li>
-        <li><a href="#event">October 24</a></li>
+        <li><a href="#cost">Kit &amp; cost</a></li>
+        <li><a href="#event">Event</a></li>
     </ul>
 
     {# Two labels, because "Register a team" will not sit beside a menu button
@@ -105,6 +105,7 @@
                 <div class="btn-row">
                     <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Read the game manual</a>
+                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}">Interested?</a>
                 </div>
             </div>
 
@@ -348,16 +349,14 @@
         <div class="cost">
             <div class="receipt">
                 <dl>
-                    <dt>Registration<span>Per team. Pays for the fields and the awards.</span></dt>
-                    <dd>$20</dd>
-                    <dt>Official kit<span>Optional. A complete, competition-legal robot, and a field to practice on. No micro:bit.</span></dt>
+                    <dt>Kit bot + practice field<span>Optional. A complete, competition-legal robot and a practice field. Does not include a micro:bit.</span></dt>
                     <dd>$100</dd>
-                    <dt>micro:bit<span>Optional, and not in the kit. Skip it if you already have one.</span></dt>
+                    <dt>micro:bit<span>Optional, sold separately from the kit. Skip it if you already have one.</span></dt>
                     <dd>$20</dd>
                 </dl>
                 <div class="receipt-total">
                     <span>Everything</span>
-                    <span>$140</span>
+                    <span>$120</span>
                 </div>
             </div>
 
@@ -555,12 +554,13 @@
                     team number by email as soon as you register.
                 </p>
                 <p>
-                    Order the kit, a micro:bit, or a practice field on the same form. Practice fields
-                    are printed from the same filament as the competition fields.
+                    Order the kit bot + practice field ($100) or a micro:bit ($20) on the same form.
+                    Practice fields are printed from the same filament as the competition fields.
                 </p>
                 <div class="btn-row">
                     <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Game manual</a>
+                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}">Interest form</a>
                 </div>
             </div>
         </div>
@@ -602,6 +602,7 @@
             <ul>
                 <li><a href="{{ url_for('main.manual') }}">Game manual</a></li>
                 <li><a href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a></li>
+                <li><a href="{{ config.INTEREST_FORM_URL }}">Interest form</a></li>
                 <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
                 <li><a href="#cost">The kit</a></li>
             </ul>

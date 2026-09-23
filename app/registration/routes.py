@@ -12,11 +12,11 @@ from flask import (
     flash,
     Response,
 )
-from markupsafe import escape
 
 from app.fake_data import DIVISION
 from app.mail import send_email
 from app.registration import registration_bp
+from app.routes import SITE_LINKS
 from app.db import db
 from app.models import Team
 from app.security import staff_required
@@ -34,38 +34,21 @@ FIRST_TEAM_NUMBER = 100
 
 
 def _send_confirmation_email(team):
-    """Best-effort confirmation email. The team is saved either way.
-
-    Everything interpolated below is escaped: team and student names come
-    straight from a public form, and this is HTML going into someone's inbox.
-    """
-    students = ", ".join(team.students.splitlines())
-    # config, not a literal: the same URL is on the confirmation page, and one
-    # of the two going stale when the form changes is worse than neither.
-    payment_url = current_app.config["PAYMENT_FORM_URL"]
-    html = (
-        f"<p>Hi {escape(team.adult_name)},</p>"
-        f"<p><strong>{escape(team.name)}</strong> is registered for Summit on "
-        f"October 24, 2026.</p>"
-        f"<p>Your team number is <strong>{team.team_number}</strong>. Enter it in the "
-        f"starter code so the field controller can start and stop your robot, and "
-        f"give it at check-in.</p>"
-        f"<ul>"
-        f"<li>Team number: {team.team_number}</li>"
-        f"<li>School: {escape(team.affiliation)}</li>"
-        f"<li>Students: {escape(students)}</li>"
-        f"</ul>"
-        f"<p><strong>One step left:</strong> registration is complete once the $20 team "
-        f'fee is paid. <a href="{escape(payment_url)}">Pay here</a> — the form asks for '
-        f"your team number, which is {team.team_number}.</p>"
-        f"<p>Climb together.</p>"
+    """Best-effort confirmation email. The team is saved either way."""
+    # PUBLIC_BASE_URL, not the request host: on Vercel the request host can be
+    # a per-deployment preview URL, which is no address to mail to a coach.
+    base = current_app.config["PUBLIC_BASE_URL"].rstrip("/")
+    html = render_template(
+        "registration/email_confirmation.html",
+        team=team,
+        manual_url=base + url_for("main.manual"),
+        kit_url=base + url_for("main.home") + "#cost",
+        field_files_url=SITE_LINKS["print_files"],
+        consent_form_url=SITE_LINKS["consent_form"],
     )
-    # Collapse whitespace: a newline pasted into the team name would otherwise
-    # end up inside a header value.
-    subject_name = " ".join(team.name.split())
     return send_email(
         to=team.adult_email,
-        subject=f"You are registered - {subject_name}",
+        subject="Welcome to SRC Summit 2026!",
         html=html,
     )
 

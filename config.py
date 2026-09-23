@@ -148,7 +148,14 @@ class Config:
     # because the landing page links to it from four places, and three of them
     # being updated when the form changes is worse than none.
     REGISTRATION_FORM_URL = os.environ.get(
-        "REGISTRATION_FORM_URL", "https://form.jotform.com/262640224063044"
+        "REGISTRATION_FORM_URL", "https://pci.jotform.com/form/262558199273066?utm_id=97760_v0_s00_e0_tv4"
+    )
+
+    # Google Form for people interested in competing — not a team
+    # registration, so it's kept separate from REGISTRATION_FORM_URL.
+    INTEREST_FORM_URL = os.environ.get(
+        "INTEREST_FORM_URL",
+        "https://docs.google.com/forms/d/e/1FAIpQLSf3rqziN51fZmo9F91nlbyWPIH1NjurJJY3YT0fbwdohZfJjw/viewform?usp=send_form",
     )
 
     # Where a team pays the $20 registration fee. Registration saves the team

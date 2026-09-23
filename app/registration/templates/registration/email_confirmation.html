@@ -1,0 +1,30 @@
+{# The confirmation email, worded exactly as SRC supplied it. Rendered with
+   autoescape on, because the team name comes straight from a public form.
+   A link SRC hasn't given us yet (None in SITE_LINKS) renders as plain text
+   rather than an <a> that goes nowhere. #}
+{% macro link(url) -%}
+    {% if url %}<a href="{{ url }}">{{ url }}</a>{% else %}coming soon — we'll email it to you{% endif %}
+{%- endmacro %}
+<p>Hi {{ team.name }},</p>
+<p>Thank you for registering for the inaugural STEMsters Robotics Competition: Summit! We’re excited to have you competing on October 24 at Arcadia High School.</p>
+<p>Your team number is <strong>{{ team.team_number }}</strong>.</p>
+
+<h3>Start here</h3>
+<p>Your first step is to review the game and start planning your robot:</p>
+<p>Game Manual: {{ link(manual_url) }}</p>
+
+<h3>Build your robot</h3>
+<p>You can approach Summit in two ways:</p>
+<p><strong>Build from scratch:</strong> Summit is intentionally open-ended. Outside of the required BBC micro:bit and the rules in the Game Manual, you have a lot of freedom in your motors, sensors, materials, and mechanisms.</p>
+<p><strong>Use the official kit:</strong> The optional Summit kit gives you a competition-ready starting point that you can compete with as-is or modify.</p>
+<p>Official Kit: {{ link(kit_url) }}<br>
+Practice Field / Field Files: {{ link(field_files_url) }}</p>
+<p>Please note that the BBC micro:bit is required and sold separately from the official kit.</p>
+
+<h3>Before competition day</h3>
+<p>Each student will also need a completed consent and release form:</p>
+<p>Consent / Release Form: {{ link(consent_form_url) }}</p>
+<p>We’ll send more updates as October 24 gets closer, including inspection and event-day information.</p>
+<p>If you have any questions, just reply to this email.</p>
+<p>We’re excited to see what your team builds.</p>
+<p>Best,<br>STEMsters Robotics Competition Team</p>
