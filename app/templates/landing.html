@@ -73,7 +73,7 @@
        carries the full name itself, so collapsing the visible one never
        leaves the link unnamed. #}
     <a class="btn btn-primary nav-cta" href="{{ config.REGISTRATION_FORM_URL }}"
-       aria-label="Register a team">
+       target="_blank" rel="noopener" aria-label="Register a team">
         <span class="nav-cta-long" aria-hidden="true">Register a team</span>
         <span class="nav-cta-short" aria-hidden="true">Register</span>
     </a>
@@ -103,9 +103,9 @@
                     for middle and high school teams in Southern California.
                 </p>
                 <div class="btn-row">
-                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a>
-                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Read the game manual</a>
-                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}">Interested?</a>
+                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the game manual</a>
+                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interested but not ready to commit? Join the interest list</a>
                 </div>
             </div>
 
@@ -127,13 +127,30 @@
                         <circle cx="210" cy="210" r="50" fill="#f0f0f0" stroke="#141414" stroke-width="1.5"></circle>
 
                         <g id="robot" tabindex="0" role="img" transform="translate(355 240)">
-                            {# 10 cm square, the legal starting footprint — which is
-                               exactly as wide as the Plateau it is trying to hold. #}
-                            <rect x="-50" y="-50" width="100" height="100"
-                                  fill="#1d1d1d" stroke="#5bcfdd" stroke-width="3"></rect>
-                            <circle cx="-18" cy="-30" r="10" fill="#4a4a4a"></circle>
-                            <circle cx="18" cy="-30" r="10" fill="#4a4a4a"></circle>
-                            <circle cx="0" cy="14" r="8" fill="#5bcfdd"></circle>
+                            {# The Summit bot mark, drawn in its own 512-unit art
+                               space and scaled so wheel to wheel is 10 cm, the legal
+                               starting width — exactly as wide as the Plateau it is
+                               trying to hold. #}
+                            <g transform="scale(0.2967) translate(-256 -248)">
+                                <defs>
+                                    <mask id="robot-eye-cut">
+                                        <rect x="140" y="100" width="232" height="280" fill="#fff"></rect>
+                                        <circle cx="210" cy="155" r="41" fill="#000"></circle>
+                                        <circle cx="303" cy="155" r="41" fill="#000"></circle>
+                                    </mask>
+                                </defs>
+                                <ellipse cx="110" cy="266" rx="22" ry="61" fill="#2a2a2e"></ellipse>
+                                <ellipse cx="402" cy="266" rx="22" ry="61" fill="#2a2a2e"></ellipse>
+                                <rect x="155" y="162" width="203" height="206" rx="10"
+                                      fill="#0645ee" mask="url(#robot-eye-cut)"></rect>
+                                <circle cx="210" cy="155" r="24" fill="#fff" stroke="#0645ee" stroke-width="7"></circle>
+                                <circle cx="303" cy="155" r="24" fill="#fff" stroke="#0645ee" stroke-width="7"></circle>
+                                <g fill="#fff">
+                                    {% for row in range(5) %}{% for col in range(5) %}
+                                    <circle cx="{{ 207 + col * 25 }}" cy="{{ 228 + row * 25 }}" r="5.5"></circle>
+                                    {% endfor %}{% endfor %}
+                                </g>
+                            </g>
                         </g>
                     </svg>
                 </div>
@@ -297,20 +314,9 @@
     <section class="section band dark" id="manual">
         <div class="manual-head">
             <div>
-                <h2 class="display">The entire rulebook</h2>
-                <p class="lede">
-                    {% if manual %}
-                        {# The count is glued to "in" and "pages" so the page
-                           count never lands alone on a line of its own. #}
-                        Not a summary. Every rule that governs a Summit match,
-                        in&nbsp;{{ manual.count_word }}&nbsp;pages. Open any page.
-                    {% else %}
-                        Not a summary. Every rule that governs a Summit match, and
-                        short enough to read before the event.
-                    {% endif %}
-                </p>
+                <h2 class="display">Game Manual</h2>
             </div>
-            <a class="btn btn-primary" href="{{ url_for('main.manual') }}">Open the manual</a>
+            <a class="btn btn-primary" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Open the manual</a>
         </div>
 
         {% if manual %}
@@ -330,7 +336,7 @@
             </div>
         {% else %}
             <p class="manual-fallback note">
-                <a href="{{ url_for('main.manual') }}">Open the game manual (PDF)</a>
+                <a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Open the game manual (PDF)</a>
             </p>
         {% endif %}
     </section>
@@ -351,7 +357,7 @@
                 <dl>
                     <dt>Kit bot + practice field<span>Optional. A complete, competition-legal robot and a practice field. Does not include a micro:bit.</span></dt>
                     <dd>$100</dd>
-                    <dt>micro:bit<span>Optional, sold separately from the kit. Skip it if you already have one.</span></dt>
+                    <dt>micro:bit<span>Required for every robot, and sold separately from the kit.</span></dt>
                     <dd>$20</dd>
                 </dl>
                 <div class="receipt-total">
@@ -418,7 +424,7 @@
                     The kit is a Wukong expansion board with a built-in battery, two continuous-rotation
                     motors, an ultrasonic sensor for finding the opponent, a colour sensor for reading the
                     zone, LEGO Technic chassis parts, and the starter code. It is programmed in MakeCode.
-                    You supply a micro:bit, a laptop, and a small screwdriver.
+                    The micro:bit is required and sold separately.
                 </p>
 
                 <figure class="kit-parts">
@@ -537,11 +543,10 @@
                 <p class="note" style="margin-top:1.5rem">
                     {% if links.consent_form %}
                         Every student needs a completed consent and release form.
-                        <a href="{{ links.consent_form }}">Download the form</a> and bring it to
-                        check-in if you haven't submitted it online.
+                        <a href="{{ links.consent_form }}" target="_blank" rel="noopener">Download the form</a>.
                     {% else %}
                         Every student needs a completed consent and release form. The form is linked
-                        in your confirmation email — bring it to check-in if you haven't submitted it online.
+                        in your confirmation email.
                     {% endif %}
                 </p>
             </div>
@@ -549,18 +554,18 @@
             <div class="register-panel">
                 <h3>$20 per team</h3>
                 <p>
-                    Teams are one to four students plus one adult who stays the whole day. A team with
-                    any student in grades 9 through 12 competes as a high school team. You'll get your
-                    team number by email as soon as you register.
+                    Teams are 1–4 students in grades 6–12. You’ll receive your team number by email
+                    after registering.
                 </p>
                 <p>
-                    Order the kit bot + practice field ($100) or a micro:bit ($20) on the same form.
-                    Practice fields are printed from the same filament as the competition fields.
+                    Build from scratch or use the optional $100 Summit kit. A BBC micro:bit is required
+                    and can be purchased separately for $20. Practice fields are also available for
+                    testing and calibration before competition day.
                 </p>
                 <div class="btn-row">
-                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a>
-                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}">Game manual</a>
-                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}">Interest form</a>
+                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a>
+                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interest form</a>
                 </div>
             </div>
         </div>
@@ -600,9 +605,9 @@
         </div>
         <div>
             <ul>
-                <li><a href="{{ url_for('main.manual') }}">Game manual</a></li>
-                <li><a href="{{ config.REGISTRATION_FORM_URL }}">Register a team</a></li>
-                <li><a href="{{ config.INTEREST_FORM_URL }}">Interest form</a></li>
+                <li><a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a></li>
+                <li><a href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a></li>
+                <li><a href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interest form</a></li>
                 <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
                 <li><a href="#cost">The kit</a></li>
             </ul>
@@ -613,7 +618,7 @@
                     <li><a href="mailto:{{ links.email }}">{{ links.email }}</a></li>
                 {% endif %}
                 {% if links.instagram %}
-                    <li><a href="{{ links.instagram }}">Instagram</a></li>
+                    <li><a href="{{ links.instagram }}" target="_blank" rel="noopener">Instagram</a></li>
                 {% endif %}
             </ul>
             <p class="footer-creed">Climb together.</p>

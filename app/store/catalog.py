@@ -39,7 +39,7 @@ CATALOG = {
     },
     "microbit": {
         "label": "micro:bit",
-        "description": "Skip it if you already have one.",
+        "description": "Required for every robot. Not included in the kit.",
         "amount_cents": MICROBIT_CENTS,
         "shippable": True,
         "max_quantity": 4,
