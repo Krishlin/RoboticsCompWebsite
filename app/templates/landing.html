@@ -131,20 +131,22 @@
                                space and scaled so wheel to wheel is 10 cm, the legal
                                starting width — exactly as wide as the Plateau it is
                                trying to hold. #}
-                            <g transform="scale(0.2967) translate(-256 -248)">
-                                <defs>
-                                    <mask id="robot-eye-cut">
-                                        <rect x="140" y="100" width="232" height="280" fill="#fff"></rect>
-                                        <circle cx="210" cy="155" r="41" fill="#000"></circle>
-                                        <circle cx="303" cy="155" r="41" fill="#000"></circle>
-                                    </mask>
-                                </defs>
-                                <ellipse cx="110" cy="266" rx="22" ry="61" fill="#2a2a2e"></ellipse>
-                                <ellipse cx="402" cy="266" rx="22" ry="61" fill="#2a2a2e"></ellipse>
-                                <rect x="155" y="162" width="203" height="206" rx="10"
-                                      fill="#0645ee" mask="url(#robot-eye-cut)"></rect>
-                                <circle cx="210" cy="155" r="24" fill="#fff" stroke="#0645ee" stroke-width="7"></circle>
-                                <circle cx="303" cy="155" r="24" fill="#fff" stroke="#0645ee" stroke-width="7"></circle>
+                            <g transform="scale(0.271) translate(-256 -248)">
+                                {# The white outline goes down first as a thick stroke,
+                                   so the fills drawn over it leave a sticker-style rim
+                                   that reads on every zone colour. #}
+                                <g fill="#fff" stroke="#fff" stroke-width="32" stroke-linejoin="round">
+                                    <ellipse cx="110" cy="266" rx="24" ry="62"></ellipse>
+                                    <ellipse cx="402" cy="266" rx="24" ry="62"></ellipse>
+                                    <rect x="155" y="162" width="203" height="206" rx="14"></rect>
+                                </g>
+                                <ellipse cx="110" cy="266" rx="24" ry="62" fill="#27272c"></ellipse>
+                                <ellipse cx="402" cy="266" rx="24" ry="62" fill="#27272c"></ellipse>
+                                <rect x="155" y="162" width="203" height="206" rx="14" fill="#3651e5"></rect>
+                                <circle cx="210" cy="152" r="44" fill="#fff"></circle>
+                                <circle cx="303" cy="152" r="44" fill="#fff"></circle>
+                                <circle cx="210" cy="152" r="23" fill="#fff" stroke="#3651e5" stroke-width="9"></circle>
+                                <circle cx="303" cy="152" r="23" fill="#fff" stroke="#3651e5" stroke-width="9"></circle>
                                 <g fill="#fff">
                                     {% for row in range(5) %}{% for col in range(5) %}
                                     <circle cx="{{ 207 + col * 25 }}" cy="{{ 228 + row * 25 }}" r="5.5"></circle>
