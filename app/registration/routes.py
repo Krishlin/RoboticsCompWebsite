@@ -12,6 +12,9 @@ def signup():
     success = False
     errors = []
 
+    # Default values shown on the form. Used both for a fresh GET request
+    # and to re-populate the form if validation fails on POST, so the
+    # person doesn't have to retype everything.
     form_data = {
         "team_name": "",
         "affiliation": "",
@@ -27,10 +30,14 @@ def signup():
     }
 
     if request.method == "POST":
+        # Pull every field out of the submitted form. .strip() removes
+        # accidental leading/trailing whitespace from typing.
         team_name = request.form.get("team_name", "").strip()
         affiliation = request.form.get("affiliation", "").strip() or "Independent"
         division = request.form.get("division", "").strip()
 
+        # Collect up to 4 student name fields, then drop any that were
+        # left blank (so "student 3" being empty doesn't count as a student).
         student_names = [
             request.form.get(f"student_{i}", "").strip() for i in range(1, 5)
         ]
@@ -39,8 +46,13 @@ def signup():
         adult_name = request.form.get("adult_name", "").strip()
         adult_email = request.form.get("adult_email", "").strip()
         adult_phone = request.form.get("adult_phone", "").strip() or None
+        # Checkboxes only send a value when checked, so "was it submitted
+        # at all" is how we detect true/false here.
         kit_ordered = request.form.get("kit_ordered") is not None
 
+        # Save whatever the person typed back into form_data, so if we
+        # end up re-rendering the page below (due to errors), the form
+        # still shows their input instead of going blank.
         form_data.update(
             team_name=team_name,
             affiliation=request.form.get("affiliation", "").strip(),
@@ -56,6 +68,8 @@ def signup():
         )
 
         # --- Validation (Week 3) ---
+        # Required-field checks. Each failure adds a human-readable
+        # message to errors, which the template displays back to the user.
         if not team_name:
             errors.append("Team name is required.")
         if not division:
@@ -65,12 +79,16 @@ def signup():
         if not adult_email:
             errors.append("Adult email is required.")
 
+        # Team size must be between 1 and 4 students.
         if len(student_names) < 1:
             errors.append("Enter at least 1 student.")
         if len(student_names) > 4:
             errors.append("You can only enter up to 4 students.")
 
         # --- Email uniqueness (Week 4) ---
+        # Look up whether any existing team already used this email.
+        # If so, block the submission and name the conflicting team so
+        # the error is actually useful, not just "email taken."
         if adult_email:
             existing_team = Team.query.filter_by(adult_email=adult_email).first()
             if existing_team:
@@ -80,6 +98,7 @@ def signup():
                     f"Each adult of record can only be used once."
                 )
 
+        # Only attempt to save if nothing above failed.
         if not errors:
             students_text = "\n".join(student_names)
 
@@ -93,6 +112,8 @@ def signup():
             saved = False
             while attempts < 3 and not saved:
                 attempts += 1
+                # Find the highest team_number currently in use, then
+                # claim the next one up.
                 last_team = Team.query.order_by(Team.team_number.desc()).first()
                 next_number = (last_team.team_number + 1) if last_team else 1
 
@@ -112,14 +133,20 @@ def signup():
                     db.session.commit()
                     saved = True
                 except IntegrityError:
+                    # Someone else grabbed this team_number first (a
+                    # race condition). Roll back this failed attempt and
+                    # loop again to try the next number instead of crashing.
                     db.session.rollback()
-                    # loop again and try the next number
 
             if saved:
                 success = True
+                # Reset the form back to blank now that registration
+                # actually succeeded.
                 form_data = {key: "" for key in form_data}
                 form_data["kit_ordered"] = False
             else:
+                # Only reachable if all 3 retry attempts hit a collision —
+                # extremely unlikely, but fail gracefully instead of 500ing.
                 errors.append(
                     "Something went wrong assigning a team number. Please try again."
                 )
