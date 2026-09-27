@@ -4,6 +4,7 @@
 
 import csv
 import io
+import math
 from datetime import datetime
 
 from flask import render_template, request, redirect, url_for, abort, Response
@@ -88,6 +89,25 @@ def edit_result(match_id):
         }
 
         try:
+            allowed_outcomes = {"red", "blue", "tie", "double_dq"}
+            allowed_zones = {"Center", "Red Zone", "Blue Zone", "Off Arena"}
+
+            if updated_values["outcome"] not in allowed_outcomes:
+                raise ValueError("Invalid outcome")
+            if updated_values["red_final_zone"] not in allowed_zones:
+                raise ValueError("Invalid red final zone")
+            if updated_values["blue_final_zone"] not in allowed_zones:
+                raise ValueError("Invalid blue final zone")
+
+            raw_win_time = updated_values["win_time_seconds"]
+            if raw_win_time is None or raw_win_time.strip() == "":
+                updated_values["win_time_seconds"] = None
+            else:
+                win_time = float(raw_win_time)
+                if not math.isfinite(win_time) or win_time < 0:
+                    raise ValueError("Invalid win time")
+                updated_values["win_time_seconds"] = win_time
+
             # Track only the fields that actually changed so we only write the
             # necessary audit entries and do not create noisy history for unchanged data.
             changed_fields = []
@@ -99,13 +119,6 @@ def edit_result(match_id):
 
             for field_name, new_value in updated_values.items():
                 old_value = getattr(result, field_name)
-
-                if field_name == "win_time_seconds":
-                    if new_value in (None, ""):
-                        converted_value = None
-                    else:
-                        converted_value = float(new_value)
-                    new_value = converted_value
 
                 if old_value != new_value:
                     changed_fields.append((field_name, old_value, new_value))
@@ -129,7 +142,7 @@ def edit_result(match_id):
                     match.status = "complete"
                 db.session.commit()
             return redirect(url_for("admin.edit_result", match_id=match_id))
-        except Exception:
+        except Exception as e:
             db.session.rollback()
             return render_template(
                 "admin/edit_result.html",
