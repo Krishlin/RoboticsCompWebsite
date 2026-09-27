@@ -1,45 +1,45 @@
 {# owner: Yueyue — edit any submitted result; every change must write an AuditEntry #}
 {% extends "base.html" %}
-{% block title %}Edit Result{% endblock %}
+{% block title %}{% if is_new_result %}Add Result{% else %}Edit Result{% endif %}{% endblock %}
 {% block content %}
-    <h1 class="page-title">Edit Result</h1>
+    <h1 class="page-title">{% if is_new_result %}Add Result{% else %}Edit Result{% endif %}</h1>
 
     {% if error_message %}
         <p class="text-muted" style="color: #8b1e1e; margin-bottom: 1rem;">{{ error_message }}</p>
     {% endif %}
 
-    {% if match and result %}
+    {% if match %}
         <form class="card" method="POST">
-            <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
+            <p class="owner-tag">{% if is_new_result %}Add result for {% else %}Match {% endif %}{{ match.match_number }} — {{ match.arena }}</p>
 
             <div class="form-group">
                 <label for="outcome">Outcome</label>
                 <select id="outcome" name="outcome">
-                    <option value="red" {% if result.outcome == "red" %}selected{% endif %}>Red</option>
-                    <option value="blue" {% if result.outcome == "blue" %}selected{% endif %}>Blue</option>
-                    <option value="tie" {% if result.outcome == "tie" %}selected{% endif %}>Tie</option>
-                    <option value="double_dq" {% if result.outcome == "double_dq" %}selected{% endif %}>Double DQ</option>
+                    <option value="red" {% if result and result.outcome == "red" %}selected{% endif %}>Red</option>
+                    <option value="blue" {% if result and result.outcome == "blue" %}selected{% endif %}>Blue</option>
+                    <option value="tie" {% if result and result.outcome == "tie" %}selected{% endif %}>Tie</option>
+                    <option value="double_dq" {% if result and result.outcome == "double_dq" %}selected{% endif %}>Double DQ</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="win_time_seconds">Win time (seconds)</label>
-                <input type="number" step="0.1" id="win_time_seconds" name="win_time_seconds" value="{{ result.win_time_seconds if result.win_time_seconds is not none else '' }}">
+                <input type="number" step="0.1" id="win_time_seconds" name="win_time_seconds" value="{{ result.win_time_seconds if result and result.win_time_seconds is not none else '' }}">
             </div>
 
             <div class="form-group">
                 <label for="red_final_zone">Red final zone</label>
-                <input type="text" id="red_final_zone" name="red_final_zone" value="{{ result.red_final_zone }}">
+                <input type="text" id="red_final_zone" name="red_final_zone" value="{{ result.red_final_zone if result else '' }}">
             </div>
 
             <div class="form-group">
                 <label for="blue_final_zone">Blue final zone</label>
-                <input type="text" id="blue_final_zone" name="blue_final_zone" value="{{ result.blue_final_zone }}">
+                <input type="text" id="blue_final_zone" name="blue_final_zone" value="{{ result.blue_final_zone if result else '' }}">
             </div>
 
             <p class="hint">Saving this will write an AuditEntry for every field that changed.</p>
             <div style="display: flex; gap: 0.5rem;">
-                <button type="submit" class="btn" onclick="sessionStorage.setItem('resultSaved', 'true')">Save changes</button>
+                <button type="submit" class="btn" onclick="sessionStorage.setItem('resultSaved', 'true')">{% if is_new_result %}Save result{% else %}Save changes{% endif %}</button>
                 <a class="btn" href="{{ url_for('admin.match_history', match_id=match.id) }}">View history</a>
             </div>
 

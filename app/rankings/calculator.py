@@ -39,7 +39,12 @@ def calculate_rankings(division):
         matches = Match.query.filter(
             Match.division == division,
             Match.status == "complete",
-            ((Match.red_team_id == team.id) | (Match.blue_team_id == team.id))
+            ((Match.red_team_id == team.id) | (Match.blue_team_id == team.id)),
+            ~Match.id.in_(
+                db.session.query(Match.replay_of_match_id).filter(
+                    Match.replay_of_match_id.isnot(None)
+                )
+            ),
         ).all()
 
         wins = 0

@@ -72,6 +72,7 @@ class Match(db.Model):
 
     status = db.Column(db.String(20), default="scheduled", nullable=False)  # scheduled/in_progress/complete
     is_replay = db.Column(db.Boolean, default=False, nullable=False)
+    replay_of_match_id = db.Column(db.Integer, db.ForeignKey("match.id"), nullable=True)
 
     bracket_round = db.Column(db.Integer, nullable=True)  # elimination only
     bracket_slot = db.Column(db.Integer, nullable=True)  # elimination only
