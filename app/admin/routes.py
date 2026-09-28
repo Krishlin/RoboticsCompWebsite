@@ -69,6 +69,7 @@ def edit_result(match_id):
     # guaranteed to exist for every match in the database.
     match = Match.query.filter_by(id=match_id).first()
     result = MatchResult.query.filter_by(match_id=match_id).first()
+    # Keep the create path distinct so existing edits never reset match status.
     is_new_result = result is None
 
     if request.method == "POST":
@@ -89,6 +90,7 @@ def edit_result(match_id):
         }
 
         try:
+            # Validate server-side because form controls can be bypassed by direct requests.
             allowed_outcomes = {"red", "blue", "tie", "double_dq"}
             allowed_zones = {"Center", "Red Zone", "Blue Zone", "Off Arena"}
 
@@ -112,6 +114,7 @@ def edit_result(match_id):
             # necessary audit entries and do not create noisy history for unchanged data.
             changed_fields = []
             if is_new_result:
+                # A first result needs its own row; an edit reuses the existing row below.
                 result = MatchResult(
                     match_id=match_id,
                     submitted_by=_current_admin_name(),
@@ -131,6 +134,7 @@ def edit_result(match_id):
                     match_id=match_id,
                     changed_by=_current_admin_name(),
                     field=field_name,
+                    # Store the before/after values as text for the audit table.
                     old_value=str(old_value) if old_value is not None else None,
                     new_value=str(new_value) if new_value is not None else None,
                 )
@@ -139,6 +143,7 @@ def edit_result(match_id):
             if changed_fields or is_new_result:
                 db.session.add(result)
                 if is_new_result:
+                    # The first submitted result means this scheduled match has been played.
                     match.status = "complete"
                 db.session.commit()
             return redirect(url_for("admin.edit_result", match_id=match_id))
@@ -217,6 +222,7 @@ def insert_replay_match():
     # Create the replay match.
     # We intentionally copy only the scheduling/bracket data and teams; no result is
     # copied because the replay starts fresh and must be scored separately.
+    # This link lets rankings replace the original with this replay's result.
     replay_match = Match(
         match_number=next_match_number,
         phase=original_match.phase,
@@ -296,7 +302,7 @@ def export_csv():
             "bracket_slot": match.bracket_slot,
         }
 
-        # Add result columns if result exists
+        # Leave result columns blank when the match has not been scored yet.
         if result:
             row["outcome"] = result.outcome
             row["win_time_seconds"] = result.win_time_seconds

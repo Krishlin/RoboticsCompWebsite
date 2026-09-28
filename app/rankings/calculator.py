@@ -35,7 +35,8 @@ def calculate_rankings(division):
     rankings = []
 
     for team in teams:
-        # Find all completed matches for this team in this division
+        # Superseded originals are excluded even before the replay has a result;
+        # the linked replay is the only attempt that can count for rankings.
         matches = Match.query.filter(
             Match.division == division,
             Match.status == "complete",
