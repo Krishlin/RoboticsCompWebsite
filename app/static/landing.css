@@ -1661,3 +1661,30 @@ a {
         width: 100%;
     }
 }
+
+/* The deadline sits under the Register button itself rather than below the
+   whole row, so it reads as part of that one action. */
+.btn-row {
+    align-items: flex-start;
+}
+
+.reg-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.reg-cta .reg-deadline {
+    margin: 0;
+}
+
+@media (max-width: 560px) {
+    .btn-row .reg-cta {
+        width: 100%;
+    }
+}
+
+/* Practice field order button, under the zones table in The Hill. */
+.spec-side .btn {
+    margin-top: 1.5rem;
+}

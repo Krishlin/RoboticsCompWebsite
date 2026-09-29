@@ -103,11 +103,14 @@
                     for middle and high school teams in Southern California.
                 </p>
                 <div class="btn-row">
-                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <div class="reg-cta">
+                        <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                        <p class="note reg-deadline">Deadline: <strong>{{ config.REGISTRATION_DEADLINE }}</strong></p>
+                    </div>
+                    <a class="btn btn-ghost" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
                     <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interested but not ready to commit? Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the game manual</a>
                 </div>
-                <p class="note reg-deadline">Registration closes <strong>{{ config.REGISTRATION_DEADLINE }}</strong>.</p>
             </div>
 
             <figure class="hill-figure">
@@ -269,43 +272,46 @@
                            '(max-width: 880px) 84vw, min(48vw, 620px)') }}
             </figure>
 
-            <table class="zones">
-                <caption>Zones, innermost first</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Zone</th>
-                        <th scope="col" class="num">Outer dia.</th>
-                        <th scope="col" class="num">Profile</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th scope="row"><span class="swatch" style="background:var(--z-plateau)"></span>1 Plateau</th>
-                        <td class="num">10 cm</td>
-                        <td class="num">flat, +2.0 cm</td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><span class="swatch" style="background:var(--z-inner)"></span>2 Inner Slope</th>
-                        <td class="num">16 cm</td>
-                        <td class="num">18.4°</td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><span class="swatch" style="background:var(--z-outer)"></span>3 Outer Slope</th>
-                        <td class="num">22 cm</td>
-                        <td class="num">18.4°</td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><span class="swatch split-swatch"></span>4 Flat Band</th>
-                        <td class="num">36 cm</td>
-                        <td class="num">flat, start zones</td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><span class="swatch" style="background:var(--edge)"></span>5 Edge Band</th>
-                        <td class="num">42 cm</td>
-                        <td class="num">flat, boundary</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="spec-side">
+                <table class="zones">
+                    <caption>Zones, innermost first</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Zone</th>
+                            <th scope="col" class="num">Outer dia.</th>
+                            <th scope="col" class="num">Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"><span class="swatch" style="background:var(--z-plateau)"></span>1 Plateau</th>
+                            <td class="num">10 cm</td>
+                            <td class="num">flat, +2.0 cm</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><span class="swatch" style="background:var(--z-inner)"></span>2 Inner Slope</th>
+                            <td class="num">16 cm</td>
+                            <td class="num">18.4°</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><span class="swatch" style="background:var(--z-outer)"></span>3 Outer Slope</th>
+                            <td class="num">22 cm</td>
+                            <td class="num">18.4°</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><span class="swatch split-swatch"></span>4 Flat Band</th>
+                            <td class="num">36 cm</td>
+                            <td class="num">flat, start zones</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><span class="swatch" style="background:var(--edge)"></span>5 Edge Band</th>
+                            <td class="num">42 cm</td>
+                            <td class="num">flat, boundary</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a class="btn btn-primary" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Buy the practice field — $10</a>
+            </div>
         </div>
     </section>
 
@@ -591,11 +597,14 @@
                     testing and calibration before competition day.
                 </p>
                 <div class="btn-row">
-                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <div class="reg-cta">
+                        <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                        <p class="note reg-deadline">Deadline: <strong>{{ config.REGISTRATION_DEADLINE }}</strong></p>
+                    </div>
+                    <a class="btn btn-ghost" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
                     <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a>
                 </div>
-                <p class="note reg-deadline">Registration closes <strong>{{ config.REGISTRATION_DEADLINE }}</strong>.</p>
             </div>
         </div>
     </section>
