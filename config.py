@@ -158,6 +158,13 @@ class Config:
         "https://docs.google.com/forms/d/e/1FAIpQLSf3rqziN51fZmo9F91nlbyWPIH1NjurJJY3YT0fbwdohZfJjw/viewform?usp=send_form",
     )
 
+    # Jotform for ordering the kit and micro:bit, linked from the cost section
+    # ("Purchase materials") and the footer.
+    KIT_ORDER_FORM_URL = os.environ.get(
+        "KIT_ORDER_FORM_URL",
+        "https://pci.jotform.com/form/262640224063044?utm_id=97757_v0_s00_e0_tv0",
+    )
+
     # Where a team pays the $20 registration fee. Registration saves the team
     # first and sends them here afterwards, so a form that is down, moved, or
     # replaced never costs us the registration itself — it only delays the

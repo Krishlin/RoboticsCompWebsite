@@ -104,8 +104,8 @@
                 </p>
                 <div class="btn-row">
                     <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interested but not ready to commit? Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the game manual</a>
-                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interested but not ready to commit? Join the interest list</a>
                 </div>
             </div>
 
@@ -355,6 +355,7 @@
         </div>
 
         <div class="cost">
+            <div>
             <div class="receipt">
                 <dl>
                     <dt>Kit bot + practice field<span>Optional. A complete, competition-legal robot and a practice field. Does not include a micro:bit.</span></dt>
@@ -366,6 +367,10 @@
                     <span>Everything</span>
                     <span>$120</span>
                 </div>
+            </div>
+            <div class="btn-row" style="margin-top:1.5rem">
+                <a class="btn btn-primary" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
+            </div>
             </div>
 
             <div>
@@ -456,36 +461,48 @@
         <div class="event-grid">
         <dl class="schedule">
             <div>
-                <dt>8:00 AM</dt>
-                <dd>Volunteers arrive and set up.</dd>
+                <dt>8:00–9:00 AM</dt>
+                <dd>Staff setup and field testing</dd>
             </div>
             <div class="key">
-                <dt>9:00 AM</dt>
-                <dd><b>Check-in and inspection open.</b></dd>
+                <dt>9:00–9:40 AM</dt>
+                <dd><b>Team check-in, inspection, open practice, calibration</b></dd>
             </div>
             <div>
-                <dt>9:50 AM</dt>
-                <dd>Team meeting at the field.</dd>
+                <dt>9:40–9:50 AM</dt>
+                <dd>Opening meeting and rules briefing</dd>
+            </div>
+            <div>
+                <dt>9:50–10:00 AM</dt>
+                <dd>Final calibration / teams queue for first matches</dd>
             </div>
             <div class="key">
-                <dt>10:00 AM</dt>
-                <dd><b>Qualification matches begin.</b></dd>
+                <dt>10:00–11:45 AM</dt>
+                <dd><b>Qualification series</b></dd>
             </div>
             <div>
-                <dt>11:45 AM</dt>
-                <dd>Lunch.</dd>
+                <dt>11:45 AM–12:20 PM</dt>
+                <dd>Lunch + rankings finalized</dd>
             </div>
             <div>
-                <dt>12:30 PM</dt>
-                <dd>Bracket begins.</dd>
+                <dt>12:20–12:30 PM</dt>
+                <dd>Elimination bracket announcement / preparation</dd>
             </div>
             <div class="key">
-                <dt>2:15 PM</dt>
-                <dd><b>Awards.</b></dd>
+                <dt>12:30–1:45 PM</dt>
+                <dd><b>Elimination bracket</b></dd>
             </div>
             <div>
-                <dt>2:30 PM</dt>
-                <dd>Teardown.</dd>
+                <dt>1:45–2:15 PM</dt>
+                <dd>Buffer / exhibition matches if ahead</dd>
+            </div>
+            <div class="key">
+                <dt>2:15–2:30 PM</dt>
+                <dd><b>Awards and photos</b></dd>
+            </div>
+            <div>
+                <dt>2:30–3:00 PM</dt>
+                <dd>Cleanup</dd>
             </div>
         </dl>
 
@@ -507,8 +524,8 @@
         <div class="section-head">
             <h2 class="display">Awards</h2>
             <p class="lede">
-                Every award winner receives a trophy, and the Champion takes home the Summit banner.
-                There are no cash prizes.
+                The Champion, Finalist, Semifinalists, and Middle School Champion receive trophies.
+                The overall Champion also takes home the Summit championship banner.
             </p>
         </div>
 
@@ -516,6 +533,14 @@
             <div>
                 <dt>Champion</dt>
                 <dd>The bracket winner, middle school or high school.</dd>
+            </div>
+            <div>
+                <dt>Finalist</dt>
+                <dd>The runner-up: the team that reached the bracket final.</dd>
+            </div>
+            <div>
+                <dt>Semifinalists</dt>
+                <dd>The two teams that reached the semifinals of the bracket.</dd>
             </div>
             <div>
                 <dt>Middle School Champion</dt>
@@ -545,7 +570,7 @@
                 <p class="note" style="margin-top:1.5rem">
                     {% if links.consent_form %}
                         Every student needs a completed consent and release form.
-                        <a href="{{ links.consent_form }}" target="_blank" rel="noopener">Download the form</a>.
+                        <a href="{{ links.consent_form }}" target="_blank" rel="noopener">Sign it online</a>.
                     {% else %}
                         Every student needs a completed consent and release form. The form is linked
                         in your confirmation email.
@@ -566,8 +591,8 @@
                 </p>
                 <div class="btn-row">
                     <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a>
-                    <a class="btn btn-ghost" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interest form</a>
                 </div>
             </div>
         </div>
@@ -610,6 +635,7 @@
                 <li><a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a></li>
                 <li><a href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a></li>
                 <li><a href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interest form</a></li>
+                <li><a href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a></li>
                 <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
                 <li><a href="#cost">The kit</a></li>
             </ul>

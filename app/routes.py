@@ -24,7 +24,7 @@ main_bp = Blueprint("main", __name__)
 SITE_LINKS = {
     "email": None,
     "instagram": None,
-    "consent_form": None,
+    "consent_form": "https://www.jotform.com/sign/262648445667067/invite/01m3dvy007e0ae5c450464b496",
     "starter_code": None,
     "build_guide": None,
     "print_files": None,
