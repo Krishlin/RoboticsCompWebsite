@@ -1,5 +1,11 @@
 Flask==3.0.3
 Flask-SQLAlchemy==3.1.1
+
+# Pinned because Flask-SQLAlchemy only asks for >=2.0.16. SQLAlchemy 2.1
+# switched the default driver for postgresql:// URLs from psycopg2 to psycopg 3,
+# so an unpinned build picked it up and every request died at import with
+# "No module named 'psycopg'". Moving to 2.1 means also swapping the driver below.
+SQLAlchemy==2.0.52
 python-dotenv==1.0.1
 
 # Postgres driver. Only used when DATABASE_URL names a Postgres database —
