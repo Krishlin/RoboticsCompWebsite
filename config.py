@@ -151,6 +151,9 @@ class Config:
         "REGISTRATION_FORM_URL", "https://pci.jotform.com/form/262558199273066?utm_id=97760_v0_s00_e0_tv4"
     )
 
+    # Shown under both "Register a team" button rows on the landing page.
+    REGISTRATION_DEADLINE = os.environ.get("REGISTRATION_DEADLINE", "Saturday, October 17")
+
     # Google Form for people interested in competing — not a team
     # registration, so it's kept separate from REGISTRATION_FORM_URL.
     INTEREST_FORM_URL = os.environ.get(

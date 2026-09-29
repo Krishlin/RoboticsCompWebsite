@@ -107,6 +107,7 @@
                     <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interested but not ready to commit? Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the game manual</a>
                 </div>
+                <p class="note reg-deadline">Registration closes <strong>{{ config.REGISTRATION_DEADLINE }}</strong>.</p>
             </div>
 
             <figure class="hill-figure">
@@ -594,6 +595,7 @@
                     <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a>
                 </div>
+                <p class="note reg-deadline">Registration closes <strong>{{ config.REGISTRATION_DEADLINE }}</strong>.</p>
             </div>
         </div>
     </section>
