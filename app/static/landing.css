@@ -574,6 +574,13 @@ a {
     border: var(--rule-dark);
 }
 
+/* Centred under the video, but held to a readable measure rather than the
+   video's full 1100px. */
+.teaser-strategy {
+    max-width: 70ch;
+    margin: clamp(1.75rem, 4vw, 2.5rem) auto 0;
+}
+
 /* The one photograph on the page. Capped rather than full-bleed: the art
    is cut out on transparency, so past about 1100px it stops reading as a
    field on a table and starts reading as two robots floating on the band. */
