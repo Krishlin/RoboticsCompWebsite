@@ -386,6 +386,24 @@
             <div class="btn-row" style="margin-top:1.5rem">
                 <a class="btn btn-primary" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
             </div>
+
+            <div class="kit-guides">
+                <h3>Guides</h3>
+                <ul>
+                    <li>
+                        <a href="{{ url_for('static', filename='docs/summit-kitbot-build-and-wiring-guide.pdf') }}" target="_blank" rel="noopener">Kit bot build and wiring guide</a>
+                        <span>Assembling the chassis and connecting the motors and sensors.</span>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('static', filename='docs/summit-kitbot-programming-guide.pdf') }}" target="_blank" rel="noopener">Kit bot programming guide</a>
+                        <span>Loading and changing the starter code in MakeCode.</span>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('static', filename='docs/summit-custom-robot-guide.pdf') }}" target="_blank" rel="noopener">Custom robot guide</a>
+                        <span>For teams building a robot of their own design.</span>
+                    </li>
+                </ul>
+            </div>
             </div>
 
             <div>

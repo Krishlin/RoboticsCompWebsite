@@ -849,6 +849,37 @@ a {
     margin: 1.5rem 0 0;
 }
 
+.kit-guides {
+    margin-top: 2.5rem;
+}
+
+.kit-guides h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+}
+
+.kit-guides ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.kit-guides li {
+    padding-block: 0.75rem;
+    border-top: var(--rule);
+}
+
+.kit-guides a {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.kit-guides span {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
 /* The rail's labels name each view for assistive tech; on screen the
    thumbnail is the label. */
 .bot-thumb span {
