@@ -391,6 +391,10 @@
                 <h3>Guides</h3>
                 <ul>
                     <li>
+                        <a href="https://www.youtube.com/watch?v=H7sx9fCWMdI" target="_blank" rel="noopener">Kit bot video</a>
+                        <span>The assembled kit bot, on YouTube.</span>
+                    </li>
+                    <li>
                         <a href="{{ url_for('static', filename='docs/summit-kitbot-build-and-wiring-guide.pdf') }}" target="_blank" rel="noopener">Kit bot build and wiring guide</a>
                         <span>Assembling the chassis and connecting the motors and sensors.</span>
                     </li>
@@ -470,6 +474,18 @@
                     The optional kit gets you to a working robot quickly. The interesting part begins
                     when you change it and see whether your idea works against another team.
                 </p>
+
+                {# Hosted on YouTube rather than in static/ like the teaser. The
+                   nocookie domain plus loading="lazy" means nothing is fetched from
+                   YouTube until a visitor scrolls this far. #}
+                <figure class="kit-video">
+                    <iframe src="https://www.youtube-nocookie.com/embed/H7sx9fCWMdI"
+                            title="The Summit kit bot"
+                            width="1280" height="720" loading="lazy"
+                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen></iframe>
+                </figure>
 
                 <figure class="kit-parts">
                     {# 670px is what this column actually measures once the
