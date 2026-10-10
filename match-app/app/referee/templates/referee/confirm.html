@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Referee — Confirm Result{% endblock %}
+
+{% block content %}
+<div class="referee-container">
+  <div class="match-meta">
+    <h2>Confirm Result</h2>
+    <p>Match {{ match.match_number }} — {{ match.arena }}</p>
+  </div>
+
+  <div class="teams-group">
+    <div class="team-card {% if winner == 'red' %}red-team{% else %}blue-team{% endif %}">
+      <span class="label">WINNER</span>
+      <span class="team-name">{{ winner_team.name if winner_team else winner|upper }}</span>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('referee.confirm_result', match_id=match.id) }}" class="actions">
+    <button type="submit" class="btn btn-start">CONFIRM & SUBMIT</button>
+    <a href="{{ url_for('referee.result_entry', match_id=match.id) }}" class="btn btn-secondary">Change Winner</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,162 @@
+body {
+  margin: 0;
+  background-color: #121212;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.referee-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+  min-height: 90vh;
+  box-sizing: border-box;
+}
+
+.match-meta h2 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.match-meta p {
+  margin: 4px 0 0;
+  color: #aaa;
+}
+
+.timer-display {
+  font-size: 4.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 30px 0;
+  font-family: monospace;
+}
+
+.teams-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.team-card {
+  padding: 18px;
+  border-radius: 12px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+
+.red-team {
+  background-color: #d32f2f;
+}
+
+.blue-team {
+  background-color: #1976d2;
+}
+
+.actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  display: block;
+  text-align: center;
+  padding: 18px;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-decoration: none;
+  border: none;
+}
+
+.btn-start {
+  background-color: #2e7d32;
+  color: white;
+}
+
+.btn-result {
+  background-color: #333;
+  color: #fff;
+}
+
+
+/* Form button layout fixes */
+.btn-winner {
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.btn-secondary {
+  background-color: #333333;
+  color: #ffffff;
+}
+
+form.actions, form.teams-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.btn-select {
+  border: 4px solid transparent;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.btn-select.selected {
+  opacity: 1;
+  border-color: #ffffff;
+  transform: scale(1.02);
+}
+
+.confirm-box {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centers child elements horizontally */
+}
+
+.confirm-box .btn-start {
+  width: 100%; /* Makes it span nicely inside the box */
+  max-width: 100%;
+}
+
+.selection-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #4caf50;
+}
+
+.actions-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.duration-input {
+  padding: 10px;
+  width: 100%;
+  margin-top: 5px;
+  background-color: #212529;
+  color: #fff;
+}
+
+.team-card .label,
+.team-card .team-name {
+  color: #000 !important;
+}

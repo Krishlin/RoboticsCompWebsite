@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Referee — Current Match{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">Current Match</h1>
+
+    {% if match %}
+        <div class="referee-container card">
+            <div class="match-meta">
+                <h2>Match {{ match.match_number }}</h2>
+                <p>{{ match.arena }}</p>
+            </div>
+
+            <div class="timer-display" id="timer">00:00</div>
+
+            <div class="teams-group">
+                <div class="team-card red-team">
+                    <span class="label">RED</span>
+                    <span class="team-name">{{ red.name if red else "0" }}</span>
+                </div>
+                <div class="team-card blue-team">
+                    <span class="label">BLUE</span>
+                    <span class="team-name">{{ blue.name if blue else "0" }}</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-start" id="startBtn">START MATCH</button>
+                {% if match.is_locked %}
+                    <span class="btn btn-secondary" style="background-color: #555; cursor: not-allowed;">Submitted & Locked</span>
+                {% else %}
+                    <a class="btn btn-result" href="{{ url_for('referee.result_entry', match_id=match.id) }}">Enter Result</a>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p class="text-muted">No match currently assigned to this arena.</p>
+    {% endif %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const startBtn = document.getElementById("startBtn");
+            const timerEl = document.getElementById("timer");
+            let startTime = localStorage.getItem("match_start_time");
+
+            function updateTimer() {
+                if (!startTime) return;
+                const now = Math.floor(Date.now() / 1000);
+                let elapsed = now - parseInt(startTime, 10);
+                if (elapsed < 0) elapsed = 0;
+
+                const m = String(Math.floor(elapsed / 60)).padStart(2, "0");
+                const s = String(elapsed % 60).padStart(2, "0");
+                if (timerEl) {
+                    timerEl.textContent = m + ":" + s;
+                }
+            }
+
+            if (startTime) {
+                updateTimer();
+                setInterval(updateTimer, 1000);
+            }
+
+            if (startBtn) {
+                startBtn.addEventListener("click", function () {
+                    if (!localStorage.getItem("match_start_time")) {
+                        startTime = Math.floor(Date.now() / 1000);
+                        localStorage.setItem("match_start_time", startTime);
+                        setInterval(updateTimer, 1000);
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}
