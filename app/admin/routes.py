@@ -4,6 +4,7 @@
 
 import csv
 import io
+import math
 from datetime import datetime
 
 from flask import render_template, request, redirect, url_for, abort, Response
@@ -14,9 +15,12 @@ from app.admin import admin_bp
 
 
 def _match_rows_with_results():
+    # Keep the dashboard template contract the same: each row is a dict with
+    # "match" and "result" so the template can remain simple and unchanged.
     rows = []
     matches = Match.query.order_by(Match.division, Match.match_number).all()
     for match in matches:
+        # A match may or may not have a corresponding result record.
         result = MatchResult.query.filter_by(match_id=match.id).first()
         rows.append({
             "match": match,
@@ -43,6 +47,9 @@ def _get_or_create_schedule_state():
 
 def _get_next_match_number_for_division(division):
     """Get the next available match_number for a given division."""
+    # Match numbers appear to restart per division rather than being globally unique.
+    # This helper finds the highest existing value in the target division and uses
+    # the next number so replay matches do not collide with existing schedule entries.
     max_match = Match.query.filter_by(division=division).order_by(Match.match_number.desc()).first()
     if max_match is None:
         return 1
@@ -58,23 +65,20 @@ def dashboard():
 
 @admin_bp.route("/edit/<int:match_id>", methods=["GET", "POST"])
 def edit_result(match_id):
+    # Fetch the match and its associated result separately, since a result is not
+    # guaranteed to exist for every match in the database.
     match = Match.query.filter_by(id=match_id).first()
     result = MatchResult.query.filter_by(match_id=match_id).first()
+    # Keep the create path distinct so existing edits never reset match status.
+    is_new_result = result is None
 
     if request.method == "POST":
-        if result is None:
-            return render_template(
-                "admin/edit_result.html",
-                match=match,
-                result=None,
-                error_message="No result found for this match.",
-            )
-
         if match is None:
             return render_template(
                 "admin/edit_result.html",
                 match=None,
                 result=result,
+                is_new_result=is_new_result,
                 error_message="No match found for this result.",
             )
 
@@ -86,45 +90,79 @@ def edit_result(match_id):
         }
 
         try:
+            # Validate server-side because form controls can be bypassed by direct requests.
+            allowed_outcomes = {"red", "blue", "tie", "double_dq"}
+            allowed_zones = {"Center", "Red Zone", "Blue Zone", "Off Arena"}
+
+            if updated_values["outcome"] not in allowed_outcomes:
+                raise ValueError("Invalid outcome")
+            if updated_values["red_final_zone"] not in allowed_zones:
+                raise ValueError("Invalid red final zone")
+            if updated_values["blue_final_zone"] not in allowed_zones:
+                raise ValueError("Invalid blue final zone")
+
+            raw_win_time = updated_values["win_time_seconds"]
+            if raw_win_time is None or raw_win_time.strip() == "":
+                updated_values["win_time_seconds"] = None
+            else:
+                win_time = float(raw_win_time)
+                if not math.isfinite(win_time) or win_time < 0:
+                    raise ValueError("Invalid win time")
+                updated_values["win_time_seconds"] = win_time
+
+            # Track only the fields that actually changed so we only write the
+            # necessary audit entries and do not create noisy history for unchanged data.
             changed_fields = []
+            if is_new_result:
+                # A first result needs its own row; an edit reuses the existing row below.
+                result = MatchResult(
+                    match_id=match_id,
+                    submitted_by=_current_admin_name(),
+                )
+
             for field_name, new_value in updated_values.items():
                 old_value = getattr(result, field_name)
-
-                if field_name == "win_time_seconds":
-                    if new_value in (None, ""):
-                        converted_value = None
-                    else:
-                        converted_value = float(new_value)
-                    new_value = converted_value
 
                 if old_value != new_value:
                     changed_fields.append((field_name, old_value, new_value))
                     setattr(result, field_name, new_value)
 
             for field_name, old_value, new_value in changed_fields:
+                # Every modified field writes an AuditEntry so admin changes are
+                # trackable in the audit log and match history views.
                 audit_entry = AuditEntry(
                     match_id=match_id,
                     changed_by=_current_admin_name(),
                     field=field_name,
+                    # Store the before/after values as text for the audit table.
                     old_value=str(old_value) if old_value is not None else None,
                     new_value=str(new_value) if new_value is not None else None,
                 )
                 db.session.add(audit_entry)
 
-            if changed_fields:
+            if changed_fields or is_new_result:
                 db.session.add(result)
+                if is_new_result:
+                    # The first submitted result means this scheduled match has been played.
+                    match.status = "complete"
                 db.session.commit()
             return redirect(url_for("admin.edit_result", match_id=match_id))
-        except Exception:
+        except Exception as e:
             db.session.rollback()
             return render_template(
                 "admin/edit_result.html",
                 match=match,
                 result=result,
+                is_new_result=is_new_result,
                 error_message="Could not save the result change. No database changes were committed.",
             )
 
-    return render_template("admin/edit_result.html", match=match, result=result)
+    return render_template(
+        "admin/edit_result.html",
+        match=match,
+        result=result,
+        is_new_result=is_new_result,
+    )
 
 
 @admin_bp.route("/audit-log")
@@ -167,6 +205,8 @@ def resume_schedule():
 @admin_bp.route("/replay", methods=["POST"])
 def insert_replay_match():
     """Create a replay of an existing match."""
+    # The form posts the original match id, and the server clones that match into a
+    # new record while preserving the original match unchanged.
     original_match_id = request.form.get("original_match_id")
 
     if not original_match_id:
@@ -176,10 +216,13 @@ def insert_replay_match():
     if original_match is None:
         abort(404)
 
-    # Get the next available match_number for this division
+    # Replays should not collide with an existing match number in the same division.
     next_match_number = _get_next_match_number_for_division(original_match.division)
 
-    # Create the replay match
+    # Create the replay match.
+    # We intentionally copy only the scheduling/bracket data and teams; no result is
+    # copied because the replay starts fresh and must be scored separately.
+    # This link lets rankings replace the original with this replay's result.
     replay_match = Match(
         match_number=next_match_number,
         phase=original_match.phase,
@@ -190,6 +233,7 @@ def insert_replay_match():
         blue_team_id=original_match.blue_team_id,
         status="scheduled",
         is_replay=True,
+        replay_of_match_id=original_match.id,
         bracket_round=original_match.bracket_round,
         bracket_slot=original_match.bracket_slot,
     )
@@ -207,10 +251,12 @@ def insert_replay_match():
 @admin_bp.route("/export.csv", methods=["GET"])
 def export_csv():
     """Export all matches and results to CSV."""
-    # Query all matches ordered by division and match_number
+    # Export the live database records instead of the fake in-memory data used by
+    # other parts of the app. The order is kept predictable by division, then match.
     matches = Match.query.order_by(Match.division, Match.match_number).all()
 
-    # Define CSV columns
+    # These columns match the live Match + MatchResult shape and are written in a
+    # consistent order so spreadsheet import is straightforward.
     columns = [
         "match_id",
         "match_number",
@@ -256,7 +302,7 @@ def export_csv():
             "bracket_slot": match.bracket_slot,
         }
 
-        # Add result columns if result exists
+        # Leave result columns blank when the match has not been scored yet.
         if result:
             row["outcome"] = result.outcome
             row["win_time_seconds"] = result.win_time_seconds

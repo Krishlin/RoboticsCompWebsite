@@ -49,7 +49,17 @@ def get_division_rankings(division):
     _team_number_cache.clear()
 
     teams = Team.query.filter_by(division=division).all()
-    matches = Match.query.filter_by(division=division, phase="qualification").all()
+    # Superseded originals are excluded even before the replay has a result;
+    # the linked replay is the only attempt that can count for rankings.
+    matches = Match.query.filter(
+        Match.division == division,
+        Match.phase == "qualification",
+        ~Match.id.in_(
+            db.session.query(Match.replay_of_match_id).filter(
+                Match.replay_of_match_id.isnot(None)
+            )
+        ),
+    ).all()
     match_ids = [m.id for m in matches]
     results = (
         MatchResult.query.filter(MatchResult.match_id.in_(match_ids)).all()
