@@ -108,7 +108,6 @@
                         <p class="note reg-deadline">Deadline: <strong>{{ config.REGISTRATION_DEADLINE }}</strong></p>
                     </div>
                     <a class="btn btn-ghost" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
-                    <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interested but not ready to commit? Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the game manual</a>
                 </div>
             </div>
@@ -648,7 +647,6 @@
                         <p class="note reg-deadline">Deadline: <strong>{{ config.REGISTRATION_DEADLINE }}</strong></p>
                     </div>
                     <a class="btn btn-ghost" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
-                    <a class="btn btn-accent" href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Join the interest list</a>
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a>
                 </div>
             </div>
@@ -691,7 +689,6 @@
             <ul>
                 <li><a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a></li>
                 <li><a href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a></li>
-                <li><a href="{{ config.INTEREST_FORM_URL }}" target="_blank" rel="noopener">Interest form</a></li>
                 <li><a href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a></li>
                 <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
                 <li><a href="#cost">The kit</a></li>

@@ -336,17 +336,6 @@ a {
     background: var(--cyan-pale);
 }
 
-/* The interest list: louder than the ghost buttons, one step below
-   Register. The Hill's blue, so it still belongs to the palette. */
-.btn-accent {
-    background: var(--z-blue);
-    color: #fff;
-}
-
-.btn-accent:hover {
-    background: #5a82dc;
-}
-
 .btn-ghost {
     background: transparent;
     color: var(--paper);

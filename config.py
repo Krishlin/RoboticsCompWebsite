@@ -154,13 +154,6 @@ class Config:
     # Shown under both "Register a team" button rows on the landing page.
     REGISTRATION_DEADLINE = os.environ.get("REGISTRATION_DEADLINE", "Saturday, October 17")
 
-    # Google Form for people interested in competing — not a team
-    # registration, so it's kept separate from REGISTRATION_FORM_URL.
-    INTEREST_FORM_URL = os.environ.get(
-        "INTEREST_FORM_URL",
-        "https://docs.google.com/forms/d/e/1FAIpQLSf3rqziN51fZmo9F91nlbyWPIH1NjurJJY3YT0fbwdohZfJjw/viewform?usp=send_form",
-    )
-
     # Jotform for ordering the kit and micro:bit, linked from the cost section
     # ("Purchase materials") and the footer.
     KIT_ORDER_FORM_URL = os.environ.get(
