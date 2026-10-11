@@ -89,27 +89,65 @@
 
 <main id="main">
 
-    <!-- Hero. The logo and subline are the brief's; the Hill beside them is
-         the game itself, playable before you have read a word about it. -->
+    <!-- Hero. Everything on the poster fits one phone screen without
+         scrolling: the game, the prizes, when, where, who, how much, then the
+         two next steps. The prizes stand on the Hill drawn side-on: Plateau,
+         inner ring, outer ring are the field's own three tiers, so the height
+         of each step is the place it pays. On a wide screen the top-down Hill
+         sits beside it, plan and elevation of the same object. The nav
+         carries the Summit wordmark, so the hero does not repeat it. -->
     <section class="hero band dark">
         <div class="hero-grid">
             <div>
-                <img class="hero-wordmark"
-                     src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
-                     width="987" height="130" alt="Summit">
-                <h1 class="display">Two robots. One hill. Three minutes.</h1>
-                <p class="lede">
-                    The STEMsters Robotics Competition. An autonomous robotics competition
-                    for middle and high school teams in Southern California.
-                </p>
-                <div class="btn-row">
-                    <div class="reg-cta">
-                        <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
-                        <p class="note reg-deadline">Deadline: <strong>{{ config.REGISTRATION_DEADLINE }}</strong></p>
-                    </div>
-                    <a class="btn btn-ghost" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
-                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the game manual</a>
+                <h1 class="display">Robot King of the Hill</h1>
+
+                <ol class="podium" aria-label="Prizes">
+                    <li class="podium-1">
+                        <img class="podium-art podium-art-photo"
+                             src="{{ url_for('static', filename='img/prize_bambu_a1_trim.png') }}"
+                             alt="" width="206" height="213">
+                        <p class="podium-step">
+                            <span class="podium-place">1st place</span>
+                            <span class="podium-prize">Bambu Lab&nbsp;A1 3D&nbsp;printer</span>
+                        </p>
+                    </li>
+                    <li class="podium-2">
+                        <img class="podium-art"
+                             src="{{ url_for('static', filename='img/prize_chatgpt.svg') }}"
+                             alt="" width="40" height="40">
+                        <p class="podium-step">
+                            <span class="podium-place">2nd</span>
+                            <span class="podium-prize">4 months ChatGPT Plus</span>
+                        </p>
+                    </li>
+                    <li class="podium-3">
+                        <img class="podium-art"
+                             src="{{ url_for('static', filename='img/prize_discord.svg') }}"
+                             alt="" width="44" height="33">
+                        <p class="podium-step">
+                            <span class="podium-place">3rd</span>
+                            <span class="podium-prize">4 months Discord Nitro</span>
+                        </p>
+                    </li>
+                </ol>
+
+                {# A drawing's title block: the facts a reader checks before
+                   anything else, in ruled cells, the way the rest of this
+                   page borrows a dimensioned drawing's vocabulary. The two
+                   long ones (venue, teams) share the wider right column. #}
+                <dl class="title-block">
+                    <div><dt>Date</dt><dd>Sat, Oct&nbsp;24</dd></div>
+                    <div><dt>Venue</dt><dd>Arcadia High School</dd></div>
+                    <div><dt>Entry</dt><dd>$20 per team</dd></div>
+                    <div><dt>Teams, grades 6–12</dt><dd>1–4 students</dd></div>
+                </dl>
+
+                {# Manual first, then Register: read the rules, then commit. #}
+                <div class="hero-ctas">
+                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the manual</a>
+                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
                 </div>
+                <p class="note reg-deadline">Registration closes {{ config.REGISTRATION_DEADLINE }}.</p>
             </div>
 
             <figure class="hill-figure">
@@ -572,7 +610,7 @@
     </section>
 
     <!-- Awards, exhibition, areas -->
-    <section class="section band dark">
+    <section class="section band dark" id="awards">
         <div class="section-head">
             <h2 class="display">Awards</h2>
             <p class="lede">
@@ -580,6 +618,40 @@
                 The overall Champion also takes home the Summit championship banner.
             </p>
         </div>
+
+        <ol class="prizes">
+            <li>
+                <div class="prize-art prize-art-photo">
+                    <img src="{{ url_for('static', filename='img/prize_bambu_a1.png') }}"
+                         alt="Bambu Lab A1 3D printer" width="320" height="320" loading="lazy">
+                </div>
+                <p class="prize-place">1st Place</p>
+                <h3 class="prize-name">Bambu Lab A1 3D Printer</h3>
+                <p class="prize-note">Bring your robot designs to life.</p>
+            </li>
+            <li>
+                <div class="prize-art">
+                    <img src="{{ url_for('static', filename='img/prize_chatgpt.svg') }}"
+                         alt="ChatGPT logo" width="72" height="72" loading="lazy">
+                </div>
+                <p class="prize-place">2nd Place</p>
+                <h3 class="prize-name">4 Months of ChatGPT Plus</h3>
+                <p class="prize-note">Explore ideas and develop your next project.</p>
+            </li>
+            <li>
+                <div class="prize-art">
+                    <img src="{{ url_for('static', filename='img/prize_discord.svg') }}"
+                         alt="Discord logo" width="80" height="60" loading="lazy">
+                </div>
+                <p class="prize-place">3rd Place</p>
+                <h3 class="prize-name">4 Months of Discord Nitro</h3>
+                <p class="prize-note">Connect, plan, and collaborate with your team on Discord.</p>
+            </li>
+            <li>
+                <p class="prize-place">Middle School Champion</p>
+                <p class="prize-note">Additional recognition for the highest-placing middle school team.</p>
+            </li>
+        </ol>
 
         <dl class="awards">
             <div>
