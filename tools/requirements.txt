@@ -1,0 +1,18 @@
+# Tooling only — the site does not import these at runtime, so they are
+# deliberately kept out of the top-level requirements.txt. Install them when
+# you need to regenerate the manual thumbnails:
+#
+#   pip install -r tools/requirements.txt
+#   python tools/render_manual_thumbs.py
+pypdfium2==5.13.0
+pillow==12.3.0
+
+# Cutting the robot renders out of their studio background
+# (tools/render_bot_views.py) is the only thing that needs these.
+numpy==2.4.5
+scipy==1.17.1
+
+# A static ffmpeg build, for tools/encode_teaser.py. The wheel carries the
+# binary, so re-encoding the teaser needs no system install and nothing on
+# PATH.
+imageio-ffmpeg==0.6.0

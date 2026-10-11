@@ -1,24 +1,65 @@
-from flask import render_template, request
+import csv
+import io
+import re
 
-from app.fake_data import DIVISIONS
+from flask import (
+    current_app,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    abort,
+    flash,
+    Response,
+)
+
+from app.fake_data import DIVISION
+from app.mail import send_email
 from app.registration import registration_bp
+from app.routes import SITE_LINKS
 from app.db import db
 from app.models import Team
+from app.security import staff_required
 from sqlalchemy.exc import IntegrityError
+
+# Deliberately loose: this catches typos like a missing "@" or a trailing
+# comma, not every RFC 5322 edge case. The real check is that a confirmation
+# email actually arrives.
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+# Team numbers start here rather than at 1. Three digits reads as a team
+# number at a glance on a pit sign, a match schedule and a bracket, and it
+# leaves 1-99 free for anything that needs a reserved number later.
+FIRST_TEAM_NUMBER = 100
+
+
+def _send_confirmation_email(team):
+    """Best-effort confirmation email. The team is saved either way."""
+    # PUBLIC_BASE_URL, not the request host: on Vercel the request host can be
+    # a per-deployment preview URL, which is no address to mail to a coach.
+    base = current_app.config["PUBLIC_BASE_URL"].rstrip("/")
+    html = render_template(
+        "registration/email_confirmation.html",
+        team=team,
+        manual_url=base + url_for("main.manual"),
+        kit_url=base + url_for("main.home") + "#cost",
+        field_files_url=SITE_LINKS["print_files"],
+        consent_form_url=SITE_LINKS["consent_form"],
+    )
+    return send_email(
+        to=team.adult_email,
+        subject="Welcome to SRC Summit 2026!",
+        html=html,
+    )
 
 
 @registration_bp.route("/", methods=["GET", "POST"])
 def signup():
-    success = False
     errors = []
 
-    # Default values shown on the form. Used both for a fresh GET request
-    # and to re-populate the form if validation fails on POST, so the
-    # person doesn't have to retype everything.
     form_data = {
         "team_name": "",
         "affiliation": "",
-        "division": "",
         "student_1": "",
         "student_2": "",
         "student_3": "",
@@ -30,33 +71,28 @@ def signup():
     }
 
     if request.method == "POST":
-        # Pull every field out of the submitted form. .strip() removes
-        # accidental leading/trailing whitespace from typing.
         team_name = request.form.get("team_name", "").strip()
         affiliation = request.form.get("affiliation", "").strip() or "Independent"
-        division = request.form.get("division", "").strip()
 
-        # Collect up to 4 student name fields, then drop any that were
-        # left blank (so "student 3" being empty doesn't count as a student).
         student_names = [
             request.form.get(f"student_{i}", "").strip() for i in range(1, 5)
         ]
         student_names = [name for name in student_names if name]
 
         adult_name = request.form.get("adult_name", "").strip()
-        adult_email = request.form.get("adult_email", "").strip()
+        # Stored and compared lowercased: the uniqueness rule is meant to be
+        # "one adult, one team", and Coach.Diaz@x.com is the same mailbox as
+        # coach.diaz@x.com. Comparing raw input let the same adult register twice.
+        adult_email = request.form.get("adult_email", "").strip().lower()
         adult_phone = request.form.get("adult_phone", "").strip() or None
-        # Checkboxes only send a value when checked, so "was it submitted
-        # at all" is how we detect true/false here.
         kit_ordered = request.form.get("kit_ordered") is not None
 
-        # Save whatever the person typed back into form_data, so if we
-        # end up re-rendering the page below (due to errors), the form
-        # still shows their input instead of going blank.
+        # Everything the registrant typed, so signup.html can put it back in
+        # the form when validation fails. A coach entering four students
+        # should not have to retype the lot because one field was blank.
         form_data.update(
             team_name=team_name,
             affiliation=request.form.get("affiliation", "").strip(),
-            division=division,
             student_1=request.form.get("student_1", ""),
             student_2=request.form.get("student_2", ""),
             student_3=request.form.get("student_3", ""),
@@ -68,60 +104,68 @@ def signup():
         )
 
         # --- Validation (Week 3) ---
-        # Required-field checks. Each failure adds a human-readable
-        # message to errors, which the template displays back to the user.
         if not team_name:
             errors.append("Team name is required.")
-        if not division:
-            errors.append("Please choose a division.")
         if not adult_name:
             errors.append("Adult of record is required.")
         if not adult_email:
             errors.append("Adult email is required.")
+        elif not EMAIL_RE.match(adult_email):
+            errors.append("Enter a valid email address for the adult of record.")
+        # Presence only - phone formats vary too much to validate usefully, and
+        # a rejected-but-correct number is worse than an odd-looking one.
+        if not adult_phone:
+            errors.append("Adult phone number is required.")
 
-        # Team size must be between 1 and 4 students.
         if len(student_names) < 1:
             errors.append("Enter at least 1 student.")
         if len(student_names) > 4:
             errors.append("You can only enter up to 4 students.")
 
         # --- Email uniqueness (Week 4) ---
-        # Look up whether any existing team already used this email.
-        # If so, block the submission and name the conflicting team so
-        # the error is actually useful, not just "email taken."
-        if adult_email:
+        if adult_email and EMAIL_RE.match(adult_email):
             existing_team = Team.query.filter_by(adult_email=adult_email).first()
             if existing_team:
                 errors.append(
-                    f"That email is already registered on Team "
-                    f"#{existing_team.team_number} ({existing_team.name}). "
+                    f"That email is already registered to {existing_team.name}. "
                     f"Each adult of record can only be used once."
                 )
 
-        # Only attempt to save if nothing above failed.
         if not errors:
             students_text = "\n".join(student_names)
 
-            # --- Team numbering (Week 4: safer than before) ---
+            # --- Team numbering (internal only) ---
+            # Nothing shows this to a registrant any more, but team_number is
+            # still unique and non-null on the model, and check-in, the
+            # schedule, rankings and the bracket all join on it - so it keeps
+            # being assigned here.
             # Retry a couple times in case two people submit at the exact
             # same instant and both try to grab the same next number —
             # the database's unique constraint on team_number will reject
             # the second one, so we catch that and try again with a fresh
             # number instead of crashing.
             attempts = 0
-            saved = False
-            while attempts < 3 and not saved:
+            saved_team_number = None
+            while attempts < 3 and saved_team_number is None:
                 attempts += 1
-                # Find the highest team_number currently in use, then
-                # claim the next one up.
                 last_team = Team.query.order_by(Team.team_number.desc()).first()
-                next_number = (last_team.team_number + 1) if last_team else 1
+                # Never below FIRST_TEAM_NUMBER, even if rows already exist
+                # with lower numbers from before the floor was introduced —
+                # otherwise the first real team after a test row would be
+                # numbered 3 rather than 100.
+                next_number = max(
+                    (last_team.team_number + 1) if last_team else FIRST_TEAM_NUMBER,
+                    FIRST_TEAM_NUMBER,
+                )
 
                 new_team = Team(
                     team_number=next_number,
                     name=team_name,
                     affiliation=affiliation,
-                    division=division,
+                    # Not taken from the form: there is only one division, and a
+                    # team filed under anything else is invisible to the schedule,
+                    # rankings and bracket pages.
+                    division=DIVISION,
                     students=students_text,
                     adult_name=adult_name,
                     adult_email=adult_email,
@@ -131,31 +175,109 @@ def signup():
                 db.session.add(new_team)
                 try:
                     db.session.commit()
-                    saved = True
+                    saved_team_number = new_team.team_number
                 except IntegrityError:
-                    # Someone else grabbed this team_number first (a
-                    # race condition). Roll back this failed attempt and
-                    # loop again to try the next number instead of crashing.
                     db.session.rollback()
+                    # loop again and try the next number
 
-            if saved:
-                success = True
-                # Reset the form back to blank now that registration
-                # actually succeeded.
-                form_data = {key: "" for key in form_data}
-                form_data["kit_ordered"] = False
-            else:
-                # Only reachable if all 3 retry attempts hit a collision —
-                # extremely unlikely, but fail gracefully instead of 500ing.
-                errors.append(
-                    "Something went wrong assigning a team number. Please try again."
+            if saved_team_number is not None:
+                # Flashed either way, so the confirmation page can tell the
+                # truth about whether an email actually went out — and so a
+                # later visit to that URL claims nothing about email at all.
+                # Two different questions: did Resend accept the message, and
+                # can it actually reach this person. The shared sender answers
+                # yes to the first and no to the second, so promising an email
+                # needs both — otherwise we tell a coach to watch an inbox
+                # nothing was ever going to arrive in.
+                accepted = _send_confirmation_email(new_team)
+                deliverable = not current_app.config["MAIL_SENDER_IS_SHARED"]
+                if accepted and deliverable:
+                    flash(f"A confirmation email is on its way to {new_team.adult_email}.")
+                else:
+                    flash(
+                        "We could not send a confirmation email just now - "
+                        "write your team number down, you will need it at check-in."
+                    )
+
+                # Send them to the confirmation page, which is the only place
+                # they are told their team number.
+                return redirect(
+                    url_for("registration.confirmation", team_number=saved_team_number)
                 )
+
+            errors.append(
+                "Something went wrong assigning a team number. Please try again."
+            )
 
     return render_template(
         "registration/signup.html",
-        divisions=DIVISIONS,
-        success=success,
         errors=errors,
         form_data=form_data,
     )
 
+
+@registration_bp.route("/confirmation/<int:team_number>")
+def confirmation(team_number):
+    """Shown straight after a team registers, so they learn their number."""
+    team = Team.query.filter_by(team_number=team_number).first()
+    if team is None:
+        abort(404)
+    return render_template(
+        "registration/confirmation.html",
+        team=team,
+        payment_url=current_app.config["PAYMENT_FORM_URL"],
+    )
+
+
+@registration_bp.route("/teams")
+@staff_required
+def team_list():
+    """Full team list, used as the check-in reference.
+
+    Staff only: this page carries every student's name and the school they
+    attend, which is not something to publish to anyone holding the URL.
+    """
+    teams = Team.query.order_by(Team.team_number).all()
+    return render_template("registration/team_list.html", teams=teams)
+
+
+@registration_bp.route("/teams.csv")
+@staff_required
+def team_list_csv():
+    """The team list as a CSV download, for check-in desks working off paper.
+
+    Staff only, and the stricter of the two: this adds the adult of record's
+    name, email address and phone number to the student names above.
+    """
+    teams = Team.query.order_by(Team.team_number).all()
+
+    # StringIO rather than writing a file: the response is built in memory and
+    # streamed straight back, so there is no temp file to clean up.
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    # team_number leads, because it is the field every other system joins on -
+    # check-in, the schedule, rankings and the bracket all key off it, and a
+    # paper list without it cannot be reconciled with any of them.
+    writer.writerow([
+        "team_number", "name", "division", "affiliation", "students",
+        "adult_name", "adult_email", "adult_phone", "kit_ordered", "checked_in",
+    ])
+    for team in teams:
+        writer.writerow([
+            team.team_number,
+            team.name,
+            team.division,
+            team.affiliation,
+            "; ".join(team.students.splitlines()),
+            team.adult_name,
+            team.adult_email,
+            team.adult_phone or "",
+            "yes" if team.kit_ordered else "no",
+            "yes" if team.checked_in else "no",
+        ])
+
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=teams.csv"},
+    )

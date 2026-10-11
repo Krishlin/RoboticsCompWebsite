@@ -1,0 +1,46 @@
+{% extends "store/_base.html" %}
+{% block content %}
+<section class="band section">
+    <div class="section-head">
+        <h1 class="display">Order for your team</h1>
+        <p class="lede">Pay by card. Your receipt arrives by email.</p>
+    </div>
+
+    {% if error %}<p class="note" style="color:#b00">{{ error }}</p>{% endif %}
+
+    <form class="card" method="POST" action="{{ url_for('store.checkout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label for="email">Email for the receipt</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="team_number">Team number (optional)</label>
+            <input type="text" id="team_number" name="team_number" inputmode="numeric">
+            <p class="hint">If you have one, this links the order to your team.</p>
+        </div>
+
+        <div class="receipt">
+            <dl>
+            {% for sku, item in items %}
+                <dt>
+                    <label for="qty_{{ sku }}">{{ item.label }}</label>
+                    <span>{{ item.description }}</span>
+                </dt>
+                <dd>
+                    ${{ "%.2f"|format(item.amount_cents / 100) }}
+                    <input type="number" id="qty_{{ sku }}" name="qty_{{ sku }}"
+                           min="0" max="{{ item.max_quantity }}" value="0"
+                           style="width:4rem;margin-left:.75rem">
+                </dd>
+            {% endfor %}
+            </dl>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Continue to payment</button>
+        <p class="note">You'll enter card details on Stripe's secure page — they never touch this site.</p>
+    </form>
+</section>
+{% endblock %}

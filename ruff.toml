@@ -1,0 +1,23 @@
+# Tooling config for ruff. This lives here rather than in pyproject.toml
+# because Vercel's Python builder treats the presence of a root
+# pyproject.toml as "this is a uv-managed project" and runs `uv lock`
+# against it. Our pyproject.toml only ever held [tool.*] config, so uv found
+# no [project] table and failed the build before installing anything from
+# requirements.txt. Keeping ruff and pytest config in their own files keeps
+# the deploy on the pip path.
+
+line-length = 100
+exclude = ["venv", "migrations", "__pycache__"]
+
+[lint]
+# E402 is enabled deliberately: several modules import after sys.path setup or
+# after a blueprint is defined, and each carries a `# noqa: E402` explaining
+# why. Enabling the rule is what makes those comments mean something.
+# BLE is enabled for the same reason as E402: app/mail.py deliberately
+# catches bare Exception and explains why in a noqa, and the rule has to
+# be on for that comment to be checked rather than merely decorative.
+select = ["E4", "E7", "E9", "F", "B", "BLE", "UP", "RUF"]
+ignore = [
+    "E501",    # line length is handled by the formatter, not the linter
+    "UP031",   # percent-format in referee/routes.py is fine and deliberate
+]

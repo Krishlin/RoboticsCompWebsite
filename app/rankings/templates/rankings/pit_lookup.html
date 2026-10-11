@@ -5,6 +5,7 @@
     <h1 class="page-title">Pit Lookup</h1>
 
     <form class="card" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="team_number">Team number</label>
             <input type="number" id="team_number" name="team_number">

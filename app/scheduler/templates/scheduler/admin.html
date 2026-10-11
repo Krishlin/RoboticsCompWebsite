@@ -135,7 +135,7 @@
             try {
                 const response = await fetch('{{ url_for("scheduler.api_generate_schedule") }}', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
                     body: JSON.stringify({
                         use_advanced: algorithm === 'advanced',
                         use_balanced: algorithm === 'balanced',
@@ -189,7 +189,8 @@
             
             try {
                 const response = await fetch('{{ url_for("scheduler.api_validate_current_schedule") }}', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
                 });
                 
                 const data = await response.json();

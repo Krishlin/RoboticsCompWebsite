@@ -25,6 +25,7 @@
                             <span class="badge badge-success">Checked in</span>
                         {% else %}
                             <form method="POST" action="{{ url_for('checkin.check_in_team', team_id=team.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-secondary">Check in</button>
                             </form>
                         {% endif %}

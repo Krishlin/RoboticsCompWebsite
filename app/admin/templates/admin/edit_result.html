@@ -10,6 +10,7 @@
 
     {% if match %}
         <form class="card" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <p class="owner-tag">{% if is_new_result %}Add result for {% else %}Match {% endif %}{{ match.match_number }} — {{ match.arena }}</p>
 
             <div class="form-group">
@@ -29,12 +30,20 @@
 
             <div class="form-group">
                 <label for="red_final_zone">Red final zone</label>
-                <input type="text" id="red_final_zone" name="red_final_zone" value="{{ result.red_final_zone if result else '' }}">
+                <select id="red_final_zone" name="red_final_zone">
+                    {% for zone in valid_zones %}
+                        <option value="{{ zone }}" {% if result and result.red_final_zone == zone %}selected{% endif %}>{{ zone }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div class="form-group">
                 <label for="blue_final_zone">Blue final zone</label>
-                <input type="text" id="blue_final_zone" name="blue_final_zone" value="{{ result.blue_final_zone if result else '' }}">
+                <select id="blue_final_zone" name="blue_final_zone">
+                    {% for zone in valid_zones %}
+                        <option value="{{ zone }}" {% if result and result.blue_final_zone == zone %}selected{% endif %}>{{ zone }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <p class="hint">Saving this will write an AuditEntry for every field that changed.</p>

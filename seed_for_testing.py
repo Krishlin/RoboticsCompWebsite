@@ -54,7 +54,7 @@ def seed():
         now = datetime.utcnow()
         matches = []
         match_number = 1
-        for round_num in range(3):  # 3 rounds -> 3 matches per team
+        for _round_num in range(3):  # 3 rounds -> 3 matches per team
             shuffled = teams[:]
             random.shuffle(shuffled)
             for i in range(0, len(shuffled), 2):

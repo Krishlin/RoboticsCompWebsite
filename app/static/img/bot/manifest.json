@@ -1,0 +1,34 @@
+{
+  "source": "Stemsters bod renders",
+  "widths": [
+    200,
+    440,
+    814
+  ],
+  "aspect": {
+    "width": 814,
+    "height": 793
+  },
+  "views": [
+    {
+      "slug": "three-quarter-rear",
+      "sizes": {
+        "200": {
+          "file": "three-quarter-rear-200.webp",
+          "width": 200,
+          "height": 195
+        },
+        "440": {
+          "file": "three-quarter-rear-440.webp",
+          "width": 440,
+          "height": 429
+        },
+        "814": {
+          "file": "three-quarter-rear-814.webp",
+          "width": 814,
+          "height": 793
+        }
+      }
+    }
+  ]
+}

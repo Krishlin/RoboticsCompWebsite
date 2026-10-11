@@ -1,0 +1,12 @@
+{% extends "store/_base.html" %}
+{% block content %}
+<section class="band section">
+    <h1 class="display">Nothing was charged</h1>
+    <p class="lede">You left the payment page before finishing, so your card was not used.</p>
+    {% if order and order.team_id %}
+        <p class="note">Your team registration is still saved — only the payment is outstanding.</p>
+    {% endif %}
+    <a class="btn btn-primary" href="{{ url_for('store.index') }}">Try again</a>
+    <a class="btn btn-outline" href="/">Back to the site</a>
+</section>
+{% endblock %}

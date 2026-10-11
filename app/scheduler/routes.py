@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import render_template, jsonify, request
 
 from app.db import db
-from app.models import Match, Team
+from app.models import Match, MatchResult, Team
 from app.scheduler import scheduler_bp
 from app.scheduler.generator import (
     generate_random_schedule,
@@ -102,8 +102,33 @@ def api_generate_schedule():
         matches_per_team = data.get("matches_per_team", 5)
         clear_existing = data.get("clear_existing", True)
         
-        # Clear existing qualification matches if requested
+        # Regenerating after the event has started is refused, not attempted.
+        # Clearing deletes the qualification matches but not their results,
+        # audit entries or replays, which all point at match ids: on SQLite the
+        # ids get reused and old results silently attach to new, different
+        # pairings; on Postgres the foreign keys make the delete fail. A
+        # partial regenerate (keep played matches, reschedule the rest) can't
+        # keep match counts equal in general, so the head ref has to decide
+        # what to do by hand instead.
         if clear_existing:
+            started = (
+                Match.query.filter(
+                    Match.phase == "qualification",
+                    db.or_(
+                        Match.status != "scheduled",
+                        Match.id.in_(db.session.query(MatchResult.match_id)),
+                    ),
+                ).count()
+            )
+            if started:
+                return jsonify({
+                    "error": (
+                        f"{started} qualification match(es) have already been played "
+                        "or started, so the schedule can't be regenerated without "
+                        "losing or misattributing results. Use the admin page to "
+                        "insert replays instead."
+                    ),
+                }), 409
             Match.query.filter_by(phase="qualification").delete()
         
         # Get all teams

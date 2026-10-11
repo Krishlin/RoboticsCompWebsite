@@ -1,0 +1,72 @@
+{
+  "summit_hill_named.png": {
+    "source": "summit_hill_named.png",
+    "sizes": [
+      {
+        "file": "summit_hill_named-640.webp",
+        "width": 640,
+        "height": 532
+      },
+      {
+        "file": "summit_hill_named-1100.webp",
+        "width": 1100,
+        "height": 914
+      }
+    ]
+  },
+  "kit_parts.png": {
+    "source": "kit_parts.png",
+    "sizes": [
+      {
+        "file": "kit_parts-520.webp",
+        "width": 520,
+        "height": 544
+      },
+      {
+        "file": "kit_parts-900.webp",
+        "width": 900,
+        "height": 942
+      },
+      {
+        "file": "kit_parts-1340.webp",
+        "width": 1340,
+        "height": 1403
+      }
+    ]
+  },
+  "stemsters_logo.png": {
+    "source": "stemsters_logo.png",
+    "sizes": [
+      {
+        "file": "stemsters_logo-320.webp",
+        "width": 320,
+        "height": 61
+      },
+      {
+        "file": "stemsters_logo-640.webp",
+        "width": 640,
+        "height": 121
+      }
+    ]
+  },
+  "RobotsOnField.png": {
+    "source": "RobotsOnField.png",
+    "sizes": [
+      {
+        "file": "RobotsOnField-700.webp",
+        "width": 700,
+        "height": 523
+      },
+      {
+        "file": "RobotsOnField-1100.webp",
+        "width": 1100,
+        "height": 822
+      },
+      {
+        "file": "RobotsOnField-1447.webp",
+        "width": 1447,
+        "height": 1081
+      }
+    ]
+  }
+}

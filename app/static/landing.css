@@ -1,0 +1,1734 @@
+/* owner: shared / lead
+   Styles for the public landing page only (app/templates/landing.html).
+   Deliberately separate from style.css: that sheet dresses the tournament
+   tools, this one dresses the competitor-facing site. Neither imports the
+   other, so changing one can't disturb the other. */
+
+/* ---------------------------------------------------------------
+   Tokens. Every colour here is measured off the real field art in
+   SRC_Website_Package/images, not picked by eye, so the page and the
+   printed Hill agree.
+   --------------------------------------------------------------- */
+
+:root {
+    --edge: #141414;          /* Edge Band. The boundary, and the page's dark ground. */
+    --edge-soft: #242424;     /* hairlines on the dark ground */
+    --paper: #f2f4f4;         /* Plateau white under gym light */
+    --paper-deep: #e4e8e8;    /* recessed panels on the light ground */
+    --ink: #141414;
+    --ink-soft: #5d6668;
+
+    --cyan: #5bcfdd;          /* the wordmark's dark end */
+    --cyan-pale: #b7e9f0;     /* the wordmark's light end */
+    --cyan-deep: #1d7f8d;     /* cyan that passes contrast on white */
+
+    /* Zone hues. These are data, never decoration: a swatch of one of
+       these on this page always means that zone of the Hill. */
+    --z-plateau: #f0f0f0;
+    --z-inner: #4fae55;
+    --z-outer: #e5c32c;
+    --z-red: #c0433b;
+    --z-blue: #4470d2;
+
+    --measure: 66ch;
+    --spine: clamp(1.25rem, 5vw, 5.5rem);
+    --rule: 1px solid rgba(20, 20, 20, 0.14);
+    --rule-dark: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    /* Stops iOS inflating body text when a phone is turned sideways, which
+       on this page reflows a measured column into something else. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Display type is the same superfamily one width wider. The width jump,
+   not a second typeface, is what separates headline from body here. */
+.display,
+.facts dt,
+.awards dt,
+.zones caption,
+.readout-zone,
+.schedule dt,
+.receipt-total,
+.duo h3,
+.block h3,
+.register-panel h3,
+.footer-creed {
+    font-family: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-stretch: 125%; /* Archivo is variable; the wide cut is the display voice. */
+    font-weight: 800;
+}
+
+.display {
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+
+a {
+    color: var(--cyan-deep);
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--cyan-deep);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.dark :where(a, button, summary, [tabindex]):focus-visible {
+    outline-color: var(--cyan);
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--cyan);
+    color: var(--edge);
+    padding: 0.75rem 1.25rem;
+    font-weight: 700;
+    z-index: 100;
+}
+
+.skip-link:focus {
+    left: 0;
+}
+
+/* ---------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------- */
+
+/* The band holds the measure in its own padding rather than constraining
+   each child. Capping children instead would hand every narrow one an
+   `auto` margin and quietly centre it, which this left-aligned page does
+   not want. */
+.band {
+    padding-inline: max(var(--spine), calc((100% - 1340px) / 2));
+}
+
+/* The nav is sticky, so an anchored section has to stop clear of it or its
+   heading lands underneath. The bar measures 83 px on a desktop and 71 on a
+   phone; this clears the taller of the two and leaves a little air. */
+.section,
+.hero,
+.creed {
+    scroll-margin-top: 6rem;
+}
+
+.dark {
+    background: var(--edge);
+    color: var(--paper);
+}
+
+.dark .lede,
+.dark .note {
+    color: rgba(242, 244, 244, 0.72);
+}
+
+/* ---------------------------------------------------------------
+   Navigation
+   --------------------------------------------------------------- */
+
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--edge);
+    border-bottom: var(--rule-dark);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    padding-block: 0.85rem;
+}
+
+.nav-logo {
+    display: flex;
+    padding-block: 0.4rem; /* part of the tap target, not decoration */
+}
+
+.nav-logo img {
+    display: block;
+    height: 26px;
+    width: auto;
+}
+
+.nav-links {
+    display: flex;
+    gap: 0 2.25rem;
+    margin-left: auto;
+    margin-right: 0.75rem;
+    list-style: none;
+    margin-block: 0;
+    padding-left: 0;
+}
+
+/* Small caps-tracked labels read as a set of sections rather than a
+   sentence, and the underline grows in from the left in the wordmark's
+   cyan so hover is unmistakable against the dark bar. */
+.nav-links a {
+    position: relative;
+    display: block;
+    padding-block: 0.4rem;
+    color: rgba(242, 244, 244, 0.86);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    transition: color 0.15s ease;
+}
+
+.nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.1rem;
+    height: 2px;
+    background: var(--cyan);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+}
+
+.nav-links a:hover,
+.nav-links a:focus-visible {
+    color: var(--cyan);
+}
+
+.nav-links a:hover::after,
+.nav-links a:focus-visible::after {
+    transform: scaleX(1);
+}
+
+.nav-cta {
+    padding: 0.62rem 1.15rem;
+    font-size: 0.95rem;
+}
+
+/* The confirmation page's bar carries no section links, so nothing else is
+   pushing its one button to the right. */
+.nav-back {
+    margin-left: auto;
+    padding: 0.62rem 1.15rem;
+    font-size: 0.95rem;
+}
+
+/* The short label is for the phone bar, where the long one does not fit
+   beside a menu button. Both are hidden from assistive tech; see the
+   template. */
+.nav-cta-short {
+    display: none;
+}
+
+/* Hidden until the script that operates it has run, and gone again above the
+   breakpoint where the links are shown in full. [hidden] is spelled out
+   because the media query below would otherwise out-specify it. */
+.nav-toggle,
+.nav-toggle[hidden] {
+    display: none;
+}
+
+.nav-bars,
+.nav-bars::before,
+.nav-bars::after {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.nav-bars::before,
+.nav-bars::after {
+    content: "";
+    position: absolute;
+}
+
+.nav-bars::before {
+    transform: translateY(-6px);
+}
+
+.nav-bars::after {
+    transform: translateY(6px);
+}
+
+.is-open .nav-bars {
+    background: transparent;
+}
+
+.is-open .nav-bars::before {
+    transform: rotate(45deg);
+}
+
+.is-open .nav-bars::after {
+    transform: rotate(-45deg);
+}
+
+/* ---------------------------------------------------------------
+   Buttons. Square corners: this whole page borrows the vocabulary of
+   a dimensioned drawing, and drawings don't have rounded corners.
+   The only round things on the page are the things that are round.
+   --------------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.4rem;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-primary {
+    background: var(--cyan);
+    color: var(--edge);
+}
+
+.btn-primary:hover {
+    background: var(--cyan-pale);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--paper);
+    border-color: rgba(242, 244, 244, 0.4);
+}
+
+.btn-ghost:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.btn-dark {
+    background: var(--edge);
+    color: var(--paper);
+}
+
+.btn-dark:hover {
+    background: #2e2e2e;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border-color: rgba(20, 20, 20, 0.35);
+}
+
+.btn-outline:hover {
+    border-color: var(--ink);
+}
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.reg-deadline {
+    margin-top: 0.75rem;
+}
+
+/* ---------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------- */
+
+.hero {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3rem, 7vw, 5.5rem);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+}
+
+.hero-wordmark {
+    width: min(100%, 420px);
+    margin-bottom: 1.75rem;
+}
+
+.hero h1 {
+    font-size: clamp(2.6rem, 6.2vw, 4.25rem);
+    margin: 0 0 1.25rem;
+}
+
+.hero .lede {
+    font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+    max-width: 34ch;
+    color: rgba(242, 244, 244, 0.78);
+    margin: 0 0 2rem;
+}
+
+.hero .btn-row {
+    margin-bottom: 1.5rem;
+}
+
+/* ---------------------------------------------------------------
+   The interactive Hill. Drawn from the field spec: 42 / 36 / 22 / 16 /
+   10 cm diameters, 2 cm of rise. Drag the robot and the readout tells
+   you what the colour sensor sees, which is the whole game.
+   --------------------------------------------------------------- */
+
+.hill-figure {
+    margin: 0;
+}
+
+.hill-stage {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin-inline: auto;
+    aspect-ratio: 1;
+    cursor: grab;
+    /* The figure is most of a phone screen, so the page has to stay
+       scrollable through it. Vertical panning belongs to the browser here;
+       only the robot below claims the gesture outright. */
+    touch-action: pan-y;
+}
+
+.hill-stage:active {
+    cursor: grabbing;
+}
+
+.hill-stage svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#robot {
+    cursor: grab;
+    transition: opacity 0.2s ease;
+    /* The one place on the Hill a finger takes the robot rather than the
+       page. js/hill.js tests for this same element, so the two agree. */
+    touch-action: none;
+}
+
+.hill-stage.is-out #robot {
+    opacity: 0.35;
+}
+
+.hill-readout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1rem;
+    align-items: center;
+    max-width: 480px;
+    margin: 1.5rem auto 0;
+    padding-top: 1.25rem;
+    border-top: var(--rule-dark);
+}
+
+.readout-swatch {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    background: var(--z-outer);
+    grid-row: span 2;
+    transition: background-color 0.18s ease;
+}
+
+.readout-zone {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.readout-detail {
+    font-size: 0.95rem;
+    color: rgba(242, 244, 244, 0.7);
+    line-height: 1.35;
+}
+
+.hill-hint {
+    max-width: 480px;
+    margin: 0.85rem auto 0;
+    font-size: 0.875rem;
+    color: rgba(242, 244, 244, 0.62);
+}
+
+/* ---------------------------------------------------------------
+   Sections
+   --------------------------------------------------------------- */
+
+.section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+
+.section + .section {
+    border-top: var(--rule);
+}
+
+.dark.section + .dark.section {
+    border-top: var(--rule-dark);
+}
+
+.section-head {
+    max-width: var(--measure);
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.section-head h2 {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    margin: 0 0 1rem;
+}
+
+.lede {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+}
+
+.note {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+}
+
+/* --- The teaser ---------------------------------------------------------
+
+   Runs straight on from the hero rather than opening a band of its own: both
+   are dark, and a rule between them would cut the page in two before it has
+   said anything. Less top padding than a .section for the same reason. */
+
+.teaser-band {
+    padding-block: 0 clamp(3.5rem, 8vw, 6rem);
+}
+
+.teaser {
+    margin: 0;
+}
+
+/* The video carries its own 1180x642 in the markup, so the box is the right
+   shape before the poster arrives and the page below it does not jump. */
+.teaser video {
+    display: block;
+    width: 100%;
+    max-width: 1100px;
+    height: auto;
+    margin: 0 auto;
+    background: #000;
+    border: var(--rule-dark);
+}
+
+/* Centred under the video, but held to a readable measure rather than the
+   video's full 1100px. */
+.teaser-strategy {
+    max-width: 70ch;
+    margin: clamp(1.75rem, 4vw, 2.5rem) auto 0;
+}
+
+/* The one photograph on the page. Capped rather than full-bleed: the art
+   is cut out on transparency, so past about 1100px it stops reading as a
+   field on a table and starts reading as two robots floating on the band. */
+.game-photo {
+    margin: 0 0 clamp(2.5rem, 5vw, 3.5rem);
+    text-align: center;
+}
+
+.game-photo img {
+    width: 100%;
+    max-width: 1100px;
+}
+
+/* Rules of the match: a plain measured list. No cards, no icons — the
+   four facts are short enough that anything around them is packaging. */
+.facts {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    margin: 0;
+    padding: 0;
+}
+
+.facts > div {
+    border-top: 2px solid var(--ink);
+    padding-top: 1rem;
+}
+
+.facts dt {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+}
+
+.facts dd {
+    margin: 0;
+    font-size: 0.975rem;
+    color: var(--ink-soft);
+}
+
+/* --- The Hill section: figure opposite its legend, as on the spec sheet --- */
+
+.spec {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.spec-figure {
+    margin: 0;
+    background: #fff;
+    padding: 1.5rem;
+    border: var(--rule);
+}
+
+.zones {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.975rem;
+}
+
+.zones caption {
+    text-align: left;
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding-bottom: 0.75rem;
+}
+
+.zones th,
+.zones td {
+    text-align: left;
+    padding: 0.7rem 0.6rem 0.7rem 0;
+    border-bottom: var(--rule);
+    vertical-align: middle;
+}
+
+.zones thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+}
+
+.zones tbody th {
+    font-weight: 600;
+}
+
+.zones .num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.swatch {
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid rgba(20, 20, 20, 0.25);
+    vertical-align: -0.18em;
+    margin-right: 0.55rem;
+}
+
+.split-swatch {
+    background: linear-gradient(90deg, var(--z-red) 0 50%, var(--z-blue) 50% 100%);
+}
+
+/* --- Cost: a receipt, because the argument is a price --- */
+
+.cost {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.receipt {
+    background: #fff;
+    border: 2px solid var(--ink);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    max-width: 30rem;
+}
+
+.receipt dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.9rem 1rem;
+}
+
+.receipt dt {
+    font-weight: 500;
+}
+
+.receipt dt span {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-weight: 400;
+}
+
+.receipt dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 600;
+}
+
+.receipt-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--ink);
+    font-stretch: 125%;
+    font-weight: 800;
+}
+
+.receipt-total span:last-child {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+/* --- The kit robot, turned over ---
+
+   One view at a time in a scroll-snap row, which is a swipe on a phone and a
+   trackpad flick or a tap on the rail everywhere else. No JavaScript is
+   involved in moving it: js/landing.js only marks which view you are on. */
+
+.bot-gallery {
+    margin: 0;
+}
+
+.bot-stage {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain; /* a swipe past the last view is not a Back */
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    background: #fff;
+    border: var(--rule);
+    /* The rail underneath says how many views there are and where you are in
+       them, so a scrollbar would be saying it a second time and worse. */
+    scrollbar-width: none;
+}
+
+.bot-stage::-webkit-scrollbar {
+    display: none;
+}
+
+/* Every slide is the full width of the stage. All seven renders share one
+   canvas, so every slide is the same height and the stage holds it without
+   being told to. */
+.bot-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.bot-slide img {
+    display: block;
+    width: 100%;
+    max-width: 24rem;
+    height: auto;
+    margin-inline: auto;
+}
+
+.bot-rail {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: 0.4rem;
+    scrollbar-width: thin;
+}
+
+.bot-thumb {
+    flex: 0 0 auto;
+    display: block;
+    width: 4.5rem;
+    padding: 0.2rem;
+    background: #fff;
+    border: 1px solid rgba(20, 20, 20, 0.16);
+    transition: border-color 0.15s ease;
+    /* Not decoration: it makes this the containing block for the hidden
+       label below. Left to position against the page instead, the label of
+       the last thumbnail sits 500 px out — past the rail, which cannot clip
+       what it is not the containing block of — and the whole page acquires a
+       sideways scroll. */
+    position: relative;
+}
+
+.bot-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.bot-thumb:hover {
+    border-color: var(--ink-soft);
+}
+
+/* Two pixels of ink rather than a tint: the swatches on this page are data
+   and a coloured highlight here would read as one of them. */
+.bot-thumb.is-current {
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.kit-still,
+.kit-parts img {
+    display: block;
+    width: 100%;
+}
+
+.bot-note {
+    margin-top: 1.5rem;
+}
+
+.kit-parts {
+    margin: 1.5rem 0 0;
+}
+
+.kit-guides {
+    margin-top: 2.5rem;
+}
+
+.kit-video {
+    margin: 1.5rem 0 0;
+}
+
+.kit-video iframe {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    background: #000;
+}
+
+.kit-video figcaption {
+    margin-top: 0.75rem;
+}
+
+.kit-guides h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+}
+
+.kit-guides ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.kit-guides li {
+    padding-block: 0.75rem;
+    border-top: var(--rule);
+}
+
+.kit-guides a {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.kit-guides span {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+/* The rail's labels name each view for assistive tech; on screen the
+   thumbnail is the label. */
+.bot-thumb span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* --- Schedule: a real day, set as a time column, with the kit list the
+       day requires beside it rather than sections away --- */
+
+.event-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+}
+
+.event-aside {
+    position: sticky;
+    top: 6rem;
+}
+
+.schedule {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0 clamp(1rem, 3vw, 2.5rem);
+}
+
+.schedule > div {
+    display: contents;
+}
+
+.schedule dt {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 1.1rem 0;
+    border-top: var(--rule);
+    white-space: nowrap;
+}
+
+.schedule dd {
+    margin: 0;
+    padding: 1.1rem 0;
+    border-top: var(--rule);
+    color: var(--ink-soft);
+    max-width: 60ch;
+}
+
+.schedule dd b {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+/* The three moments a team actually has to hit. Weight, not an icon. */
+.schedule .key dt,
+.schedule .key dd {
+    border-top: 2px solid var(--ink);
+}
+
+.schedule .key dd {
+    color: var(--ink);
+}
+
+/* --- Awards --- */
+
+.awards {
+    display: grid;
+    gap: 0;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin: 0;
+}
+
+.awards > div {
+    padding: 1.4rem 1.5rem 1.4rem 0;
+    border-top: 2px solid var(--ink);
+    margin-right: 1.5rem;
+}
+
+.awards dt {
+    font-stretch: 125%;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+}
+
+.awards dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+}
+
+.dark .awards > div {
+    border-top-color: var(--cyan);
+}
+
+.dark .awards dd {
+    color: rgba(242, 244, 244, 0.72);
+}
+
+/* --- Two-up prose blocks (exhibition / areas, bring / register) --- */
+
+.duo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: clamp(2rem, 4vw, 3.5rem);
+}
+
+.duo h3,
+.block h3 {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem;
+}
+
+.checklist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.checklist li {
+    padding: 0.6rem 0 0.6rem 1.75rem;
+    border-bottom: var(--rule);
+    position: relative;
+    color: var(--ink-soft);
+}
+
+.dark .checklist li {
+    border-bottom-color: rgba(255, 255, 255, 0.14);
+    color: rgba(242, 244, 244, 0.72);
+}
+
+/* A drawn tick, so the list needs no icon font and no emoji. */
+.checklist li::before {
+    content: "";
+    position: absolute;
+    left: 0.15rem;
+    top: 1.05rem;
+    width: 0.65rem;
+    height: 0.35rem;
+    border-left: 2px solid var(--cyan-deep);
+    border-bottom: 2px solid var(--cyan-deep);
+    transform: rotate(-45deg);
+}
+
+.dark .checklist li::before {
+    border-color: var(--cyan);
+}
+
+/* --- Register --- */
+
+.register {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.register-panel {
+    background: var(--edge);
+    color: var(--paper);
+    padding: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+.register-panel h3 {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.35rem;
+    margin: 0 0 1rem;
+}
+
+.register-panel p {
+    color: rgba(242, 244, 244, 0.75);
+    font-size: 0.975rem;
+}
+
+.register-panel .btn-row {
+    margin-top: 1.5rem;
+}
+
+/* --- Climb together --- */
+
+.creed {
+    padding-block: clamp(4rem, 9vw, 7rem);
+}
+
+.creed .display {
+    font-size: clamp(1.6rem, 3.6vw, 2.6rem);
+    line-height: 1.15;
+    max-width: 22ch;
+    margin: 0 0 1.75rem;
+}
+
+.creed .note {
+    max-width: 52ch;
+    font-size: 1.05rem;
+    color: rgba(242, 244, 244, 0.7);
+}
+
+/* --- Footer --- */
+
+.footer {
+    padding-block: clamp(2.5rem, 5vw, 3.5rem);
+    border-top: var(--rule-dark);
+    font-size: 0.95rem;
+}
+
+.footer-inner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+    align-items: start;
+}
+
+.footer img {
+    height: 24px;
+    width: auto;
+    margin-bottom: 1rem;
+}
+
+.footer p {
+    color: rgba(242, 244, 244, 0.6);
+    margin: 0 0 0.4rem;
+    max-width: 38ch;
+}
+
+.footer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.footer li {
+    margin-bottom: 0.5rem;
+}
+
+.footer a {
+    color: rgba(242, 244, 244, 0.85);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: var(--cyan);
+    text-decoration: underline;
+}
+
+.footer-creed {
+    font-stretch: 125%;
+    font-weight: 800;
+    color: var(--cyan) !important;
+    font-size: 1.05rem;
+}
+
+/* The organiser's mark, set apart from the competition's own so the two
+   wordmarks are not read as one lockup. */
+.footer-org {
+    margin-top: 1.75rem;
+}
+
+/* Taller than the Summit wordmark above it, and the one place on the page
+   that overrides `.footer img`. It is a drawn wordmark — the letters carry
+   glasses, eyes and legs — and at 24px those details collapse into specks.
+   The selector is doubled because `.footer img` would otherwise outrank a
+   bare class. */
+.footer img.footer-org-mark {
+    height: 34px;
+    margin-bottom: 0.6rem;
+}
+
+/* ---------------------------------------------------------------
+   Responsive. Everything above is a two-column grid; below 880px the
+   page becomes one column and the figures lead.
+   --------------------------------------------------------------- */
+
+@media (max-width: 880px) {
+    .event-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .event-aside {
+        position: static;
+    }
+
+    .hero-grid,
+    .spec,
+    .cost,
+    .register {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-grid {
+        gap: 2.5rem;
+    }
+
+    /* The headline leads on a phone: the Hill is the most characteristic
+       thing on the page but it explains nothing on its own, and the nav
+       already carries the wordmark, so the hero's copy of it goes. */
+    .hero-wordmark {
+        display: none;
+    }
+
+    /* --- The nav on a phone ---
+
+       Logo, Register, Menu on one line; the five section links on a second
+       line that the button opens and closes. Without the script the button
+       is not there and the links are simply always shown, which is why the
+       nav stops being sticky in that case — five open links plus the bar
+       would otherwise hold a third of a phone screen hostage for the whole
+       page. */
+    .nav {
+        padding-block: 0.55rem;
+        gap: 0 0.6rem;
+    }
+
+    .nav:not(.nav-has-js) {
+        position: static;
+    }
+
+    .nav-logo {
+        margin-right: auto;
+    }
+
+    /* The wordmark is 7.6 times as wide as it is tall, so every pixel of
+       height costs eight of the bar. Three things have to fit on one line
+       here and this is the one that can give — but the link around it still
+       has to be a thumb tall, which is what the min-height is for. */
+    .nav-logo {
+        align-items: center;
+        min-height: 2.75rem;
+    }
+
+    .nav-logo img {
+        height: 20px;
+    }
+
+    .nav-cta {
+        order: 2;
+        padding: 0.7rem 1rem;
+    }
+
+    .nav-cta-long {
+        display: none;
+    }
+
+    .nav-cta-short {
+        display: inline;
+    }
+
+    .nav-toggle {
+        order: 3;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-height: 2.75rem;
+        padding-inline: 0.85rem;
+        background: transparent;
+        border: 2px solid rgba(242, 244, 244, 0.32);
+        color: var(--paper);
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .nav-bars {
+        position: relative;
+    }
+
+    .nav-links {
+        order: 4;
+        flex-basis: 100%;
+        flex-direction: column;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 0.6rem;
+        border-top: var(--rule-dark);
+    }
+
+    .nav-has-js .nav-links {
+        display: none;
+    }
+
+    .nav-has-js.is-open .nav-links {
+        display: flex;
+    }
+
+    .nav-links li + li {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* A full-width row a thumb can hit without aiming. */
+    .nav-links a {
+        padding-block: 0.8rem;
+        font-size: 1.05rem;
+    }
+}
+
+/* Below this the bar runs out of room for three things and starts wrapping,
+   so the word next to the bars goes and the logo shrinks again. The button
+   keeps its name in aria-label. */
+@media (max-width: 420px) {
+    .nav-logo img {
+        height: 18px;
+    }
+
+    .nav-toggle-text {
+        display: none;
+    }
+
+    .nav-toggle {
+        padding-inline: 0.75rem;
+        min-width: 2.75rem;
+        justify-content: center;
+    }
+
+    .nav-cta {
+        padding-inline: 0.85rem;
+    }
+}
+
+/* The last tier, for a 320 px phone. Everything gives a little rather than
+   any one thing giving a lot, because the alternative is the bar wrapping to
+   two rows and taking a seventh of the screen with it for the whole page. */
+@media (max-width: 360px) {
+    .nav {
+        gap: 0 0.45rem;
+    }
+
+    .nav-logo img {
+        height: 15px;
+    }
+
+    .nav-cta {
+        padding-inline: 0.7rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 560px) {
+    body {
+        font-size: 1rem;
+    }
+
+    /* The clamp floor above is set for the desktop ramp and overflows a
+       360 px screen; below that width the headline has to scale with the
+       viewport instead. */
+    .hero h1 {
+        font-size: clamp(2.05rem, 9.5vw, 2.6rem);
+    }
+
+    .schedule {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .schedule dd {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .schedule .key dd {
+        border-top: 0;
+    }
+
+    .awards > div {
+        margin-right: 0;
+    }
+
+    /* Full-width buttons, but only the ones in a row of them: the nav's
+       Register is a button too and stretching it breaks the bar. */
+    .btn-row .btn {
+        width: 100%;
+    }
+
+    /* Thumb-sized rows rather than lines of text with a hairline between. */
+    .footer li {
+        margin-bottom: 0;
+    }
+
+    .footer li a {
+        display: inline-block;
+        padding-block: 0.55rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .zones {
+        font-size: 0.9rem;
+    }
+
+    .zones th,
+    .zones td {
+        padding: 0.65rem 0.4rem 0.65rem 0;
+    }
+
+    /* nowrap keeps "flat, start zones" on one line, which at this width
+       pushes the table wider than the screen. */
+    .zones .num {
+        white-space: normal;
+    }
+
+    .swatch {
+        margin-right: 0.4rem;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Where a light section meets a dark one the change of ground is the
+   division; a rule there as well would be a second, weaker one.
+   --------------------------------------------------------------- */
+
+.section.dark + .section:not(.dark),
+.section:not(.dark) + .section.dark {
+    border-top: 0;
+}
+
+/* ---------------------------------------------------------------
+   The manual as a contact sheet.
+
+   The argument for SRC is that the rulebook is nine pages, so the page
+   shows all nine rather than claiming it. The thumbnails are ordinary
+   images built by tools/render_manual_thumbs.py; with none generated the
+   section falls back to a plain link.
+   --------------------------------------------------------------- */
+
+.manual-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem clamp(2rem, 5vw, 4rem);
+    align-items: end;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.manual-head h2 {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    margin: 0 0 1rem;
+}
+
+/* Balanced because this one runs to exactly two lines at desktop widths, and
+   the natural break leaves a full line above a short one. Balancing evens
+   them; the non-breaking space in the template is what stops "in nine pages"
+   being split across whichever break the browser picks. */
+.manual-head .lede {
+    max-width: 48ch;
+    text-wrap: balance;
+}
+
+/* One column per page, however many pages the manual runs to: the whole
+   rulebook laid out in a single row is the point being made. */
+.manual-sheet {
+    display: grid;
+    grid-template-columns: repeat(var(--pages, 9), minmax(0, 1fr));
+    gap: clamp(0.5rem, 1.2vw, 1rem);
+}
+
+/* One page. The lift on hover is the affordance for "this opens" — the
+   thumbnails are too small to read, so the target has to say it is one. */
+.sheet-page {
+    display: block;
+    position: relative;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.sheet-page:hover,
+.sheet-page:focus-visible {
+    border-color: var(--cyan);
+    transform: translateY(-4px);
+}
+
+.sheet-page img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.sheet-number {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--paper);
+    background: var(--edge);
+}
+
+.manual-fallback {
+    border-top: var(--rule-dark);
+    padding-top: 1.5rem;
+}
+
+@media (max-width: 1000px) {
+    .manual-sheet {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 880px) {
+    .manual-head {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+}
+
+/* Nine columns on a phone is nine illegible slivers, and so is three. Below
+   this the sheet stops being a sheet and becomes something you swipe: a page
+   and a half at a time, wide enough to see that these are pages of rules,
+   with the half page at the edge saying there are more. */
+@media (max-width: 700px) {
+    .manual-sheet {
+        display: flex;
+        gap: 0.6rem;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x proximity;
+        padding-bottom: 0.5rem;
+    }
+
+    .sheet-page {
+        flex: 0 0 min(62%, 15rem);
+        scroll-snap-align: start;
+    }
+
+    /* The lift said "this opens" to a cursor. A finger has already tapped. */
+    .sheet-page:hover,
+    .sheet-page:focus-visible {
+        transform: none;
+    }
+
+    .manual-head .btn {
+        width: 100%;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Registration confirmation.
+
+   Two jobs: hand over the team number, and get the fee paid. The
+   number is sized to be read across a room and copied down; the
+   payment panel is the only call to action on the page.
+   --------------------------------------------------------------- */
+
+.confirm-hero {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3rem, 6vw, 4.5rem);
+}
+
+.confirm-kicker {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+.confirm-title {
+    font-size: clamp(2.4rem, 5.5vw, 3.75rem);
+    margin: 0 0 2rem;
+}
+
+/* The number, as it will appear on the pit sign. */
+.team-badge {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.25rem 2rem 1.4rem;
+    border: 2px solid var(--cyan);
+    margin-bottom: 1.75rem;
+}
+
+.team-badge-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--cyan);
+}
+
+.team-badge-number {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: clamp(3.5rem, 9vw, 5.5rem);
+    line-height: 0.9;
+    color: var(--paper);
+    font-variant-numeric: tabular-nums;
+}
+
+.confirm-lede {
+    max-width: 46ch;
+}
+
+/* --- Payment --- */
+
+.pay-section {
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+
+.pay-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+    background: #fff;
+    border: 2px solid var(--ink);
+    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+}
+
+.pay-title {
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    margin: 0 0 0.85rem;
+}
+
+.pay-copy p {
+    margin: 0 0 0.6rem;
+    max-width: 58ch;
+    color: var(--ink-soft);
+}
+
+.pay-copy strong {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.pay-note {
+    margin-top: 0.9rem !important;
+}
+
+.pay-action {
+    text-align: center;
+}
+
+.pay-btn {
+    font-size: 1.05rem;
+    padding: 1rem 1.75rem;
+    white-space: nowrap;
+}
+
+/* --- Summary --- */
+
+.confirm-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+}
+
+.confirm-h2 {
+    font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+    margin: 0 0 1.5rem;
+}
+
+.summary {
+    margin: 0 0 1.25rem;
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 0;
+}
+
+.summary > div {
+    display: contents;
+}
+
+.summary dt {
+    padding: 0.75rem 1rem 0.75rem 0;
+    border-top: var(--rule);
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.summary dd {
+    margin: 0;
+    padding: 0.75rem 0;
+    border-top: var(--rule);
+    font-weight: 500;
+}
+
+.confirm-flash {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: var(--rule);
+}
+
+@media (max-width: 880px) {
+    .pay-panel,
+    .confirm-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pay-action {
+        text-align: left;
+    }
+
+    .pay-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 560px) {
+    .summary {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .summary dd {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .team-badge {
+        display: flex;
+        width: 100%;
+    }
+}
+
+/* The deadline sits under the Register button itself rather than below the
+   whole row, so it reads as part of that one action. */
+.btn-row {
+    align-items: flex-start;
+}
+
+.reg-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.reg-cta .reg-deadline {
+    margin: 0;
+}
+
+@media (max-width: 560px) {
+    .btn-row .reg-cta {
+        width: 100%;
+    }
+}
+
+/* Practice field order button, under the zones table in The Hill. */
+.spec-side .btn {
+    margin-top: 1.5rem;
+}
