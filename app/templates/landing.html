@@ -99,7 +99,12 @@
     <section class="hero band dark">
         <div class="hero-grid">
             <div>
-                <h1 class="display">Robot King of the Hill</h1>
+                <h1 class="display hero-title">Robot<br>King of the Hill</h1>
+                <p class="hero-tagline">
+                    <strong>Two robots. One hill. No remote control.</strong>
+                    Will you race to the summit, hunt your opponent, or defend your position?
+                    Once the match starts, your robot is on its own.
+                </p>
 
                 <ol class="podium" aria-label="Prizes">
                     <li class="podium-1">
@@ -252,10 +257,9 @@
         <div class="section-head">
             <h2 class="display">Summit</h2>
             <p class="lede">
-                Summit is the SRC game for 2026. Two autonomous robots, one red and one blue,
-                compete on a small raised hill. A robot wins by pushing its opponent off the Hill,
-                or by being higher on the Hill when time expires. Once a match begins, no one may
-                touch or control them.
+                Push your opponent off the hill to win. Otherwise, the robot higher up when time
+                runs out wins. Play too aggressively and you might fall off. Play too safely and
+                you might lose on height.
             </p>
         </div>
 
@@ -272,29 +276,27 @@
             <div>
                 <dt>Constraints</dt>
                 <dd>
-                    Robots fit within 10 cm by 10 cm at the start and weigh 500 g or less.
-                    No height limit, and after the start signal they may expand without restriction.
+                    Start within 10 × 10 cm and weigh no more than 500 g. No height limit, and
+                    expansion is allowed after the start.
                 </dd>
             </div>
             <div>
                 <dt>Controller</dt>
                 <dd>
-                    A micro:bit running the team's own code controls the robot. Every other
-                    part is the team's choice.
+                    One micro:bit runs your code. The rest of the design is yours, within the rules.
                 </dd>
             </div>
             <div>
                 <dt>Match</dt>
                 <dd>
-                    Matches last three minutes. The referee's field controller starts and
-                    stops both robots at once.
+                    Up to three minutes. Both robots start together.
                 </dd>
             </div>
             <div>
                 <dt>Tournament</dt>
                 <dd>
-                    Every team plays the same number of qualification matches, then the
-                    field seeds into a single-elimination bracket.
+                    At least six best-of-three qualification series per team. Top-ranked teams
+                    advance to eliminations.
                 </dd>
             </div>
         </dl>
@@ -305,8 +307,8 @@
         <div class="section-head">
             <h2 class="display">The Hill</h2>
             <p class="lede">
-                A 3D-printed PLA mound, 42 cm across, rising 2 cm to a flat top. Each ring is a
-                different colour so that a colour sensor can identify where the robot is.
+                Five colored zones help your robot detect where it is. Use a color sensor to
+                navigate toward the summit or avoid driving off the edge.
             </p>
         </div>
 
@@ -355,7 +357,6 @@
                         </tr>
                     </tbody>
                 </table>
-                <a class="btn btn-primary" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Buy the practice field — $10</a>
             </div>
         </div>
     </section>
@@ -398,11 +399,10 @@
     <!-- Cost -->
     <section class="section band" id="cost">
         <div class="section-head">
-            <h2 class="display">Under $150, robot included</h2>
+            <h2 class="display">Build your way</h2>
             <p class="lede">
-                Most robotics competitions cost several hundred dollars per team before the first
-                match is played, and that cost decides who gets to take part. Teams may compete
-                with the kit, with a robot of their own design, or with a combination of the two.
+                New to robotics? Start with our optional kit and editable starter code. Want to
+                design your own robot? Build one from scratch.
             </p>
         </div>
 
@@ -410,41 +410,22 @@
             <div>
             <div class="receipt">
                 <dl>
-                    <dt>Kit bot + practice field<span>Optional. A complete, competition-legal robot and a practice field. Does not include a micro:bit.</span></dt>
+                    <dt>Registration</dt>
+                    <dd>$20 per team</dd>
+                    <dt>Robot kit + practice field<span>Optional.</span></dt>
                     <dd>$100</dd>
-                    <dt>micro:bit<span>Required for every robot, and sold separately from the kit.</span></dt>
+                    <dt>micro:bit<span>Required, sold separately.</span></dt>
                     <dd>$20</dd>
                 </dl>
                 <div class="receipt-total">
-                    <span>Everything</span>
-                    <span>$120</span>
+                    <span>Total with kit, micro:bit, and registration</span>
+                    <span>$140</span>
                 </div>
             </div>
             <div class="btn-row" style="margin-top:1.5rem">
                 <a class="btn btn-primary" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
             </div>
 
-            <div class="kit-guides">
-                <h3>Guides</h3>
-                <ul>
-                    <li>
-                        <a href="https://www.youtube.com/watch?v=H7sx9fCWMdI" target="_blank" rel="noopener">Kit bot video</a>
-                        <span>The assembled kit bot, on YouTube.</span>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('static', filename='docs/summit-kitbot-build-and-wiring-guide.pdf') }}" target="_blank" rel="noopener">Kit bot build and wiring guide</a>
-                        <span>Assembling the chassis and connecting the motors and sensors.</span>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('static', filename='docs/summit-kitbot-programming-guide.pdf') }}" target="_blank" rel="noopener">Kit bot programming guide</a>
-                        <span>Loading and changing the starter code in MakeCode.</span>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('static', filename='docs/summit-custom-robot-guide.pdf') }}" target="_blank" rel="noopener">Custom robot guide</a>
-                        <span>For teams building a robot of their own design.</span>
-                    </li>
-                </ul>
-            </div>
             </div>
 
             <div>
@@ -524,27 +505,41 @@
                             allowfullscreen></iframe>
                 </figure>
 
-                <figure class="kit-parts">
-                    {# 670px is what this column actually measures once the
-                       band hits its 1340px ceiling: 1.1 of 2.1 columns, less
-                       the 4rem gap. The old 480 was a guess, and under-
-                       declaring is the one error `sizes` punishes — the
-                       browser downloads a file too small and upscales it. #}
-                    {{ art_img(art, 'kit_parts.png',
-                               'The parts included in the kit, laid out',
-                               '(max-width: 880px) 84vw, min(52vw, 670px)') }}
-                </figure>
             </div>
+        </div>
+
+        <div class="kit-guides kit-guides-foot">
+            <h3>Guides</h3>
+            <ul>
+                <li>
+                    <a href="https://www.youtube.com/watch?v=H7sx9fCWMdI" target="_blank" rel="noopener">Kit bot video</a>
+                    <span>The assembled kit bot, on YouTube.</span>
+                </li>
+                <li>
+                    <a href="{{ url_for('static', filename='docs/summit-kitbot-build-and-wiring-guide.pdf') }}" target="_blank" rel="noopener">Kit bot build and wiring guide</a>
+                    <span>Assembling the chassis and connecting the motors and sensors.</span>
+                </li>
+                <li>
+                    <a href="{{ url_for('static', filename='docs/summit-kitbot-programming-guide.pdf') }}" target="_blank" rel="noopener">Kit bot programming guide</a>
+                    <span>Loading and changing the starter code in MakeCode.</span>
+                </li>
+                <li>
+                    <a href="{{ url_for('static', filename='docs/summit-custom-robot-guide.pdf') }}" target="_blank" rel="noopener">Custom robot guide</a>
+                    <span>For teams building a robot of their own design.</span>
+                </li>
+            </ul>
         </div>
     </section>
 
     <!-- The event -->
     <section class="section band" id="event">
         <div class="section-head">
-            <h2 class="display">Saturday, October 24, 2026</h2>
+            <h2 class="display">Event Day</h2>
             <p class="lede">
-                The gym at Arcadia High School, Arcadia, California. Parking and entrance details
-                are emailed to registered teams the week before.
+                Saturday, October 24, at Arcadia High School.
+            </p>
+            <p class="lede">
+                Check-in starts at 9 AM. Matches begin at 10 AM. Awards start at 2:15 PM.
             </p>
         </div>
 
@@ -615,13 +610,13 @@
             <h2 class="display">Awards</h2>
             <p class="lede">
                 The Champion, Finalist, Semifinalists, and Middle School Champion receive trophies.
-                The overall Champion also takes home the Summit championship banner.
+                The overall Champion also receives the Summit championship banner.
             </p>
         </div>
 
         <ol class="prizes">
             <li>
-                <div class="prize-art prize-art-photo">
+                <div class="prize-art prize-art-photo prize-bambu">
                     <img src="{{ url_for('static', filename='img/prize_bambu_a1.png') }}"
                          alt="Bambu Lab A1 3D printer" width="320" height="320" loading="lazy">
                 </div>
@@ -630,7 +625,7 @@
                 <p class="prize-note">Bring your robot designs to life.</p>
             </li>
             <li>
-                <div class="prize-art">
+                <div class="prize-art prize-chatgpt">
                     <img src="{{ url_for('static', filename='img/prize_chatgpt.svg') }}"
                          alt="ChatGPT logo" width="72" height="72" loading="lazy">
                 </div>
@@ -639,7 +634,7 @@
                 <p class="prize-note">Explore ideas and develop your next project.</p>
             </li>
             <li>
-                <div class="prize-art">
+                <div class="prize-art prize-discord">
                     <img src="{{ url_for('static', filename='img/prize_discord.svg') }}"
                          alt="Discord logo" width="80" height="60" loading="lazy">
                 </div>
@@ -653,34 +648,15 @@
             </li>
         </ol>
 
-        <dl class="awards">
-            <div>
-                <dt>Champion</dt>
-                <dd>The bracket winner, middle school or high school.</dd>
-            </div>
-            <div>
-                <dt>Finalist</dt>
-                <dd>The runner-up: the team that reached the bracket final.</dd>
-            </div>
-            <div>
-                <dt>Semifinalists</dt>
-                <dd>The two teams that reached the semifinals of the bracket.</dd>
-            </div>
-            <div>
-                <dt>Middle School Champion</dt>
-                <dd>
-                    The middle school team that went furthest in the bracket, ties broken by
-                    qualification rank. If a middle school team wins the Championship, this goes
-                    to the next-best middle school team.
-                </dd>
-            </div>
-        </dl>
     </section>
 
     <!-- Register -->
     <section class="section band" id="register">
         <div class="section-head">
-            <h2 class="display">Register your team</h2>
+            <h2 class="display">Register Your Team</h2>
+            <p class="lede">
+                Grades 6–12. Teams of 1–4 students. Registration closes {{ config.REGISTRATION_DEADLINE }}.
+            </p>
         </div>
 
         <div class="register">
@@ -705,8 +681,7 @@
             <div class="register-panel">
                 <h3>$20 per team</h3>
                 <p>
-                    Teams are 1–4 students in grades 6–12. You’ll receive your team number by email
-                    after registering.
+                    You’ll receive your team number by email after registering.
                 </p>
                 <p>
                     Build from scratch or use the optional $100 Summit kit. A BBC micro:bit is required

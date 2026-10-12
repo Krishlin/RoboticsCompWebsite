@@ -30,6 +30,11 @@
     --z-red: #c0433b;
     --z-blue: #4470d2;
 
+    /* Prize sponsors' brand colours, for the podium steps only. */
+    --brand-bambu: #00ae42;
+    --brand-chatgpt: #ffffff;
+    --brand-discord: #5865f2;
+
     --measure: 66ch;
     --spine: clamp(1.25rem, 5vw, 5.5rem);
     --rule: 1px solid rgba(20, 20, 20, 0.14);
@@ -84,7 +89,6 @@ img {
    not a second typeface, is what separates headline from body here. */
 .display,
 .facts dt,
-.awards dt,
 .zones caption,
 .readout-zone,
 .schedule dt,
@@ -400,18 +404,33 @@ a {
     margin: 0 0 1rem;
 }
 
+.hero-title,
+.hero-tagline {
+    text-align: center;
+}
+
+.hero-tagline {
+    margin: 0 auto 1.25rem;
+    max-width: 34ch;
+    color: rgba(242, 244, 244, 0.8);
+}
+
+.hero-tagline strong {
+    display: block;
+    color: var(--paper);
+    margin-bottom: 0.25rem;
+}
+
 .hero .btn-row {
     margin-bottom: 1.5rem;
 }
 
 /* --- The podium ---
 
-   The Hill seen side-on. Its three raised tiers are the three places, so the
-   step colours are the zone colours and the step heights are the ranks:
-   Plateau for first, inner ring for second, outer ring for third. Read left
-   to right it is the profile from the summit outward, which is also 1st,
-   2nd, 3rd. Each step carries its prize on top and the words on its face,
-   in ink, because every one of the three zone colours is light. */
+   The Hill seen side-on: the step heights are the ranks. Each step is in
+   its prize's brand colour, with the prize on top and the words on its
+   face. Ink on the light steps; white on Discord's blurple, where ink
+   falls short of AA contrast. */
 
 .podium {
     list-style: none;
@@ -453,17 +472,18 @@ a {
 }
 
 .podium-1 .podium-step {
-    background: var(--z-plateau);
+    background: var(--brand-bambu);
     min-height: clamp(104px, 27vw, 112px);
 }
 
 .podium-2 .podium-step {
-    background: var(--z-inner);
+    background: var(--brand-chatgpt);
     min-height: clamp(84px, 22vw, 90px);
 }
 
 .podium-3 .podium-step {
-    background: var(--z-outer);
+    background: var(--brand-discord);
+    color: #fff;
     min-height: clamp(68px, 18vw, 70px);
 }
 
@@ -980,8 +1000,7 @@ a {
     box-shadow: inset 0 0 0 1px var(--ink);
 }
 
-.kit-still,
-.kit-parts img {
+.kit-still {
     display: block;
     width: 100%;
 }
@@ -990,12 +1009,15 @@ a {
     margin-top: 1.5rem;
 }
 
-.kit-parts {
-    margin: 1.5rem 0 0;
-}
-
 .kit-guides {
     margin-top: 2.5rem;
+}
+
+/* Under both columns, so the four guides sit side by side when there is room. */
+.kit-guides-foot ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    column-gap: 2rem;
 }
 
 .kit-video {
@@ -1112,41 +1134,6 @@ a {
     color: var(--ink);
 }
 
-/* --- Awards --- */
-
-.awards {
-    display: grid;
-    gap: 0;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    margin: 0;
-}
-
-.awards > div {
-    padding: 1.4rem 1.5rem 1.4rem 0;
-    border-top: 2px solid var(--ink);
-    margin-right: 1.5rem;
-}
-
-.awards dt {
-    font-stretch: 125%;
-    font-weight: 800;
-    margin-bottom: 0.4rem;
-}
-
-.awards dd {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-}
-
-.dark .awards > div {
-    border-top-color: var(--cyan);
-}
-
-.dark .awards dd {
-    color: rgba(242, 244, 244, 0.72);
-}
-
 /* --- Prizes (inside the dark Awards band) --- */
 
 .prizes {
@@ -1193,6 +1180,15 @@ a {
 .prize-art-photo img {
     max-height: 168px;
 }
+
+/* Same brand colours as the hero podium steps. */
+.prize-bambu { background: var(--brand-bambu); border-top-color: var(--brand-bambu); }
+.prize-chatgpt { background: var(--brand-chatgpt); border-top-color: var(--brand-chatgpt); }
+.prize-discord { background: var(--brand-discord); border-top-color: var(--brand-discord); }
+
+/* The logo file is drawn white for the dark page; on the white box it
+   has to be dark. */
+.prize-chatgpt img { filter: invert(1); }
 
 .prize-place {
     margin: 0 0 0.25rem;
@@ -1585,10 +1581,6 @@ a {
 
     .schedule .key dd {
         border-top: 0;
-    }
-
-    .awards > div {
-        margin-right: 0;
     }
 
     /* Full-width buttons, but only the ones in a row of them: the nav's
