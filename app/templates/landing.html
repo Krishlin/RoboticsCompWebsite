@@ -242,14 +242,6 @@
                 </p>
             </video>
         </figure>
-
-        <p class="lede teaser-strategy">
-            Before the match, you choose a strategy. Will your robot race for the top, charge its
-            opponent, or try to push from farther away? You might use the colored rings to find
-            your position or a sensor to track the other robot. Once the match starts, nobody can
-            steer. For three minutes, you watch your plan meet someone else’s. Then you change the
-            build or code and try to think one step further ahead.
-        </p>
     </section>
 
     <!-- The game -->
@@ -262,15 +254,6 @@
                 you might lose on height.
             </p>
         </div>
-
-        {# The game as an object rather than a diagram: two legal robots on
-           the Hill, facing each other across the Plateau. The hero's SVG is
-           the rules; this is what a team actually builds toward. #}
-        <figure class="game-photo">
-            {{ art_img(art, 'RobotsOnField.png',
-                       'Two micro:bit robots on the Hill, one on the red half and one on the blue, facing each other across the white Plateau',
-                       '(max-width: 880px) 88vw, min(86vw, 1100px)') }}
-        </figure>
 
         <dl class="facts">
             <div>
@@ -311,6 +294,15 @@
                 navigate toward the summit or avoid driving off the edge.
             </p>
         </div>
+
+        {# The game as an object rather than a diagram: two legal robots on
+           the Hill, facing each other across the Plateau. The hero's SVG is
+           the rules; this is what a team actually builds toward. #}
+        <figure class="game-photo">
+            {{ art_img(art, 'RobotsOnField.png',
+                       'Two micro:bit robots on the Hill, one on the red half and one on the blue, facing each other across the white Plateau',
+                       '(max-width: 880px) 88vw, min(86vw, 1100px)') }}
+        </figure>
 
         <div class="spec">
             <figure class="spec-figure">
