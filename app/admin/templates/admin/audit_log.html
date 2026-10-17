@@ -1,31 +1,37 @@
 {# owner: Yueyue — every change made to a result, who made it, and when #}
 {% extends "base.html" %}
-{% block title %}Audit Log{% endblock %}
+{% block title %}Change log{% endblock %}
 {% block content %}
-    <h1 class="page-title">Audit Log</h1>
+    <h1 class="page-title">Change log</h1>
+    <p class="page-subtitle">Every change to a result: who made it (the name typed at the
+    head ref sign-in), when, and the value before and after. Newest first.</p>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Match</th>
-                <th>Changed by</th>
-                <th>When</th>
-                <th>Field</th>
-                <th>Old value</th>
-                <th>New value</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in entries %}
+    {% if entries %}
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <td><a href="{{ url_for('admin.match_history', match_id=entry.match_id) }}">{{ entry.match_id }}</a></td>
-                    <td>{{ entry.changed_by }}</td>
-                    <td>{{ entry.changed_at }}</td>
-                    <td>{{ entry.field }}</td>
-                    <td>{{ entry.old_value }}</td>
-                    <td>{{ entry.new_value }}</td>
+                    <th>When</th>
+                    <th>Who</th>
+                    <th class="num">Match</th>
+                    <th>What changed</th>
+                    <th>Before</th>
+                    <th>After</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.changed_at | local_clock(seconds=true) }}</td>
+                        <td>{{ entry.changed_by }}</td>
+                        <td class="num"><a href="{{ url_for('admin.match_history', match_id=entry.match_id) }}">{{ match_numbers.get(entry.match_id, entry.match_id) }}</a></td>
+                        <td>{{ entry.field | replace("_", " ") }}</td>
+                        <td>{{ entry.old_value if entry.old_value is not none else "—" }}</td>
+                        <td>{{ entry.new_value if entry.new_value is not none else "—" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="notice">No results have been changed yet.</div>
+    {% endif %}
 {% endblock %}

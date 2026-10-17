@@ -1,70 +1,41 @@
 {# owner: Shivani — pass/fail inspection checklist for one team #}
 {% extends "base.html" %}
-{% block title %}Inspection{% endblock %}
+{% from "_ui.html" import team as team_label %}
+{% block title %}Inspect team {{ team.team_number }}{% endblock %}
 {% block content %}
+    <h1 class="page-title">Inspect {{ team_label(team.team_number, team.name) }}</h1>
+    <p class="page-subtitle">Tick each check the robot passes. It passes inspection only if all five are ticked.
+    Every attempt is kept, so a robot that fails can be fixed and inspected again.</p>
 
-<h1 class="page-title">
-    Inspection — Team {{ team.team_number }}
-</h1>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<p>{{ team.name }}</p>
+        <ul class="check-list">
+            {% for name, label, detail in (
+                ("size_ok", "Size", "Fits inside the official 10 × 10 cm size gauge."),
+                ("weight_ok", "Weight", "500 g or less, battery included, heaviest configuration."),
+                ("microbit_present", "micro:bit", "One micro:bit makes the robot's decisions."),
+                ("team_number_displayed", "Team number", "Written legibly on the robot."),
+                ("ref_start_stop_test", "Start and stop test", "Stays still until a test START, stops on STOP."),
+            ) %}
+                <li>
+                    <label>
+                        <input type="checkbox" name="{{ name }}">
+                        <span><strong>{{ label }}</strong><span class="hint">{{ detail }}</span></span>
+                    </label>
+                </li>
+            {% endfor %}
+        </ul>
 
-<form method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="inspector_name">Inspector</label>
+            <input type="text" id="inspector_name" name="inspector_name" autocomplete="name">
+        </div>
+        <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" placeholder="What failed and what the team needs to fix"></textarea>
+        </div>
 
-    <p>
-        <label>
-            <input type="checkbox" name="size_ok">
-            Size OK
-        </label>
-    </p>
-
-    <p>
-        <label>
-            <input type="checkbox" name="weight_ok">
-            Weight OK
-        </label>
-    </p>
-
-    <p>
-        <label>
-            <input type="checkbox" name="microbit_present">
-            micro:bit present
-        </label>
-    </p>
-
-    <p>
-        <label>
-            <input type="checkbox" name="team_number_displayed">
-            Team number displayed
-        </label>
-    </p>
-
-    <p>
-        <label>
-            <input type="checkbox" name="ref_start_stop_test">
-            Ref start/stop test
-        </label>
-    </p>
-
-    <p>
-        <label>
-            Inspector:
-            <input type="text" name="inspector_name">
-        </label>
-    </p>
-
-    <p>
-        <label>
-            Notes:
-            <textarea name="notes"></textarea>
-        </label>
-    </p>
-
-    <button type="submit" class="btn btn-secondary">
-        Save Inspection
-    </button>
-
-</form>
-
+        <button type="submit" class="btn btn-large">Save inspection</button>
+    </form>
 {% endblock %}

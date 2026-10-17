@@ -1,40 +1,32 @@
-{# owner: Serena — phone-sized current-match screen for the referee standing at an arena #}
+{# owner: Serena — pick the arena this phone runs. One phone per arena, all day. #}
 {% extends "base.html" %}
-{% block title %}Referee — Current Match{% endblock %}
+{% block title %}Referee{% endblock %}
+{% block extra_head %}<meta http-equiv="refresh" content="30">{% endblock %}
 {% block content %}
-    <h1 class="page-title">Current Match</h1>
+    <h1 class="page-title">Which arena is this phone for?</h1>
+    <p class="page-subtitle">Pick yours once. The screen then runs every match on that arena in order.</p>
 
-    {% if match %}
-        <div class="card">
-            <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
-            <p style="font-size: 1.5rem;">
-                <span class="badge badge-red">RED — {{ red.name if red else "TBD" }}</span>
-                <br><br>
-                <span class="badge badge-blue">BLUE — {{ blue.name if blue else "TBD" }}</span>
-            </p>
-            <p id="timer" style="font-size: 2rem; text-align: center;">00:00</p>
-            <button class="btn btn-large">Start match</button>
-            <br><br>
-            <a class="btn btn-large btn-secondary" href="{{ url_for('referee.result_entry', match_id=match.id) }}">Enter result</a>
-        </div>
-    {% else %}
-        <p class="text-muted">No match currently assigned to this arena.</p>
+    {% if paused %}
+        <div class="notice notice-warn">Matches are paused by the head ref.</div>
     {% endif %}
-{% endblock %}
 
-{% block extra_head %}
-<script>
-    // Placeholder timer. Serena's real version starts on the Start button
-    // tap and stops on the winner tap, recording win_time_seconds.
-    let seconds = 0;
-    setInterval(function () {
-        seconds += 1;
-        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-        const s = String(seconds % 60).padStart(2, "0");
-        const timerEl = document.getElementById("timer");
-        if (timerEl) {
-            timerEl.textContent = m + ":" + s;
-        }
-    }, 1000);
-</script>
+    {% for arena in arenas %}
+        <a class="card card-link" href="{{ url_for('referee.arena_screen', arena=arena.slug) }}">
+            <p class="card-link-title">{{ arena.name }}</p>
+            {% if arena.match %}
+                <p class="meta">
+                    {% if arena.match.status == "in_progress" %}<span class="badge badge-now">Now</span>{% else %}Next:{% endif %}
+                    match {{ arena.match.match_number }},
+                    {{ arena.red.team_number if arena.red else "TBD" }} against {{ arena.blue.team_number if arena.blue else "TBD" }}
+                </p>
+            {% else %}
+                <p class="meta">Nothing waiting.</p>
+            {% endif %}
+        </a>
+    {% else %}
+        <div class="notice">
+            No matches are scheduled yet. The head ref generates the qualification
+            schedule from the head ref panel.
+        </div>
+    {% endfor %}
 {% endblock %}

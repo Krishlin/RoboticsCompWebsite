@@ -1,36 +1,40 @@
 {# owner: Yueyue — match-specific edit history #}
 {% extends "base.html" %}
-{% block title %}Match {{ match.match_number }} History{% endblock %}
+{% block title %}Match {{ match.match_number }} change log{% endblock %}
 {% block content %}
-    <h1 class="page-title">Match {{ match.match_number }} — {{ match.arena }}</h1>
-    <p class="text-muted" style="margin-bottom: 1rem;">Edit history for this match</p>
+    <div class="page-head">
+        <h1 class="page-title">Match {{ match.match_number }} change log</h1>
+        <p class="meta">{{ match.arena }}</p>
+    </div>
 
     {% if entries %}
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Changed by</th>
                     <th>When</th>
-                    <th>Field</th>
-                    <th>Old value</th>
-                    <th>New value</th>
+                    <th>Who</th>
+                    <th>What changed</th>
+                    <th>Before</th>
+                    <th>After</th>
                 </tr>
             </thead>
             <tbody>
                 {% for entry in entries %}
                     <tr>
+                        <td>{{ entry.changed_at | local_clock(seconds=true) }}</td>
                         <td>{{ entry.changed_by }}</td>
-                        <td>{{ entry.changed_at }}</td>
-                        <td>{{ entry.field }}</td>
-                        <td>{{ entry.old_value }}</td>
-                        <td>{{ entry.new_value }}</td>
+                        <td>{{ entry.field | replace("_", " ") }}</td>
+                        <td>{{ entry.old_value if entry.old_value is not none else "—" }}</td>
+                        <td>{{ entry.new_value if entry.new_value is not none else "—" }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     {% else %}
-        <p class="text-muted">No edits recorded for this match.</p>
+        <div class="notice">Nothing in this match has been changed.</div>
     {% endif %}
 
-    <p style="margin-top: 1rem;"><a href="{{ url_for('admin.edit_result', match_id=match.id) }}">Back to edit result</a></p>
+    <div class="btn-row">
+        <a class="btn btn-secondary" href="{{ url_for('admin.edit_result', match_id=match.id) }}">Back to this match</a>
+    </div>
 {% endblock %}

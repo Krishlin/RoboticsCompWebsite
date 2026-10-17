@@ -130,6 +130,30 @@ class Config:
     # a deployment means those pages 403 rather than publish.
     STAFF_PASSCODE = os.environ.get("STAFF_PASSCODE")
 
+    # The head referee's passcode: editing results, the audit log, pausing
+    # the event, generating the schedule, building the bracket and the full
+    # export. Separate from STAFF_PASSCODE because every referee phone holds
+    # that one, and the manual makes the head ref's decision the final one.
+    # Same fail-closed rule: unset on a deployment means those pages 403.
+    HEAD_REF_PASSCODE = os.environ.get("HEAD_REF_PASSCODE")
+
+    # When qualification starts: the manual's event date (October 24, 2026)
+    # and the published day schedule's "10:00 AM. Qualification matches
+    # begin". Local event time, which is how every scheduled_time is written.
+    # The schedule admin page can override it per generation.
+    EVENT_QUAL_START = os.environ.get("EVENT_QUAL_START", "2026-10-24 10:00")
+
+    # Hours from UTC to the event's local time, for showing the UTC stamps
+    # (inspections, the change log) as the gym's clock reads. Arcadia on
+    # October 24, 2026 is Pacific Daylight Time.
+    EVENT_UTC_OFFSET_HOURS = int(os.environ.get("EVENT_UTC_OFFSET_HOURS", "-7"))
+
+    # T4 ends with "any remaining tie is broken by random draw". The draw has
+    # to give the same answer on every page load, or the big screen would
+    # reshuffle tied teams every refresh, so it is a hash of this value and
+    # the team number. Change it (once, before the event) to redraw.
+    RANKING_DRAW_SEED = os.environ.get("RANKING_DRAW_SEED", "SRC Summit 2026")
+
     # Session cookies. SECURE only on a deployment: forcing it locally means
     # the cookie is never sent over http://localhost and nobody can stay
     # logged in while developing. SAMESITE is "Lax" and not "Strict" because

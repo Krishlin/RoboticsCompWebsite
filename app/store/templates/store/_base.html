@@ -9,11 +9,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Store — Summit{% endblock %}</title>
     <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#141414">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
 </head>
 <body>
 <nav class="nav band" aria-label="Main">
-    <a class="nav-logo" href="/" aria-label="Summit, home">Summit</a>
+    <a class="nav-logo" href="/" aria-label="Summit, home">
+        <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+             width="197" height="26" alt="Summit">
+    </a>
     <a class="btn btn-ghost nav-back" href="/">Back to the site</a>
 </nav>
 <main>{% block content %}{% endblock %}</main>

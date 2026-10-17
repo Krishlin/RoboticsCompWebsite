@@ -1,238 +1,186 @@
 {# owner: Shaurya — admin schedule generation #}
 {% extends "base.html" %}
-{% block title %}Schedule Admin{% endblock %}
+{% block title %}Schedule generator{% endblock %}
 {% block content %}
-    <h1 class="page-title">Schedule Generation Admin</h1>
+    <h1 class="page-title">Schedule generator</h1>
+    <p class="page-subtitle">Each match is one best-of-three series. Every team plays the same
+    number of series, never two in a row, with red and blue balanced and no repeat
+    opponents until there's no way around it.</p>
 
-    <div class="admin-section">
-        <h2>Generate Schedule</h2>
-        <p>Generate a new qualification schedule.</p>
-        
-        <div style="margin-bottom: 1rem;">
-            <label for="algorithm-select">Algorithm:</label>
-            <select id="algorithm-select" style="padding: 0.5rem; margin-left: 0.5rem;">
-                <option value="random">Week 2: Random (Baseline - No Constraints)</option>
-                <option value="balanced">Week 3: Balanced (Equal Matches + Red/Blue Balance)</option>
-                <option value="advanced" selected>Weeks 4-5: Advanced (No Back-to-Back + Min Repeat Pairs)</option>
-            </select>
-        </div>
-        
-        <button id="generate-btn" class="btn btn-primary">Generate Schedule</button>
-        <button id="validate-btn" class="btn btn-secondary">Validate Current</button>
-        
-        <div id="status-message" class="status-message" style="display: none;"></div>
-        <div id="violations-message" class="violations-message" style="display: none;"></div>
+    <div class="notice">
+        <p>{{ team_count }} teams registered, {{ checked_in_count }} checked in.
+        {% if existing_count %}Generating replaces the {{ existing_count }} qualification series
+        already scheduled, and is refused once any of them has been played.{% endif %}</p>
     </div>
 
-    <div class="admin-section" id="schedule-preview" style="display: none;">
-        <h2>Schedule Preview</h2>
-        <p>Generated matches: <span id="match-count">0</span></p>
-        
-        <h3>Full Schedule</h3>
+    <div class="card">
+        <div class="form-group">
+            <label for="series-per-team">Series per team</label>
+            <input type="number" id="series-per-team" min="1" max="30" value="{{ default_series }}">
+            <p class="hint">The manual says at least six. Goes up by one if an odd number of teams makes the count impossible.</p>
+        </div>
+        <div class="form-group">
+            <label for="arena-count">Arenas</label>
+            <input type="number" id="arena-count" min="1" max="30" value="{{ default_arenas }}">
+        </div>
+        <div class="form-group">
+            <label for="start-time">First series starts</label>
+            <input type="datetime-local" id="start-time" value="{{ default_start }}">
+        </div>
+        <div class="form-group">
+            <label for="slot-minutes">Minutes per round of series</label>
+            <input type="number" id="slot-minutes" min="1" max="120" value="{{ default_slot }}">
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="checked-in-only" {% if checked_in_count %}checked{% endif %}>
+            <label for="checked-in-only">Only schedule teams that have checked in</label>
+        </div>
+
+        <div class="btn-row">
+            <button id="generate-btn" class="btn">Generate and save the schedule</button>
+            <button id="validate-btn" class="btn btn-secondary">Check the current schedule</button>
+        </div>
+
+        <div id="status-message" class="notice" role="status" hidden></div>
+        <pre id="violations-message" class="notice notice-warn pre-wrap" hidden></pre>
+    </div>
+
+    <section id="schedule-preview" hidden>
+        <h2 class="section-title">Preview</h2>
+        <p><span id="match-count">0</span> series. The last round starts at about <span id="last-slot"></span>.</p>
+        <p>Printable lists: <a href="{{ url_for('scheduler.schedule_full') }}" target="_blank">full schedule</a><span id="arena-links"></span></p>
+
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Match #</th>
-                    <th>Division</th>
+                    <th class="num">Match</th>
                     <th>Arena</th>
                     <th>Time</th>
-                    <th>Red Team</th>
-                    <th>Blue Team</th>
+                    <th>Red</th>
+                    <th>Blue</th>
                 </tr>
             </thead>
-            <tbody id="schedule-table">
-            </tbody>
+            <tbody id="schedule-table"></tbody>
         </table>
-        
-        <h3>Printable Views</h3>
-        <ul>
-            <li><a href="{{ url_for('scheduler.schedule_full') }}" target="_blank">Full Schedule</a></li>
-            <li id="arena-links"></li>
-        </ul>
-    </div>
-
-    <style>
-        .admin-section {
-            margin: 2rem 0;
-            padding: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        
-        .status-message {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        
-        .status-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .violations-message {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 0.9rem;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            margin-right: 0.5rem;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #545b62;
-        }
-    </style>
+    </section>
 
     <script>
-        document.getElementById('generate-btn').addEventListener('click', async function() {
-            const statusEl = document.getElementById('status-message');
-            const violationsEl = document.getElementById('violations-message');
-            const algorithmSelect = document.getElementById('algorithm-select');
-            const algorithm = algorithmSelect.value;
-            
-            statusEl.textContent = 'Generating schedule...';
-            statusEl.className = 'status-message';
-            statusEl.style.display = 'block';
-            violationsEl.style.display = 'none';
-            
+        const statusEl = document.getElementById('status-message');
+        const violationsEl = document.getElementById('violations-message');
+
+        function showStatus(text, kind) {
+            statusEl.textContent = text;
+            statusEl.className = 'notice' + (kind ? ' notice-' + kind : '');
+            statusEl.hidden = false;
+        }
+
+        function formatViolations(violations) {
+            let result = '';
+            for (const [rule, issues] of Object.entries(violations)) {
+                result += `${rule.replace(/_/g, ' ')}:\n`;
+                issues.slice(0, 5).forEach(issue => { result += `  ${issue}\n`; });
+                if (issues.length > 5) { result += `  and ${issues.length - 5} more\n`; }
+            }
+            return result.trim();
+        }
+
+        function teamCell(text, side) {
+            const td = document.createElement('td');
+            const span = document.createElement('span');
+            span.className = 'team team-' + side;
+            const [number, ...name] = text.split(' ');
+            const strong = document.createElement('span');
+            strong.className = 'team-number';
+            strong.textContent = number;
+            span.appendChild(strong);
+            span.appendChild(document.createTextNode(' ' + name.join(' ')));
+            td.appendChild(span);
+            return td;
+        }
+
+        document.getElementById('generate-btn').addEventListener('click', async function () {
+            showStatus('Generating the schedule…');
+            violationsEl.hidden = true;
+
             try {
                 const response = await fetch('{{ url_for("scheduler.api_generate_schedule") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
                     body: JSON.stringify({
-                        use_advanced: algorithm === 'advanced',
-                        use_balanced: algorithm === 'balanced',
-                        use_random: algorithm === 'random',
-                        matches_per_team: 5,
+                        use_advanced: true,
+                        matches_per_team: Number(document.getElementById('series-per-team').value),
+                        arena_count: Number(document.getElementById('arena-count').value),
+                        start_time: document.getElementById('start-time').value,
+                        slot_minutes: Number(document.getElementById('slot-minutes').value),
+                        checked_in_only: document.getElementById('checked-in-only').checked,
                         clear_existing: true
                     })
                 });
-                
                 const data = await response.json();
-                
-                if (response.ok) {
-                    statusEl.textContent = `✓ Schedule generated! ${data.matches_generated} matches created across arenas: ${data.arenas.join(', ')}`;
-                    statusEl.className = 'status-message success';
-                    
-                    // Show preview
-                    document.getElementById('schedule-preview').style.display = 'block';
-                    document.getElementById('match-count').textContent = data.matches_generated;
-                    
-                    // Build arena links
-                    const arenaLinks = document.getElementById('arena-links');
-                    arenaLinks.innerHTML = data.arenas.map(arena => {
-                        const arenaUrl = '/schedule/arena/' + arena.replace(' ', '_');
-                        return `<li><a href="${arenaUrl}" target="_blank">Schedule - ${arena}</a></li>`;
-                    }).join('');
-                    
-                    // Reload schedule preview
-                    await loadSchedulePreview();
-                } else {
-                    statusEl.textContent = `✗ Error: ${data.error}`;
-                    statusEl.className = 'status-message error';
+
+                if (!response.ok) {
+                    showStatus(data.error, 'error');
                     if (data.violations) {
                         violationsEl.textContent = formatViolations(data.violations);
-                        violationsEl.style.display = 'block';
+                        violationsEl.hidden = false;
                     }
+                    return;
                 }
+
+                showStatus(`Saved: ${data.matches_generated} series for ${data.teams_scheduled} teams, ${data.series_per_team.join(' or ')} each, on ${data.arenas.join(', ')}.`, 'ok');
+                document.getElementById('schedule-preview').hidden = false;
+                document.getElementById('match-count').textContent = data.matches_generated;
+                document.getElementById('last-slot').textContent = data.last_slot || 'TBD';
+
+                const arenaLinks = document.getElementById('arena-links');
+                arenaLinks.textContent = '';
+                data.arenas.forEach(arena => {
+                    arenaLinks.appendChild(document.createTextNode(', '));
+                    const link = document.createElement('a');
+                    link.href = '/schedule/arena/' + arena.replace(/ /g, '_');
+                    link.target = '_blank';
+                    link.textContent = arena;
+                    arenaLinks.appendChild(link);
+                });
+
+                const tbody = document.getElementById('schedule-table');
+                tbody.textContent = '';
+                data.matches.forEach(m => {
+                    const tr = document.createElement('tr');
+                    [[m.match_number, 'num'], [m.arena, ''], [m.time, '']].forEach(([value, klass]) => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        if (klass) { td.className = klass; }
+                        tr.appendChild(td);
+                    });
+                    tr.appendChild(teamCell(m.red, 'red'));
+                    tr.appendChild(teamCell(m.blue, 'blue'));
+                    tbody.appendChild(tr);
+                });
             } catch (error) {
-                statusEl.textContent = `✗ Error: ${error.message}`;
-                statusEl.className = 'status-message error';
+                showStatus(`Couldn't reach the server: ${error.message}. Nothing was changed.`, 'error');
             }
         });
-        
-        document.getElementById('validate-btn').addEventListener('click', async function() {
-            const statusEl = document.getElementById('status-message');
-            const violationsEl = document.getElementById('violations-message');
-            
-            statusEl.textContent = 'Validating schedule...';
-            statusEl.className = 'status-message';
-            statusEl.style.display = 'block';
-            violationsEl.style.display = 'none';
-            
+
+        document.getElementById('validate-btn').addEventListener('click', async function () {
+            showStatus('Checking the current schedule…');
+            violationsEl.hidden = true;
             try {
                 const response = await fetch('{{ url_for("scheduler.api_validate_current_schedule") }}', {
                     method: 'POST',
                     headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
                 });
-                
                 const data = await response.json();
-                
                 if (data.valid) {
-                    statusEl.textContent = '✓ Schedule is valid!';
-                    statusEl.className = 'status-message success';
+                    showStatus('The current schedule follows every rule.', 'ok');
                 } else {
-                    statusEl.textContent = '✗ Schedule has violations';
-                    statusEl.className = 'status-message error';
-                    violationsEl.textContent = data.details;
-                    violationsEl.style.display = 'block';
+                    showStatus('The current schedule breaks these rules:', 'error');
+                    violationsEl.textContent = formatViolations(data.violations);
+                    violationsEl.hidden = false;
                 }
             } catch (error) {
-                statusEl.textContent = `✗ Error: ${error.message}`;
-                statusEl.className = 'status-message error';
+                showStatus(`Couldn't reach the server: ${error.message}.`, 'error');
             }
         });
-        
-        function formatViolations(violations) {
-            let result = '';
-            for (const [rule, issues] of Object.entries(violations)) {
-                result += `\n${rule}:\n`;
-                issues.slice(0, 5).forEach(issue => {
-                    result += `  - ${issue}\n`;
-                });
-                if (issues.length > 5) {
-                    result += `  ... and ${issues.length - 5} more\n`;
-                }
-            }
-            return result;
-        }
-        
-        async function loadSchedulePreview() {
-            try {
-                const response = await fetch('{{ url_for("scheduler.schedule_full") }}');
-                // In production, we'd parse the table and display it
-                // For now, just show a link to view full schedule
-                console.log('Schedule preview loaded');
-            } catch (error) {
-                console.error('Error loading preview:', error);
-            }
-        }
     </script>
 {% endblock %}

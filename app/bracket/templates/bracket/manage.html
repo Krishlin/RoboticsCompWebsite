@@ -1,0 +1,73 @@
+{# owner: Krish S — head ref: configure, seed and build the bracket for a division #}
+{% extends "base.html" %}
+{% from "_ui.html" import team %}
+{% block title %}Bracket setup{% endblock %}
+{% block content %}
+    <h1 class="page-title">Bracket setup</h1>
+
+    {% for conflict in conflicts %}
+        <div class="notice notice-error">
+            <p><strong>Needs a decision.</strong> {{ conflict }} Change the earlier
+            result back, or correct this series' games on the head ref panel.</p>
+        </div>
+    {% endfor %}
+
+    {% if config %}
+        <div class="card">
+            <h2>{{ "Double" if config.format == "double" else "Single" }} elimination, {{ config.seeds.splitlines() | length }} teams</h2>
+            <p class="meta">Built by {{ config.created_by or "head ref" }} at {{ config.created_at | local_clock }}.</p>
+            <div class="btn-row">
+                <a class="btn" href="{{ url_for('bracket.view_bracket', division=division_slug) }}">Open the bracket</a>
+                <a class="btn btn-secondary" href="{{ url_for('admin.dashboard') }}">Back to the head ref panel</a>
+            </div>
+        </div>
+        <form class="card" method="POST" action="{{ url_for('bracket.reset', division=division_slug) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h2>Start over</h2>
+            <p class="hint">Removing the bracket is only possible until the first bracket game is played.</p>
+            <button type="submit" class="btn btn-secondary space-above">Remove the bracket</button>
+        </form>
+    {% else %}
+        <p class="page-subtitle">Seeds come from the final qualification rankings and are fixed when you build.</p>
+
+        {% if unfinished %}
+            <div class="notice notice-warn">
+                {{ unfinished }} qualification series are not finished yet. Build the
+                bracket once they are, because it seeds from the final rankings.
+            </div>
+        {% endif %}
+
+        <form class="card" method="POST" action="{{ url_for('bracket.build', division=division_slug) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="format">Format</label>
+                <select id="format" name="format">
+                    <option value="single" selected>Single elimination (game manual)</option>
+                    <option value="double">Double elimination</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="size">Teams advancing</label>
+                <input type="number" id="size" name="size" min="2" max="{{ standings | length }}" value="{{ default_size }}">
+                <p class="hint">Announced before qualification starts. When this isn't a power of two, the top seeds get byes.</p>
+            </div>
+            <button type="submit" class="btn btn-large" {% if unfinished or standings | length < 2 %}disabled{% endif %}>Build the bracket</button>
+        </form>
+
+        <h2 class="section-title">Seeds if you build now</h2>
+        <table class="data-table">
+            <thead><tr><th class="num">Seed</th><th>Team</th><th class="num">Points</th><th class="num">Match diff</th><th class="num">Strength of schedule</th></tr></thead>
+            <tbody>
+                {% for row in standings %}
+                    <tr>
+                        <td class="num">{{ row.rank }}</td>
+                        <td>{{ team(row.team_number, row.team_name) }}</td>
+                        <td class="num">{{ row.qual_points }}</td>
+                        <td class="num">{{ "%+d"|format(row.match_diff) if row.match_diff else 0 }}</td>
+                        <td class="num">{{ row.sos }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

@@ -1,36 +1,54 @@
 {# owner: Shaurya — printable per-team match list #}
 {% extends "base.html" %}
-{% block title %}Schedule — Team {{ team_number }}{% endblock %}
+{% from "_ui.html" import team as team_label %}
+{% block title %}Team {{ team_number }} schedule{% endblock %}
 {% block content %}
-    <h1 class="page-title">Schedule — Team {{ team_number }}</h1>
+    <div class="page-head">
+        <h1 class="page-title">Team {{ team_number }}{% if team %}, {{ team.name }}{% endif %}</h1>
+        {% if team %}<button type="button" class="btn btn-secondary no-print" onclick="window.print()">Print this list</button>{% endif %}
+    </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Match</th>
-                <th>Arena</th>
-                <th>Time</th>
-                <th>Opponent</th>
-                <th>Side</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for match in matches %}
-                <tr>
-                    <td>{{ match.match_number }}</td>
-                    <td>{{ match.arena }}</td>
-                    <td>{{ match.scheduled_time }}</td>
-                    {% if match.red_team_number == team_number %}
-                        <td>{{ match.blue_team_name }}</td>
-                        <td><span class="badge badge-red">Red</span></td>
-                    {% else %}
-                        <td>{{ match.red_team_name }}</td>
-                        <td><span class="badge badge-blue">Blue</span></td>
-                    {% endif %}
-                    <td>{{ match.status }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if not team %}
+        <div class="notice notice-error">No team has the number {{ team_number }}.</div>
+    {% else %}
+        <p class="page-subtitle">Your qualification matches. Each is a best-of-three series, and times are
+        approximate. Queue at your arena before the call: one minute late is a forfeit.</p>
+
+        {% if matches %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Arena</th>
+                        <th class="num">Match</th>
+                        <th>You play</th>
+                        <th>Against</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matches %}
+                        {% set on_red = match.red_team_number == team_number %}
+                        <tr>
+                            <td>{{ match.scheduled_time }}</td>
+                            <td>{{ match.arena }}</td>
+                            <td class="num">{{ match.match_number }}</td>
+                            <td><span class="team team-{{ 'red' if on_red else 'blue' }}">{{ "Red" if on_red else "Blue" }}</span></td>
+                            <td>
+                                {% if on_red %}{{ team_label(match.blue_team_number, match.blue_team_name) }}
+                                {% else %}{{ team_label(match.red_team_number, match.red_team_name) }}{% endif %}
+                            </td>
+                            <td>
+                                {% if match.status == "complete" %}<span class="badge badge-success">Done</span>
+                                {% elif match.status == "in_progress" %}<span class="badge badge-now">Now</span>
+                                {% else %}<span class="badge">Scheduled</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="notice">No matches are scheduled for this team yet.</div>
+        {% endif %}
+    {% endif %}
 {% endblock %}

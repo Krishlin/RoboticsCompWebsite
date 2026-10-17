@@ -4,145 +4,154 @@
 # imports Flask or the database — it only works with plain dicts, so it can
 # be unit tested with made-up data and reused by anyone (seed script,
 # scripts/, tests) without spinning up the app.
+#
+# The official order is the game manual's T4 (Summit manual v1.0):
+#   1. qualification points  — 3 per series won, 0 per series lost
+#   2. match differential    — qualification matches won minus lost
+#   3. strength of schedule  — the final qualification points of every
+#                              opponent, counted once per series played
+#   4. random draw
+# Each qualification pairing is a best-of-three series (T3), so a "match" in
+# T4 is one game of a series here — one MatchResult row.
 
-import re
+import hashlib
 
-WIN_POINTS = {"win": 3, "tie": 1, "loss": 0, "double_dq": 0}
+from app.series import game_result_for, tally
 
-ZONE_POINTS = {
-    "out": 0,
-    "band": 1,
-    "plateau": 7,
-}
+SERIES_WIN_POINTS = 3
+SERIES_LOSS_POINTS = 0
+
+DEFAULT_DRAW_SEED = "SRC Summit 2026"
 
 
-def zone_points(zone_label):
-    """Convert a final-zone string into its point value.
+def draw_value(team_number, draw_seed=DEFAULT_DRAW_SEED):
+    """This team's ticket in the T4 random draw. Lower draws rank higher.
 
-    Handles "Ring 2".."Ring 6" via regex so small formatting differences
-    ("ring2", "Ring 3", "RING 4") all still work. Falls back to 0 for
-    anything unrecognized rather than raising.
+    A hash rather than random.random(): the draw must give the same order on
+    every page load, every server, and after a restart, or tied teams would
+    swap places on the big screen every refresh.
     """
-    if zone_label is None:
-        return 0
-    key = zone_label.strip().lower()
-    if key in ZONE_POINTS:
-        return ZONE_POINTS[key]
-    match = re.match(r"^ring\s*([2-6])$", key)
-    if match:
-        return int(match.group(1))
-    return 0
+    digest = hashlib.sha256(f"{draw_seed}:{team_number}".encode()).hexdigest()
+    return int(digest[:16], 16)
 
 
-def compute_team_records(teams, matches, results):
-    """Build one record per team from plain-dict teams/matches/results.
+def compute_team_records(teams, matches, games, draw_seed=DEFAULT_DRAW_SEED):
+    """Build one record per team from plain-dict teams/matches/games.
 
     teams:   iterable of {"team_number", "team_name", "division"}
-    matches: iterable of {"id", "division", "phase", "status",
-                         "red_team_number", "blue_team_number"}
-    results: iterable of {"match_id", "outcome", "win_time_seconds",
-                         "red_final_zone", "blue_final_zone"}
-                         outcome is one of "red", "blue", "tie", "double_dq"
+    matches: iterable of {"id", "division", "phase",
+                          "red_team_number", "blue_team_number"}
+             — one per series
+    games:   iterable of {"match_id", "game_number", "outcome", "voided"}
+             — one per game; outcome is "red", "blue", "tie" or "double_dq"
+
+    Only a decided series counts: until someone has two wins, neither its
+    points, its games nor its opponent appear in anybody's record. Counting a
+    half-played series would rank a team on a result that does not exist yet.
     """
-    results_by_match = {r["match_id"]: r for r in results}
+    games_by_match = {}
+    for game in games:
+        if game.get("voided"):
+            continue
+        games_by_match.setdefault(game["match_id"], []).append(game)
 
     records = {
         t["team_number"]: {
             "team_number": t["team_number"],
             "team_name": t["team_name"],
             "division": t["division"],
-            "wins": 0,
-            "losses": 0,
-            "ties": 0,
-            "matches_played": 0,
-            "win_points": 0,
-            "ring_points": 0,
-            "sp": 0,
-            "_win_times": [],       # scratch, dropped before return
-            "_opponents": [],       # scratch, dropped before return
+            "series_played": 0,
+            "series_wins": 0,
+            "series_losses": 0,
+            "qual_points": 0,
+            "match_wins": 0,
+            "match_losses": 0,
+            "match_ties": 0,
+            "match_diff": 0,
+            "sos": 0,
+            "draw": draw_value(t["team_number"], draw_seed),
+            "_opponents": [],  # scratch, dropped before return
         }
         for t in teams
     }
 
-    qual_matches = [
-        m for m in matches
-        if m["phase"] == "qualification" and m["status"] == "complete"
-    ]
+    for match in matches:
+        if match["phase"] != "qualification":
+            continue
+        series_games = sorted(
+            games_by_match.get(match["id"], []), key=lambda g: g["game_number"]
+        )
+        result = tally(g["outcome"] for g in series_games)
+        if result.winner is None:
+            continue
+        counted_games = series_games[: result.games_counted]
 
-    # Pass 1: Tally wins/losses/ties, win points, ring points, win times,
-    # and remember who each team faced (needed for SP in pass 2).
-    for match in qual_matches:
-        result = results_by_match.get(match["id"])
-        if result is None:
-            continue  # marked complete but no result yet
-
-        red_number = match["red_team_number"]
-        blue_number = match["blue_team_number"]
-        outcome = result["outcome"]
-        win_time = result.get("win_time_seconds")
-        red_zone = zone_points(result.get("red_final_zone"))
-        blue_zone = zone_points(result.get("blue_final_zone"))
-
-        for team_number, opponent_number, is_red, own_zone in (
-            (red_number, blue_number, True, red_zone),
-            (blue_number, red_number, False, blue_zone),
+        for side, team_number, opponent_number in (
+            ("red", match["red_team_number"], match["blue_team_number"]),
+            ("blue", match["blue_team_number"], match["red_team_number"]),
         ):
             record = records.get(team_number)
             if record is None:
                 continue
-            record["matches_played"] += 1
-            record["ring_points"] += own_zone
+            record["series_played"] += 1
+            if result.winner == side:
+                record["series_wins"] += 1
+                record["qual_points"] += SERIES_WIN_POINTS
+            else:
+                record["series_losses"] += 1
+                record["qual_points"] += SERIES_LOSS_POINTS
             record["_opponents"].append(opponent_number)
 
-            if outcome == "tie":
-                record["ties"] += 1
-                record["win_points"] += WIN_POINTS["tie"]
-            elif outcome == "double_dq":
-                record["losses"] += 1
-                record["win_points"] += WIN_POINTS["double_dq"]
-            elif (outcome == "red" and is_red) or (outcome == "blue" and not is_red):
-                record["wins"] += 1
-                record["win_points"] += WIN_POINTS["win"]
-                if win_time is not None:
-                    record["_win_times"].append(win_time)
-            else:
-                record["losses"] += 1
-                record["win_points"] += WIN_POINTS["loss"]
+            for game in counted_games:
+                outcome = game_result_for(side, game["outcome"])
+                if outcome == "win":
+                    record["match_wins"] += 1
+                elif outcome == "loss":
+                    record["match_losses"] += 1
+                else:
+                    record["match_ties"] += 1
 
-    # Pass 2: SP needs every opponent's final win count
+    # Strength of schedule needs every opponent's FINAL points, so it waits
+    # until every series has been tallied.
     for record in records.values():
-        record["sp"] = sum(
-            records[opp]["wins"] for opp in record["_opponents"] if opp in records
+        record["match_diff"] = record["match_wins"] - record["match_losses"]
+        record["sos"] = sum(
+            records[opp]["qual_points"] for opp in record.pop("_opponents") if opp in records
         )
-        win_times = record.pop("_win_times")
-        record["fastest_win_time"] = min(win_times) if win_times else None
-        record.pop("_opponents")
 
     return list(records.values())
 
 
 def _sort_key(record):
-    """Sort key matching Rio's official tiebreak order."""
-    fastest = record["fastest_win_time"] if record["fastest_win_time"] is not None else float("inf")
+    """Sort key for the official T4 order."""
     return (
-        -record["win_points"],
-        -record["sp"],
-        -record["ring_points"],
-        fastest,
-        record["team_number"],
+        -record["qual_points"],
+        -record["match_diff"],
+        -record["sos"],
+        record["draw"],
     )
 
 
 def tiebreak_sort(records):
-    """Sort team records into official standings order and assign rank."""
+    """Sort team records into official standings order and assign rank.
+
+    decided_by_draw marks a team whose place against a neighbour came down to
+    the random draw, so a standings page can say so instead of implying the
+    draw was a result.
+    """
     ordered = sorted(records, key=_sort_key)
-    return [
-        {**record, "rank": i}
-        for i, record in enumerate(ordered, start=1)
-    ]
+    ranked = []
+    for i, record in enumerate(ordered):
+        tied = _sort_key(record)[:3]
+        before = _sort_key(ordered[i - 1])[:3] if i > 0 else None
+        after = _sort_key(ordered[i + 1])[:3] if i + 1 < len(ordered) else None
+        ranked.append(
+            {**record, "rank": i + 1, "decided_by_draw": tied in (before, after)}
+        )
+    return ranked
 
 
-def rank_division(teams, matches, results):
+def rank_division(teams, matches, games, draw_seed=DEFAULT_DRAW_SEED):
     """Convenience: compute records and sort them in one call."""
-    records = compute_team_records(teams, matches, results)
+    records = compute_team_records(teams, matches, games, draw_seed)
     return tiebreak_sort(records)

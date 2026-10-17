@@ -7,6 +7,15 @@ from flask import render_template, redirect, url_for, request
 from app.checkin import checkin_bp
 from app.db import db
 from app.models import Team, Inspection
+from app.security import staff_required
+
+
+# Volunteers only: the check-in desk and inspection table. Gated as a whole,
+# because inspection records and the "who has arrived" list are not public.
+@checkin_bp.before_request
+@staff_required
+def _require_staff():
+    return None
 
 
 @checkin_bp.route("/")
@@ -15,8 +24,19 @@ def checkin_list():
     # ordered by team number.
     teams = Team.query.order_by(Team.team_number).all()
 
+    # Each team's most recent inspection, so the list shows where every team
+    # stands without opening each one. Later attempts overwrite earlier ones.
+    latest = {}
+    for inspection in Inspection.query.order_by(Inspection.inspected_at).all():
+        latest[inspection.team_id] = inspection
+
     # Send those teams to the check-in page.
-    return render_template("checkin/checkin_list.html", teams=teams)
+    return render_template(
+        "checkin/checkin_list.html",
+        teams=teams,
+        latest=latest,
+        arrived=sum(1 for t in teams if t.checked_in),
+    )
 
 
 @checkin_bp.route("/<int:team_id>/check-in", methods=["POST"])

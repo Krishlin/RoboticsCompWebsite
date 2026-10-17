@@ -2,31 +2,83 @@
    Exception to the shared-styles rule (per CLAUDE.md): this page has its
    own CSS in app/bracket/static/bracket/bracket.css. #}
 {% extends "base.html" %}
-{% block title %}Bracket — {{ division }}{% endblock %}
+{% from "_ui.html" import team %}
+{% block title %}Bracket, {{ division }}{% endblock %}
 
 {% block extra_head %}
+    <meta http-equiv="refresh" content="{{ refresh_seconds }}">
     <link rel="stylesheet" href="{{ url_for('bracket.static', filename='bracket/bracket.css') }}">
 {% endblock %}
 
-{% block content %}
-    <h1 class="page-title">Bracket — {{ division }}</h1>
-    <p class="page-subtitle">Single elimination. A tie inserts a replay instead of advancing anyone.</p>
+{% macro slot_row(slot, wins) %}
+    <div class="bracket-slot {% if slot.kind == 'team' and slot.won %}is-winner{% endif %} {% if slot.kind == 'tbd' %}is-tbd{% endif %} {% if slot.kind == 'bye' %}is-bye{% endif %}">
+        {% if slot.kind == "team" %}
+            <span class="bracket-seed" title="Seed {{ slot.seed }}">{{ slot.seed }}</span>
+            <span class="bracket-team"><span class="team-number">{{ slot.number }}</span> {{ slot.name }}</span>
+            {% if wins is not none %}<span class="bracket-wins">{{ wins }}</span>{% endif %}
+        {% else %}
+            <span class="bracket-seed"></span>
+            <span class="bracket-team">{{ slot.label }}</span>
+        {% endif %}
+    </div>
+{% endmacro %}
 
-    <div class="bracket-board">
-        {% for round in rounds %}
-            <div class="bracket-round">
-                <div class="bracket-round-title">{{ round.round_name }}</div>
-                {% for match in round.matches %}
-                    <div class="bracket-match">
-                        <div class="bracket-slot {% if match.winner == match.red %}is-winner{% endif %} {% if match.red == 'TBD' %}is-tbd{% endif %}">
-                            {{ match.red }}
-                        </div>
-                        <div class="bracket-slot {% if match.winner == match.blue %}is-winner{% endif %} {% if match.blue == 'TBD' %}is-tbd{% endif %}">
-                            {{ match.blue }}
-                        </div>
+{% block content %}
+<div class="bracket-page">
+    <h1 class="page-title">Bracket</h1>
+
+    {% if view is none %}
+        <p class="page-subtitle">The bracket is built from the final qualification
+        rankings once every qualification series has been played.</p>
+        {% if preview %}
+            <div class="card">
+                <h2>If qualification ended now</h2>
+                <table class="data-table">
+                    <thead><tr><th class="num">Seed</th><th>Team</th><th class="num">Points</th></tr></thead>
+                    <tbody>
+                        {% for row in preview[:8] %}
+                            <tr><td class="num">{{ row.rank }}</td><td>{{ team(row.team_number, row.team_name) }}</td><td class="num">{{ row.qual_points }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    {% else %}
+        <p class="page-subtitle">
+            {{ "Double" if view.config.format == "double" else "Single" }} elimination,
+            seeded by qualification rank. Every series is best of three, and a tied
+            game is replayed. The lower seed plays red.
+        </p>
+
+        {% if view.champion %}
+            <div class="bracket-champion">
+                Champion: {{ view.champion.team_number }} {{ view.champion.name }}
+                <span class="bracket-champion-seed">seed {{ view.champion_seed }}</span>
+            </div>
+        {% endif %}
+
+        {% for section in view.sections %}
+            {% if view.sections | length > 1 %}<h2 class="bracket-section-title">{{ section.label }}</h2>{% endif %}
+            <div class="bracket-board">
+                {% for column in section.columns %}
+                    <div class="bracket-round">
+                        <h3 class="bracket-round-title">{{ column.title }}</h3>
+                        {% for series in column.series %}
+                            {% set live = series.match and series.match.status == "in_progress" %}
+                            <div class="bracket-match {% if series.walkover %}is-walkover{% endif %} {% if live %}is-live{% endif %}">
+                                {{ slot_row(series.top, series.top_wins) }}
+                                {{ slot_row(series.bottom, series.bottom_wins) }}
+                                {% if series.match and not series.walkover %}
+                                    <p class="bracket-meta">
+                                        Match {{ series.match.match_number }}, {{ series.match.arena }}{% if live %}, <strong>playing now</strong>{% endif %}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
                     </div>
                 {% endfor %}
             </div>
         {% endfor %}
-    </div>
+    {% endif %}
+</div>
 {% endblock %}

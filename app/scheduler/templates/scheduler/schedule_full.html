@@ -1,52 +1,51 @@
 {# owner: Shaurya — full qualification schedule, all arenas and divisions #}
 {% extends "base.html" %}
+{% from "_ui.html" import team %}
 {% block title %}Schedule{% endblock %}
 {% block content %}
-    <h1 class="page-title">Qualification Schedule</h1>
+    <h1 class="page-title">Schedule</h1>
+    <p class="page-subtitle">Qualification matches. Each match is a best-of-three series, and the times are approximate.</p>
 
     {% if not matches %}
-        <div class="admin-section" style="margin-bottom: 1rem;">
-            <p><strong>No qualification matches yet.</strong></p>
-            <p>1) Register teams first, then 2) generate the schedule from Scheduler Admin.</p>
-            <p>
-                <a class="btn btn-primary" href="/schedule/admin">Open Scheduler Admin</a>
-                <a class="btn btn-secondary" href="/register/">Open Registration</a>
-            </p>
+        <div class="notice">
+            <p>The schedule hasn't been made yet. It's generated after teams check in.</p>
         </div>
-    {% endif %}
+    {% else %}
+        <p class="no-print">
+            Print a list for one arena:
+            {% for arena in arenas -%}
+                <a href="{{ url_for('scheduler.schedule_by_arena', arena=arena.replace(' ', '_')) }}">{{ arena }}</a>{% if not loop.last %}, {% endif %}
+            {%- endfor %}.
+            For one team, use <a href="{{ url_for('rankings.pit_lookup') }}">pit lookup</a>.
+        </p>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Match</th>
-                <th>Division</th>
-                <th>Arena</th>
-                <th>Time</th>
-                <th>Red</th>
-                <th>Blue</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for match in matches %}
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <td>{{ match.match_number }}</td>
-                    <td>{{ match.division }}</td>
-                    <td>{{ match.arena }}</td>
-                    <td>{{ match.scheduled_time }}</td>
-                    <td><span class="badge badge-red">{{ match.red_team_name }}</span></td>
-                    <td><span class="badge badge-blue">{{ match.blue_team_name }}</span></td>
-                    <td>
-                        {% if match.status == "complete" %}
-                            <span class="badge badge-success">Complete</span>
-                        {% elif match.status == "in_progress" %}
-                            <span class="badge badge-warning">In progress</span>
-                        {% else %}
-                            <span class="badge badge-neutral">Scheduled</span>
-                        {% endif %}
-                    </td>
+                    <th class="num">Match</th>
+                    <th>Time</th>
+                    <th>Arena</th>
+                    <th>Red</th>
+                    <th>Blue</th>
+                    <th>Status</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for match in matches %}
+                    <tr>
+                        <td class="num">{{ match.match_number }}</td>
+                        <td>{{ match.scheduled_time }}</td>
+                        <td>{{ match.arena }}</td>
+                        <td>{{ team(match.red_team_number, match.red_team_name, "red") }}</td>
+                        <td>{{ team(match.blue_team_number, match.blue_team_name, "blue") }}</td>
+                        <td>
+                            {% if match.status == "complete" %}<span class="badge badge-success">Done</span>
+                            {% elif match.status == "in_progress" %}<span class="badge badge-now">Now</span>
+                            {% else %}<span class="badge">Scheduled</span>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}

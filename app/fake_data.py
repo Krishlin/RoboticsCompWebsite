@@ -109,7 +109,8 @@ INSPECTIONS = [
 MATCHES = []
 RESULTS = []
 
-_ZONES = ["Center", "Red Zone", "Blue Zone", "Off Arena"]
+# The manual's rings; app/series.py:VALID_ZONES is the real list.
+_ZONES = ["Plateau", "Inner Slope", "Outer Slope", "Flat Band", "Edge Band", "Ring-out"]
 _OUTCOMES = ["red", "blue", "tie", "double_dq"]
 
 
@@ -138,7 +139,7 @@ def _make_matches():
                     "phase": "qualification",
                     "division": division,
                     "arena": arena,
-                    "scheduled_time": f"2026-09-12 {9 + (match_id % 6)}:{'00' if match_id % 2 else '30'}",
+                    "scheduled_time": f"2026-10-24 {9 + (match_id % 6)}:{'00' if match_id % 2 else '30'}",
                     "red_team_number": red,
                     "blue_team_number": blue,
                     "status": "complete" if is_complete else "scheduled",
@@ -207,44 +208,12 @@ def fake_rankings(division):
     return rankings
 
 
-# --- Bracket -------------------------------------------------------------
-# A small single-elimination bracket for one division, fake data only.
-
-BRACKET_ROUNDS = [
-    {
-        "round_number": 1,
-        "round_name": "Quarterfinals",
-        "matches": [
-            {"slot": 1, "red": "Team 101", "blue": "Team 108", "winner": "Team 101"},
-            {"slot": 2, "red": "Team 104", "blue": "Team 105", "winner": "Team 105"},
-            {"slot": 3, "red": "Team 102", "blue": "Team 107", "winner": "Team 102"},
-            {"slot": 4, "red": "Team 103", "blue": "Team 106", "winner": "Team 103"},
-        ],
-    },
-    {
-        "round_number": 2,
-        "round_name": "Semifinals",
-        "matches": [
-            {"slot": 1, "red": "Team 101", "blue": "Team 105", "winner": "Team 101"},
-            {"slot": 2, "red": "Team 102", "blue": "Team 103", "winner": None},
-        ],
-    },
-    {
-        "round_number": 3,
-        "round_name": "Final",
-        "matches": [
-            {"slot": 1, "red": "Team 101", "blue": "TBD", "winner": None},
-        ],
-    },
-]
-
-
 # --- Audit log ---------------------------------------------------------------
 
 AUDIT_ENTRIES = [
     {
         "id": 1, "match_id": 3, "changed_by": "Head Ref",
-        "changed_at": "2026-09-12 10:15", "field": "outcome",
+        "changed_at": "2026-10-24 10:15", "field": "outcome",
         "old_value": "tie", "new_value": "red",
     },
 ]

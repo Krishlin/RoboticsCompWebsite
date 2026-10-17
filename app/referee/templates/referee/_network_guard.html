@@ -1,0 +1,39 @@
+{# owner: Serena — shared by the match and confirm screens. Wifi at the arena
+   drops; a form tapped while offline is held back with a message instead of
+   turning into a browser error page, and a button is not left tappable twice
+   while its request is on the way. The server refuses duplicates anyway (each
+   game submission names its game number), so this is about the referee's
+   confidence, not correctness. #}
+<div class="notice notice-error" id="ref-offline" role="alert" hidden>
+    No connection, so nothing was sent. Your choices are still here. Tap again
+    when the wifi is back.
+</div>
+<script>
+(function () {
+    var offline = document.getElementById("ref-offline");
+    document.querySelectorAll("form[data-needs-network]").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            if (navigator.onLine === false) {
+                event.preventDefault();
+                offline.hidden = false;
+                offline.scrollIntoView({ block: "center" });
+                return;
+            }
+            offline.hidden = true;
+            // After the submit has been handed to the browser, so the tapped
+            // button's own name/value still travels with the form.
+            setTimeout(function () {
+                form.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+            }, 0);
+        });
+    });
+    // Coming back with the Back button restores the page from cache with the
+    // buttons still disabled; give them back.
+    window.addEventListener("pageshow", function () {
+        document.querySelectorAll("form[data-needs-network] button").forEach(function (b) {
+            if (!b.hasAttribute("data-keep-disabled")) { b.disabled = false; }
+        });
+    });
+    window.addEventListener("online", function () { offline.hidden = true; });
+})();
+</script>

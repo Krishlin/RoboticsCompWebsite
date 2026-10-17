@@ -1,152 +1,429 @@
 /* owner: shared / lead
-   Shared styles for the whole app. Use these classes instead of writing
-   your own button/table/form styles in your blueprint's templates.
+   Shared styles for the tournament tools: every page that extends base.html.
+   Use these classes instead of writing your own button/table/form styles in
+   your blueprint's templates.
+
+   The tools wear the same clothes as the public site (landing.css): Archivo,
+   the Edge-band black, Plateau white, the wordmark's cyan, square corners.
+   They are a separate sheet so the two can change independently, but the
+   tokens below are the same values, so moving from the site to a tool page
+   reads as one product.
+
+   One rule matters more than the rest: red and blue mean a team's side of
+   the Hill, and nothing else. No button, link, status or error is ever red
+   or blue, so a referee glancing at a phone never mistakes "Start game" for
+   the Blue team, or an error for the Red one.
+
    Exceptions: app/bracket/static/bracket/bracket.css and
-   app/rankings/templates/rankings/display.html may use their own CSS,
-   because those two pages need layouts nothing here covers. */
+   app/rankings/templates/rankings/display.html add their own layout,
+   because those two pages need layouts nothing here covers. They still use
+   these tokens. */
 
 :root {
-    --color-bg: #f7f7f9;
-    --color-surface: #ffffff;
-    --color-text: #1a1a1a;
-    --color-muted: #6b7280;
-    --color-border: #e2e2e6;
-    --color-primary: #2f5fa8;
-    --color-primary-dark: #244a86;
-    --color-red: #c0392b;
-    --color-blue: #2f5fa8;
-    --color-success: #1e7e34;
-    --color-warning: #b06d00;
-    --radius: 8px;
-    --spacing: 1rem;
+    --edge: #141414;          /* Edge Band: nav band, primary buttons, the TV ground */
+    --edge-raised: #2a2a2a;   /* hover on the dark */
+    --paper: #f2f4f4;         /* Plateau white: the page */
+    --paper-deep: #e4e8e8;    /* recessed: table heads, wells */
+    --surface: #ffffff;       /* panels on the page */
+    --ink: #141414;
+    --ink-soft: #5d6668;
+    --rule: rgba(20, 20, 20, 0.14);
+    --rule-strong: rgba(20, 20, 20, 0.35);
+
+    --cyan: #5bcfdd;          /* the wordmark; on dark ground only */
+    --cyan-deep: #1d7f8d;     /* cyan that passes contrast on white: links, focus, "now" */
+    --cyan-wash: #e3f5f7;
+
+    /* Team sides. The two halves of the Flat Band. Data, never decoration. */
+    --red: #c0433b;
+    --red-wash: #f8e4e2;
+    --blue: #4470d2;
+    --blue-wash: #e4ebfa;
+
+    /* Status. Deliberately neither zone hues nor team colours. */
+    --ok: #2f7a4b;
+    --ok-wash: #e2f1e7;
+    --warn: #8a5a00;
+    --warn-wash: #fff1c7;
+    --warn-rule: #d9a21b;
+
+    --font: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --space: 1rem;
+
+    /* Kept for templates written against the old names. */
+    --color-bg: var(--paper);
+    --color-surface: var(--surface);
+    --color-text: var(--ink);
+    --color-muted: var(--ink-soft);
+    --color-border: var(--rule);
+    --color-primary: var(--edge);
+    --color-red: var(--red);
+    --color-blue: var(--blue);
+    --color-success: var(--ok);
+    --color-warning: var(--warn);
+    --radius: 0;
+    --spacing: var(--space);
 }
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
+}
+
+html {
+    /* Safari inflates body text when the phone turns sideways otherwise. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--color-bg);
-    color: var(--color-text);
+    font-family: var(--font);
+    font-size: 1rem;
     line-height: 1.5;
+    background: var(--paper);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* --- Navigation --- */
+h1,
+h2,
+h3 {
+    line-height: 1.15;
+    margin: 0 0 0.5em;
+}
+
+h2 {
+    font-size: 1.25rem;
+    font-stretch: 112%;
+    font-weight: 750;
+}
+
+h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+p {
+    margin: 0 0 0.75em;
+}
+
+a {
+    color: var(--cyan-deep);
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+}
+
+a:hover {
+    color: var(--ink);
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--cyan-deep);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+    }
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background: var(--cyan);
+    color: var(--edge);
+    font-weight: 700;
+}
+
+.skip-link:focus {
+    left: 0;
+}
+
+/* --- Navigation --------------------------------------------------------
+   The public site's dark band, so a coach who clicks through from the
+   landing page lands somewhere that is visibly the same event. Public pages
+   on the left; the staff group sits apart on the right, so nobody hunting
+   for the schedule has to read past the referee tools. */
 
 .site-nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.5rem 2rem;
     flex-wrap: wrap;
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
-    padding: 0.75rem 1.5rem;
+    padding: 0.7rem 1.5rem;
+    background: var(--edge);
+    color: var(--paper);
 }
 
 .site-nav-brand {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--color-primary);
+    display: flex;
+    padding-block: 0.35rem; /* part of the tap target */
+}
+
+.site-nav-brand img {
+    display: block;
+    height: 22px;
+    width: auto;
+}
+
+.site-nav-links {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 1.5rem;
+}
+
+.site-nav-staff {
+    display: flex;
+    gap: 0 1.5rem;
+    margin-left: auto;
+    padding-left: 1.5rem;
+    border-left: 1px solid rgba(242, 244, 244, 0.2);
+}
+
+.site-nav a {
+    color: rgba(242, 244, 244, 0.82);
     text-decoration: none;
 }
 
 .site-nav-links a {
-    margin-left: 1rem;
-    color: var(--color-text);
-    text-decoration: none;
-    font-size: 0.95rem;
+    display: block;
+    padding-block: 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
 }
 
 .site-nav-links a:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
+    color: var(--cyan);
 }
 
-/* --- Layout --- */
+.site-nav-links a[aria-current="page"] {
+    color: var(--paper);
+    border-bottom-color: var(--cyan);
+}
+
+.site-nav :focus-visible {
+    outline-color: var(--cyan);
+}
+
+/* --- Layout ------------------------------------------------------------- */
 
 .page-container {
     max-width: 960px;
     margin: 0 auto;
-    padding: 1.5rem;
+    padding: 2rem 1.5rem 3rem;
 }
 
+/* The page title is the event's display voice: Archivo one width wider. */
 .page-title {
-    margin-top: 0;
+    margin: 0 0 0.35em;
+    font-size: clamp(1.75rem, 4vw, 2.4rem);
+    font-stretch: 125%;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    text-wrap: balance;
 }
 
 .page-subtitle {
-    color: var(--color-muted);
-    margin-top: -0.5rem;
+    max-width: 66ch;
+    margin: 0 0 1.5rem;
+    color: var(--ink-soft);
 }
 
-/* --- Cards --- */
+.page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+}
+
+.section-title {
+    margin-top: 2rem;
+}
+
+/* --- Panels --------------------------------------------------------------
+   One flat panel, square, ruled. No shadow: the page has no light source to
+   cast one, and a stack of floating cards reads as a template. */
 
 .card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: var(--spacing);
-    margin-bottom: var(--spacing);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 1.25rem;
+    margin-bottom: var(--space);
+}
+
+.card > :last-child {
+    margin-bottom: 0;
 }
 
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: var(--spacing);
+    gap: var(--space);
 }
 
-/* --- Buttons --- */
+.card-grid .card {
+    margin-bottom: 0;
+}
+
+/* A whole panel that is one link (the referee's arena picker). */
+.card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    border-left: 4px solid var(--ink);
+}
+
+.card-link:hover {
+    color: inherit;
+    border-left-color: var(--cyan-deep);
+    background: var(--cyan-wash);
+}
+
+.card-link-title {
+    font-size: 1.35rem;
+    font-stretch: 112%;
+    font-weight: 750;
+    margin: 0 0 0.15rem;
+}
+
+/* --- Notices -------------------------------------------------------------
+   Every message the app shows a person - a saved change, a pause, a
+   problem - is one of these, so they all read the same way on every page.
+   An error is the inverted panel: the loudest thing the palette has, and a
+   colour no team wears. */
+
+.notice {
+    margin: 0 0 var(--space);
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 5px solid var(--cyan-deep);
+}
+
+.notice > :last-child {
+    margin-bottom: 0;
+}
+
+.notice ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.notice-ok {
+    border-left-color: var(--ok);
+    background: var(--ok-wash);
+}
+
+.notice-warn {
+    border-left-color: var(--warn-rule);
+    background: var(--warn-wash);
+    font-weight: 600;
+}
+
+.notice-error {
+    border: none;
+    border-left: 5px solid var(--warn-rule);
+    background: var(--edge);
+    color: var(--paper);
+}
+
+.notice-error a {
+    color: var(--cyan);
+}
+
+/* --- Buttons -------------------------------------------------------------
+   Square, like the public site's: it borrows the vocabulary of a dimensioned
+   drawing. The main action is Edge black; the second is an outline. Never a
+   team colour. */
 
 .btn {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    border: 1px solid transparent;
-    background: var(--color-primary);
-    color: #fff;
-    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.15rem;
+    border: 2px solid var(--edge);
+    background: var(--edge);
+    color: var(--paper);
+    font: inherit;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
     text-decoration: none;
     cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn:hover {
-    background: var(--color-primary-dark);
+    background: var(--edge-raised);
+    border-color: var(--edge-raised);
+    color: var(--paper);
 }
 
 .btn-secondary {
-    background: var(--color-surface);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--rule-strong);
 }
 
 .btn-secondary:hover {
-    background: var(--color-bg);
+    background: var(--surface);
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .btn-large {
-    padding: 1rem 1.5rem;
-    font-size: 1.25rem;
     width: 100%;
+    padding: 1rem 1.25rem;
+    font-size: 1.15rem;
 }
 
 .btn-row {
     display: flex;
-    gap: 0.75rem;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: var(--space);
 }
 
-/* --- Forms --- */
+.btn-row form {
+    margin: 0;
+}
+
+/* --- Forms ---------------------------------------------------------------- */
 
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
 }
 
-.form-group label {
+.form-group > label,
+.form-label {
     display: block;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
+    font-weight: 700;
 }
 
 /* 1rem is not a preference here. Safari zooms the page in on any field whose
@@ -156,101 +433,352 @@ body {
 .form-group input[type="email"],
 .form-group input[type="tel"],
 .form-group input[type="number"],
+.form-group input[type="datetime-local"],
 .form-group select,
 .form-group textarea {
+    display: block;
     width: 100%;
-    padding: 0.6rem 0.5rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
     font-size: 1rem;
-    font-family: inherit;
 }
 
+/* Short fields side by side on a laptop, stacked on a phone. */
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1.25rem;
+}
+
+@media (max-width: 720px) {
+    .field-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.form-group input + input {
+    margin-top: 0.5rem;
+}
+
+.form-group textarea {
+    min-height: 5rem;
+    resize: vertical;
+}
+
+.hint,
 .form-group .hint {
-    color: var(--color-muted);
-    font-size: 0.85rem;
+    margin: 0.35rem 0 0;
+    color: var(--ink-soft);
+    font-size: 0.875rem;
 }
 
 .checkbox-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
 }
 
-/* --- Tables --- */
+.checkbox-row input {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--edge);
+}
+
+/* A checklist with targets big enough for a thumb (inspection). */
+.check-list {
+    margin: 0 0 1.25rem;
+    padding: 0;
+    border: 1px solid var(--rule);
+    list-style: none;
+    background: var(--surface);
+}
+
+.check-list li + li {
+    border-top: 1px solid var(--rule);
+}
+
+.check-list label {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    cursor: pointer;
+}
+
+.check-list input {
+    flex: 0 0 auto;
+    width: 1.4rem;
+    height: 1.4rem;
+    accent-color: var(--edge);
+}
+
+.check-list .hint {
+    display: block;
+    margin: 0;
+}
+
+/* Choices drawn as big tiles: the referee's result buttons. The radio stays
+   in the page, so it still works with a keyboard and without JavaScript. */
+.choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.choice {
+    position: relative;
+}
+
+.choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.choice label {
+    display: block;
+    padding: 1rem 0.5rem;
+    border: 2px solid var(--rule-strong);
+    background: var(--surface);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+}
+
+.choice.is-red label {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+}
+
+.choice.is-blue label {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+}
+
+.choice input:checked + label {
+    outline: 4px solid var(--ink);
+    outline-offset: 3px;
+}
+
+.choice input:checked + label::before {
+    content: "✓ ";
+}
+
+.choice input:focus-visible + label {
+    outline: 3px dashed var(--cyan-deep);
+    outline-offset: 3px;
+}
+
+/* --- Tables ---------------------------------------------------------------- */
 
 table.data-table {
     width: 100%;
+    margin-bottom: var(--space);
     border-collapse: collapse;
-    background: var(--color-surface);
+    background: var(--surface);
+    border: 1px solid var(--rule);
 }
 
 table.data-table th,
 table.data-table td {
-    text-align: left;
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: top;
 }
 
 table.data-table th {
-    background: var(--color-bg);
+    background: var(--paper-deep);
+    font-size: 0.875rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+table.data-table tbody tr:hover td {
+    background: var(--paper);
+}
+
+table.data-table .num {
+    text-align: right;
+}
+
+/* --- Teams ------------------------------------------------------------------
+   A team is always its number then its name, the number in bold because it
+   is what is written on the robot and called at the arena. When the side
+   matters, a square of the side's colour sits in front, the way the Flat
+   Band marks where each robot starts. */
+
+.team {
+    white-space: nowrap;
+}
+
+.team-number {
+    font-weight: 800;
+}
+
+.team-red::before,
+.team-blue::before {
+    content: "";
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    margin-right: 0.4em;
+    vertical-align: 0;
+}
+
+.team-red::before {
+    background: var(--red);
+}
+
+.team-blue::before {
+    background: var(--blue);
+}
+
+.team-tbd {
+    color: var(--ink-soft);
+    font-style: italic;
+}
+
+/* The referee's big side bars: the one place a team colour fills a block. */
+.side-bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.85rem 1rem;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.side-bar.is-red {
+    background: var(--red);
+}
+
+.side-bar.is-blue {
+    background: var(--blue);
+}
+
+.side-bar-label {
+    display: block;
+    font-size: 0.8rem;
     font-weight: 600;
+    opacity: 0.85;
 }
 
-table.data-table tr:hover td {
-    background: var(--color-bg);
+.side-bar-wins {
+    font-size: 2rem;
+    font-stretch: 125%;
+    font-weight: 800;
+    line-height: 1;
 }
 
-/* --- Status badges --- */
+/* --- Status badges ------------------------------------------------------------ */
 
 .badge {
     display: inline-block;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 .badge-success {
-    background: #e3f4e6;
-    color: var(--color-success);
+    border-color: transparent;
+    background: var(--ok-wash);
+    color: var(--ok);
 }
 
 .badge-warning {
-    background: #fdf1dd;
-    color: var(--color-warning);
+    border-color: transparent;
+    background: var(--warn-wash);
+    color: var(--warn);
 }
 
 .badge-danger {
-    background: #fbe6e3;
-    color: var(--color-red);
+    border-color: var(--edge);
+    background: var(--edge);
+    color: var(--paper);
+}
+
+.badge-now {
+    border-color: transparent;
+    background: var(--cyan-wash);
+    color: var(--cyan-deep);
 }
 
 .badge-neutral {
-    background: #eceef1;
-    color: var(--color-muted);
+    /* the default badge */
 }
 
+/* Team sides, for the rare place a badge is the right shape for one. */
 .badge-red {
-    background: #fbe6e3;
-    color: var(--color-red);
+    border-color: transparent;
+    background: var(--red-wash);
+    color: var(--red);
 }
 
 .badge-blue {
-    background: #e6edf8;
-    color: var(--color-blue);
+    border-color: transparent;
+    background: var(--blue-wash);
+    color: var(--blue);
 }
 
-/* --- Utility --- */
+/* --- Small print ---------------------------------------------------------------- */
 
-.owner-tag {
-    color: var(--color-muted);
-    font-size: 0.85rem;
+.owner-tag,
+.meta {
+    margin: 0 0 0.5rem;
+    color: var(--ink-soft);
+    font-size: 0.875rem;
 }
 
 .text-muted {
-    color: var(--color-muted);
+    color: var(--ink-soft);
+}
+
+/* Text whose line breaks are part of it (a list of schedule-rule problems). */
+.space-above {
+    margin-top: 0.75rem;
+}
+
+.space-below {
+    margin-bottom: 1rem;
+}
+
+.pre-wrap {
+    white-space: pre-wrap;
+    font: inherit;
+    font-weight: 400;
+}
+
+/* The one fact a page exists to tell someone, in the display voice. */
+.lead-figure {
+    margin: 0.15em 0 0.4em;
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
+    font-stretch: 125%;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.big-number {
+    font-size: 3.5rem;
+    font-stretch: 125%;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
 }
 
 /* ---------------------------------------------------------------
@@ -262,15 +790,9 @@ table.data-table tr:hover td {
    volunteer has in their pocket. What follows is for that.
    --------------------------------------------------------------- */
 
-html {
-    /* Safari inflates body text when the phone turns sideways otherwise. */
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-}
-
 @media (max-width: 720px) {
     .page-container {
-        padding: 1rem;
+        padding: 1.25rem 1rem 2.5rem;
     }
 
     /* The links wrapped into a ragged block under the brand and each one
@@ -279,8 +801,8 @@ html {
        blueprints are switched on. */
     .site-nav {
         flex-wrap: nowrap;
-        gap: 0.75rem;
-        padding: 0.6rem 1rem;
+        gap: 1rem;
+        padding: 0.55rem 1rem;
     }
 
     .site-nav-brand {
@@ -288,12 +810,12 @@ html {
     }
 
     .site-nav-links {
-        display: flex;
-        gap: 0.25rem;
+        flex-wrap: nowrap;
         overflow-x: auto;
         overscroll-behavior-x: contain;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        gap: 0 1.1rem;
     }
 
     .site-nav-links::-webkit-scrollbar {
@@ -301,9 +823,14 @@ html {
     }
 
     .site-nav-links a {
-        margin-left: 0;
-        padding: 0.6rem 0.6rem;
+        padding-block: 0.6rem;
         white-space: nowrap;
+    }
+
+    .site-nav-staff {
+        gap: 0 1.1rem;
+        margin-left: 0.25rem;
+        padding-left: 1.1rem;
     }
 
     /* A results table has more columns than a phone has width. Letting the
@@ -325,15 +852,32 @@ html {
 
     /* Room for a thumb rather than a cursor. */
     .btn {
-        padding: 0.7rem 1.1rem;
+        padding: 0.8rem 1.1rem;
     }
 
     .btn-row .btn {
         flex: 1 1 auto;
-        text-align: center;
     }
 
     .card-grid {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Printed schedules (per arena, per team) go on clipboards and pit tables.
+   The navigation bar is no use on paper. */
+@media print {
+    .site-nav,
+    .no-print {
+        display: none;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .page-container {
+        padding: 0;
+        max-width: none;
     }
 }

@@ -153,6 +153,11 @@
             </ul>
         </div>
         <div>
+            {% if contact_email %}
+                <ul>
+                    <li><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></li>
+                </ul>
+            {% endif %}
             <p class="footer-creed">Climb together.</p>
         </div>
     </div>

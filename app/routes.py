@@ -22,7 +22,7 @@ main_bp = Blueprint("main", __name__)
 # text in place of any entry left as None, so an unfilled value never ships
 # as a link that goes nowhere. Fill one in and it becomes a link.
 SITE_LINKS = {
-    "email": None,
+    "email": "stemstersrobotics@gmail.com",
     "instagram": None,
     "consent_form": "https://www.jotform.com/sign/262648445667067/invite/01m3dvy007e0ae5c450464b496",
     "starter_code": None,
@@ -41,30 +41,32 @@ MANUAL_FILENAME = "summit-manual-v1.0.pdf"
 ROUTE_INDEX = [
     {"owner": "Emily", "label": "Sign up a team", "path": "/register/"},
     {"owner": "Emily", "label": "Registration confirmation (team 101)", "path": "/register/confirmation/101"},
-    {"owner": "Emily", "label": "Team list / CSV export", "path": "/register/teams"},
+    {"owner": "Emily", "label": "Team list / CSV export (staff)", "path": "/register/teams"},
 
-    {"owner": "Shivani", "label": "Check-in list", "path": "/checkin/"},
-    {"owner": "Shivani", "label": "Inspection form (team 101)", "path": "/checkin/inspect/101"},
-    {"owner": "Shivani", "label": "Inspection history (team 102)", "path": "/checkin/history/102"},
+    {"owner": "Shivani", "label": "Check-in list (staff)", "path": "/checkin/"},
+    {"owner": "Shivani", "label": "Inspection form (team 101, staff)", "path": "/checkin/inspect/101"},
+    {"owner": "Shivani", "label": "Inspection history (team 102, staff)", "path": "/checkin/history/102"},
 
     {"owner": "Shaurya", "label": "Full qualification schedule", "path": "/schedule/"},
-    {"owner": "Shaurya", "label": "Schedule generator admin", "path": "/schedule/admin"},
+    {"owner": "Shaurya", "label": "Schedule generator (head ref)", "path": "/schedule/admin"},
     {"owner": "Shaurya", "label": "Schedule by arena", "path": "/schedule/arena/Arena_1"},
     {"owner": "Shaurya", "label": "Schedule by team (team 101)", "path": "/schedule/team/101"},
 
-    {"owner": "Serena", "label": "Referee: current match", "path": "/referee/"},
-    {"owner": "Serena", "label": "Referee: enter result", "path": "/referee/result/1"},
-    {"owner": "Serena", "label": "Referee: confirm submission (reached from the result form)", "path": "/referee/confirm/1"},
+    {"owner": "Serena", "label": "Referee: choose arena (staff)", "path": "/referee/"},
+    {"owner": "Serena", "label": "Referee: Arena 1 match screen (staff)", "path": "/referee/arena/Arena_1"},
+    {"owner": "Serena", "label": "Referee: one match's screen (staff)", "path": "/referee/result/1"},
 
     {"owner": "Jon", "label": "Rankings (High School)", "path": "/rankings/High_School"},
     {"owner": "Jon", "label": "Big-screen display (High School)", "path": "/rankings/display/High_School"},
     {"owner": "Jon", "label": "Pit lookup", "path": "/rankings/pit"},
 
     {"owner": "Krish S", "label": "Elimination bracket (High School)", "path": "/bracket/High_School"},
+    {"owner": "Krish S", "label": "Bracket setup (head ref)", "path": "/bracket/High_School/manage"},
 
-    {"owner": "Yueyue", "label": "Admin dashboard", "path": "/admin/"},
-    {"owner": "Yueyue", "label": "Edit a result", "path": "/admin/edit/1"},
-    {"owner": "Yueyue", "label": "Audit log", "path": "/admin/audit-log"},
+    {"owner": "Yueyue", "label": "Admin dashboard (head ref)", "path": "/admin/"},
+    {"owner": "Yueyue", "label": "Edit a series' games (head ref)", "path": "/admin/edit/1"},
+    {"owner": "Yueyue", "label": "Audit log (head ref)", "path": "/admin/audit-log"},
+    {"owner": "Yueyue", "label": "Export everything (head ref)", "path": "/admin/export/all.zip"},
 ]
 
 

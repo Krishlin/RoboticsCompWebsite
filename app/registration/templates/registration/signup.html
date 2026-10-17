@@ -1,15 +1,12 @@
 {# owner: Emily — public signup form for a new team #}
 {% extends "base.html" %}
-{% block title %}Register a Team{% endblock %}
+{% from "_ui.html" import errors as error_list %}
+{% block title %}Register a team{% endblock %}
 {% block content %}
-    <h1 class="page-title">Register a Team</h1>
-    {% if errors %}
-<ul class="errors" style="color: red;">
-    {% for error in errors %}
-    <li>{{ error }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+    <h1 class="page-title">Register a team</h1>
+    <p class="page-subtitle">One to four students and one adult of record. You get your team
+    number as soon as you register.</p>
+    {{ error_list(errors) }}
 
     {# Every field is re-filled from form_data so a validation error doesn't
        make the registrant retype the whole form. #}
@@ -22,12 +19,13 @@
 
         <div class="form-group">
             <label for="affiliation">School</label>
-            <input type="text" id="affiliation" name="affiliation" placeholder="School name, or leave blank for Independent" value="{{ form_data.affiliation }}">
+            <input type="text" id="affiliation" name="affiliation" value="{{ form_data.affiliation }}">
+            <p class="hint">Leave blank if you are an independent team.</p>
         </div>
 
         <div class="form-group">
-            <label>Students (1 to 4)</label>
-            <input type="text" name="student_1" placeholder="Student 1 name" value="{{ form_data.student_1 }}">
+            <label for="student_1">Students, 1 to 4</label>
+            <input type="text" id="student_1" name="student_1" placeholder="Student 1 name" value="{{ form_data.student_1 }}">
             <input type="text" name="student_2" placeholder="Student 2 name (optional)" value="{{ form_data.student_2 }}">
             <input type="text" name="student_3" placeholder="Student 3 name (optional)" value="{{ form_data.student_3 }}">
             <input type="text" name="student_4" placeholder="Student 4 name (optional)" value="{{ form_data.student_4 }}">
@@ -41,7 +39,7 @@
         <div class="form-group">
             <label for="adult_email">Adult email</label>
             <input type="email" id="adult_email" name="adult_email" value="{{ form_data.adult_email }}">
-            <p class="hint">Must be unique across all teams.</p>
+            <p class="hint">Each adult can be the adult of record for one team only. Your confirmation goes to this address.</p>
         </div>
 
         <div class="form-group">
@@ -54,14 +52,14 @@
             <label for="kit_ordered">We already ordered a kit</label>
         </div>
 
-        <button type="submit" class="btn">Register team</button>
+        <button type="submit" class="btn btn-large">Register team</button>
     </form>
 
     <script>
     document.querySelector('form.card').addEventListener('submit', function(e) {
         const btn = this.querySelector('button[type="submit"]');
         btn.disabled = true;
-        btn.textContent = 'Registering...';
+        btn.textContent = 'Registering…';
     });
     </script>
 {% endblock %}

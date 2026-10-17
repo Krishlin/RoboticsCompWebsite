@@ -1,77 +1,255 @@
-{# owner: Serena — end-of-match result entry, phone-sized with large touch targets #}
+{# owner: Serena — the referee's match screen for one arena, phone-sized with
+   large touch targets. Shows the current series, the Start button and timer,
+   and the result entry for the game being played. #}
 {% extends "base.html" %}
-{% block title %}Referee — Enter Result{% endblock %}
-{% block content %}
-    <h1 class="page-title">Enter Result</h1>
+{% block title %}Referee — {{ arena or "Match" }}{% endblock %}
 
-    {% if match %}
-        {% if errors %}
-            <ul class="errors" style="color: red;">
-                {% for error in errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+{% block extra_head %}
+    {# A screen with nothing to run checks back on its own, so a phone left on
+       an idle arena picks up the next series without anyone touching it. #}
+    {% if match is none or not teams_known %}<meta http-equiv="refresh" content="15">{% endif %}
+    <style>
+        .ref-timer.is-over { color: var(--warn); }
+        .ref-timer-note { margin: 0.25rem 0 0; text-align: center; }
+        .ref-status { margin: 0.25rem 0 1rem; font-size: 1.05rem; }
+        .ref-games { margin: 0; padding-left: 1.5rem; }
+        .ref-problems { margin-top: 0.75rem; }
+        .ref-problems summary { cursor: pointer; color: var(--ink-soft); }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% from "_ui.html" import errors as error_list %}
+
+    {% if paused %}
+        <div class="notice notice-warn">
+            Matches are paused by the head ref. A game already running can be
+            finished and submitted. Don't start a new one.
+        </div>
+    {% endif %}
+
+    {% if match is none %}
+        <h1 class="page-title">{{ arena }}</h1>
+        <p class="page-subtitle">No match is waiting on this arena. This screen
+        checks again every 15 seconds.</p>
+        <a class="btn btn-secondary" href="{{ url_for('referee.current_match') }}">Choose a different arena</a>
+    {% else %}
+        <div class="page-head">
+            <h1 class="page-title">Match {{ match.match_number }}</h1>
+            <p class="meta">{{ match.arena }}, {{ "bracket" if match.phase == "elimination" else "qualification" }}</p>
+        </div>
+
+        <div class="side-bar is-red">
+            <span><span class="side-bar-label">Red</span>{% if red %}{{ red.team_number }} {{ red.name }}{% else %}TBD{% endif %}</span>
+            <span class="side-bar-wins" aria-label="Red has {{ tally.red_wins }} game wins">{{ tally.red_wins }}</span>
+        </div>
+        <div class="side-bar is-blue">
+            <span><span class="side-bar-label">Blue</span>{% if blue %}{{ blue.team_number }} {{ blue.name }}{% else %}TBD{% endif %}</span>
+            <span class="side-bar-wins" aria-label="Blue has {{ tally.blue_wins }} game wins">{{ tally.blue_wins }}</span>
+        </div>
+
+        <p class="ref-status">
+            Best of three, first to two game wins.
+            {% if not locked %}Now playing <strong>game {{ game_number }}</strong>.{% endif %}
+        </p>
+
+        {{ error_list(errors) }}
 
         {% if locked %}
-            <div class="card">
-                <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
-                <p><strong>This match is locked.</strong> A result was submitted by
-                {{ result.submitted_by }}. Only the head ref can change it now.</p>
-                <p>
-                    Winner: <strong>{{ result.outcome }}</strong><br>
-                    Red final zone: {{ result.red_final_zone }}<br>
-                    Blue final zone: {{ result.blue_final_zone }}<br>
-                    Win time: {{ result.win_time_seconds if result.win_time_seconds is not none else "—" }}
-                </p>
-                <a class="btn btn-large btn-secondary" href="{{ url_for('referee.current_match') }}">Back to current match</a>
+            {% set winner = red if tally.winner == "red" else blue %}
+            <div class="notice notice-ok">
+                <p><strong>Series finished.</strong> {{ tally.winner | capitalize }}
+                ({{ winner.name if winner else "TBD" }}) wins
+                {{ [tally.red_wins, tally.blue_wins] | max }}–{{ [tally.red_wins, tally.blue_wins] | min }}.
+                Only the head ref can change it now.</p>
             </div>
+            <a class="btn btn-large" href="{{ url_for('referee.arena_screen', arena=match.arena.replace(' ', '_')) }}">Next match on {{ match.arena }}</a>
+        {% elif not teams_known %}
+            <p class="text-muted">Waiting for an earlier bracket result before both
+            teams are known. This screen checks again every 15 seconds.</p>
         {% else %}
-            <form class="card" method="POST">
+            <div class="card">
+                {% if elapsed is none %}
+                    <form method="POST" action="{{ url_for('referee.start_game', match_id=match.id) }}" data-needs-network>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-large" {% if paused %}disabled data-keep-disabled{% endif %}>
+                            Start game {{ game_number }}
+                        </button>
+                    </form>
+                    <p class="hint">Tap Start when the field controller sends START. The
+                    clock is kept on the server, so reloading this page or locking
+                    the phone doesn't reset it.</p>
+                {% else %}
+                    <div id="timer" class="big-number ref-timer" data-elapsed="{{ '%.3f' | format(elapsed) }}" data-limit="{{ game_seconds }}" aria-live="off">--:--</div>
+                    <p class="ref-timer-note text-muted">Game {{ game_number }} is running. Tap the result the moment it's decided.</p>
+                    <details class="ref-problems">
+                        <summary>Timer problems</summary>
+                        <form method="POST" action="{{ url_for('referee.restart_timer', match_id=match.id) }}" data-needs-network class="space-above">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="btn-row">
+                                <button type="submit" name="action" value="restart" class="btn btn-secondary">False start: restart timer</button>
+                                <button type="submit" name="action" value="cancel" class="btn btn-secondary">Started by mistake: cancel</button>
+                            </div>
+                        </form>
+                    </details>
+                {% endif %}
+            </div>
+
+            <form class="card" id="result-form" method="POST"
+                  action="{{ url_for('referee.result_entry', match_id=match.id) }}"
+                  data-needs-network
+                  data-match-id="{{ match.id }}" data-game="{{ game_number }}"
+                  data-server-values="{{ '1' if values.outcome else '0' }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <p class="owner-tag">Match {{ match.match_number }} — {{ match.arena }}</p>
-
-                {# Filled in by the match timer. See TODO(Serena) in routes.py. #}
-                <input type="hidden" name="win_time_seconds" value="{{ values.win_time_seconds if values.win_time_seconds is not none else '' }}">
+                <input type="hidden" name="game_number" value="{{ game_number }}">
+                <input type="hidden" id="win-time" name="win_time_seconds" value="{{ values.win_time_seconds if values.win_time_seconds is not none else '' }}">
 
                 <div class="form-group">
-                    <label for="red_final_zone">Red final zone</label>
-                    <select id="red_final_zone" name="red_final_zone">
-                        {% for zone in valid_zones %}
-                            <option value="{{ zone }}" {% if values.red_final_zone == zone %}selected{% endif %}>{{ zone }}</option>
+                    <span class="form-label" id="result-label">Result of game {{ game_number }}</span>
+                    <div class="choice-grid" role="radiogroup" aria-labelledby="result-label">
+                        {% for value, label, klass in (("red", "Red wins", "is-red"), ("blue", "Blue wins", "is-blue"), ("tie", "Tie", ""), ("double_dq", "Double DQ", "")) %}
+                            <div class="choice {{ klass }}">
+                                <input type="radio" id="outcome-{{ value }}" name="outcome" value="{{ value }}" {% if values.outcome == value %}checked{% endif %}>
+                                <label for="outcome-{{ value }}">{{ label }}</label>
+                            </div>
                         {% endfor %}
-                    </select>
+                    </div>
+                    <p class="hint" id="win-time-note"></p>
                 </div>
 
-                <div class="form-group">
-                    <label for="blue_final_zone">Blue final zone</label>
-                    <select id="blue_final_zone" name="blue_final_zone">
-                        {% for zone in valid_zones %}
-                            <option value="{{ zone }}" {% if values.blue_final_zone == zone %}selected{% endif %}>{{ zone }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                {% for side in ("red", "blue") %}
+                    {% set field = side ~ "_final_zone" %}
+                    <div class="form-group">
+                        <label for="{{ field }}">{{ side | capitalize }} robot's final zone</label>
+                        <select id="{{ field }}" name="{{ field }}">
+                            <option value="">Pick a zone</option>
+                            {% for zone in valid_zones %}
+                                <option value="{{ zone }}" {% if values[field] == zone %}selected{% endif %}>{{ zone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endfor %}
 
-                {# Each winner button submits the form with its own outcome, so the
-                   choice and the zones travel together to the confirm step. #}
-                <div class="form-group">
-                    <label>Winner — tap to review &amp; submit</label>
-                    <div class="btn-row">
-                        <button type="submit" name="outcome" value="red" class="btn btn-large" style="background: var(--color-red);">RED — {{ red.name if red else "TBD" }}</button>
-                    </div>
-                    <div class="btn-row" style="margin-top: 0.5rem;">
-                        <button type="submit" name="outcome" value="blue" class="btn btn-large" style="background: var(--color-blue);">BLUE — {{ blue.name if blue else "TBD" }}</button>
-                    </div>
-                    <div class="btn-row" style="margin-top: 0.5rem;">
-                        <button type="submit" name="outcome" value="tie" class="btn btn-large btn-secondary">TIE</button>
-                    </div>
-                    <div class="btn-row" style="margin-top: 0.5rem;">
-                        <button type="submit" name="outcome" value="double_dq" class="btn btn-large btn-secondary">DOUBLE DQ</button>
-                    </div>
-                </div>
+                <button type="submit" class="btn btn-large">Review result</button>
             </form>
         {% endif %}
-    {% else %}
-        <p class="text-muted">Match not found.</p>
+
+        {% if games %}
+            <div class="card">
+                <h2>Games so far</h2>
+                <ol class="ref-games">
+                    {% for game in games %}
+                        <li value="{{ game.game_number }}">
+                            {% if game.outcome in ("red", "blue") %}{{ game.outcome | capitalize }} won{% elif game.outcome == "tie" %}Tie, replayed{% else %}Double DQ{% endif %}
+                            {% if game.win_time_seconds is not none %}in {{ game.win_time_seconds | seconds }}{% endif %}
+                            {% if game.voided %}<span class="badge badge-warning">Replay ordered</span>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+        {% endif %}
+
+        <p><a href="{{ url_for('referee.current_match') }}">Change arena</a></p>
     {% endif %}
+
+    {% include "referee/_network_guard.html" %}
+
+    <script>
+    (function () {
+        var timer = document.getElementById("timer");
+        var loadedAt = Date.now();
+
+        // Elapsed time = what the server measured when it drew the page, plus
+        // how long this page has been open by the phone's own clock. Using a
+        // difference of the phone's clock means a phone set to the wrong time
+        // still counts correctly, and Date.now keeps counting while the
+        // screen is locked, so the timer is right the moment it wakes.
+        function elapsedNow() {
+            if (!timer) { return null; }
+            return parseFloat(timer.dataset.elapsed) + (Date.now() - loadedAt) / 1000;
+        }
+
+        if (timer) {
+            var limit = parseFloat(timer.dataset.limit);
+            var tick = function () {
+                var total = Math.max(0, Math.floor(elapsedNow()));
+                var minutes = Math.floor(total / 60);
+                var secs = total % 60;
+                timer.textContent = String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+                timer.classList.toggle("is-over", total >= limit);
+            };
+            tick();
+            setInterval(tick, 250);
+        }
+
+        var form = document.getElementById("result-form");
+        if (!form) { return; }
+
+        var matchId = form.dataset.matchId;
+        var game = parseInt(form.dataset.game, 10);
+        var key = "ref-" + matchId + "-" + game;
+        var winTime = document.getElementById("win-time");
+        var note = document.getElementById("win-time-note");
+
+        function store(action) {
+            // Storage can be missing or full (private mode, old phones); the
+            // screen must still work without it.
+            try { return action(window.localStorage); } catch (e) { return null; }
+        }
+
+        function showNote() {
+            var picked = form.querySelector("input[name=outcome]:checked");
+            if (winTime.value) {
+                note.textContent = "Win time recorded: " + winTime.value + " s";
+            } else if (picked && (picked.value === "red" || picked.value === "blue")) {
+                note.textContent = "No win time: the timer was not running.";
+            } else {
+                note.textContent = "";
+            }
+        }
+
+        function save() {
+            var picked = form.querySelector("input[name=outcome]:checked");
+            var draft = {
+                outcome: picked ? picked.value : "",
+                win: winTime.value,
+                red: form.elements.red_final_zone.value,
+                blue: form.elements.blue_final_zone.value
+            };
+            store(function (s) { s.setItem(key, JSON.stringify(draft)); });
+        }
+
+        // Earlier games of this series are done with; drop their drafts.
+        store(function (s) {
+            for (var n = 1; n < game; n++) { s.removeItem("ref-" + matchId + "-" + n); }
+        });
+
+        // Put back what was chosen before a reload, unless the server just
+        // sent the form back with values of its own (a validation error).
+        if (form.dataset.serverValues !== "1") {
+            var draft = store(function (s) { return JSON.parse(s.getItem(key) || "null"); });
+            if (draft) {
+                if (draft.outcome) {
+                    var radio = form.querySelector("input[name=outcome][value='" + draft.outcome + "']");
+                    if (radio) { radio.checked = true; }
+                }
+                winTime.value = draft.win || "";
+                form.elements.red_final_zone.value = draft.red || "";
+                form.elements.blue_final_zone.value = draft.blue || "";
+            }
+        }
+        showNote();
+
+        form.addEventListener("change", function (event) {
+            if (event.target.name === "outcome") {
+                var value = event.target.value;
+                var seconds = elapsedNow();
+                winTime.value = (value === "red" || value === "blue") && seconds !== null
+                    ? seconds.toFixed(1) : "";
+                showNote();
+            }
+            save();
+        });
+    })();
+    </script>
 {% endblock %}

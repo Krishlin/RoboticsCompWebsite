@@ -1,0 +1,28 @@
+{# owner: shared / lead
+   Small pieces every page draws the same way. Import what you need:
+       {% from "_ui.html" import team, errors %}
+#}
+
+{# A team: number in bold, then name. `side` ("red"/"blue") adds the side's
+   colour swatch. A missing team (a bracket slot not decided yet) is TBD. #}
+{% macro team(number, name, side=none) -%}
+    {%- if number is none -%}
+        <span class="team team-tbd">TBD</span>
+    {%- else -%}
+        <span class="team{% if side in ('red', 'blue') %} team-{{ side }}{% endif %}"><span class="team-number">{{ number }}</span> {{ name }}</span>
+    {%- endif -%}
+{%- endmacro %}
+
+{# A list of validation problems, in the one error style. #}
+{% macro errors(items) -%}
+    {%- if items -%}
+        <div class="notice notice-error" role="alert">
+            {% if items | length == 1 %}
+                <p>{{ items[0] }}</p>
+            {% else %}
+                <p>Fix these and try again:</p>
+                <ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+    {%- endif -%}
+{%- endmacro %}

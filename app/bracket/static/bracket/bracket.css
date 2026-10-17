@@ -1,52 +1,126 @@
 /* owner: Krish S
    Custom bracket rendering CSS. Exception to the shared-stylesheet rule
    (per CLAUDE.md) — the bracket layout can't come from shared button/table
-   classes. */
+   classes. Built on style.css's tokens, so it is square and ruled like every
+   other page. Sized to be read on the big screen as well as a laptop. */
+
+/* Full width, not the shared 960px page column: on the big screen a
+   bracket that scrolls sideways hides the final, which is the part people
+   look for. A browser without :has() keeps the column and scrolls, as before. */
+.page-container:has(.bracket-page) {
+    max-width: none;
+}
 
 .bracket-board {
     display: flex;
     gap: 2.5rem;
     overflow-x: auto;
-    padding: 1rem 0;
+    padding: 0.5rem 0 1.5rem;
 }
 
 .bracket-round {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    min-width: 220px;
-    gap: 1.5rem;
+    min-width: 240px;
+    gap: 1.25rem;
 }
 
 .bracket-round-title {
-    text-align: center;
-    font-weight: 600;
-    color: var(--color-muted);
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.25rem;
+    font-size: clamp(0.95rem, 1.1vw, 1.3rem);
+    font-weight: 700;
+    color: var(--ink-soft);
+}
+
+.bracket-section-title {
+    margin: 1.5rem 0 0;
 }
 
 .bracket-match {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background: var(--color-surface);
-    overflow: hidden;
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+    font-size: clamp(1rem, 1.2vw, 1.45rem);
+}
+
+/* Being played right now: the cyan that means "now" on every page. */
+.bracket-match.is-live {
+    border-color: var(--cyan-deep);
+    box-shadow: inset 0 0 0 1px var(--cyan-deep);
+}
+
+.bracket-match.is-walkover {
+    border-style: dashed;
 }
 
 .bracket-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--color-border);
 }
 
-.bracket-slot:last-child {
-    border-bottom: none;
+.bracket-slot + .bracket-slot {
+    border-top: 1px solid var(--rule);
 }
 
+.bracket-seed {
+    min-width: 1.4em;
+    color: var(--ink-soft);
+    font-size: 0.8em;
+    text-align: right;
+}
+
+.bracket-team {
+    flex: 1 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bracket-wins {
+    font-weight: 800;
+}
+
+/* Advanced: bold, with an Edge-black bar down its edge. */
 .bracket-slot.is-winner {
     font-weight: 700;
-    background: #e3f4e6;
+    box-shadow: inset 4px 0 0 var(--ink);
 }
 
-.bracket-slot.is-tbd {
-    color: var(--color-muted);
+.bracket-slot.is-tbd,
+.bracket-slot.is-bye {
+    color: var(--ink-soft);
     font-style: italic;
+}
+
+.bracket-meta {
+    margin: 0;
+    padding: 0.35rem 0.75rem;
+    border-top: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
+    font-size: 0.72em;
+}
+
+.bracket-meta strong {
+    color: var(--cyan-deep);
+}
+
+.bracket-champion {
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.25rem;
+    background: var(--edge);
+    color: var(--paper);
+    border-left: 6px solid var(--cyan);
+    font-size: clamp(1.4rem, 2.4vw, 2.4rem);
+    font-stretch: 125%;
+    font-weight: 800;
+}
+
+.bracket-champion-seed {
+    font-size: 0.55em;
+    font-stretch: 100%;
+    font-weight: 500;
+    color: rgba(242, 244, 244, 0.72);
 }

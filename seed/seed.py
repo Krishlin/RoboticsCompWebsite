@@ -4,24 +4,30 @@
 # database (as opposed to app/fake_data.py, which is hardcoded Python used
 # by every blueprint's routes.py before the database is wired up).
 #
-# What this should do, once it's real:
-#   1. Create ~24 fake Team rows, split across the two divisions.
-#   2. Generate a qualification schedule for them (using Shaurya's
-#      generate_schedule from app/scheduler/logic.py once it exists).
-#   3. Create Match rows from that schedule.
-#   4. Create MatchResult rows for some of those matches, so there's
+# What it does:
+#   1. Create 24 fake Team rows in the one division.
+#   2. Generate a qualification schedule for them with Shaurya's generator
+#      (app/scheduler/generator.py), so the fake schedule obeys the same
+#      rules as the real one.
+#   3. Create Match rows from that schedule. Each one is a best-of-three
+#      series (game manual T3).
+#   4. Play out about two thirds of those series game by game, so there's
 #      something to look at in rankings, the bracket, and admin without
 #      everyone having to click through the referee flow by hand first.
 #
-# Run with: python3 -m seed.seed
-# (once this is implemented, from the project root, with the virtualenv
-# active)
+# Run with: python -m seed.seed   (from the project root, venv active)
+#
+# WARNING: it empties the database it points at first. That is whatever
+# DATABASE_URL says - check it is not the event database.
 
-from datetime import datetime, timedelta
+import random
+from datetime import datetime
 
 from app import create_app
 from app.db import db
-from app.models import Team, Match, MatchResult
+from app.models import AuditEntry, BracketConfig, Inspection, Match, MatchResult, Team
+from app.scheduler.generator import generate_advanced_schedule
+from app.series import VALID_ZONES, tally
 
 
 DIVISIONS = ["High School"]
@@ -83,138 +89,92 @@ def seed_teams():
     return team_count
 
 
+def _play_series(match, rng):
+    """Play one series game by game until someone has two wins.
+
+    Mostly decisive games, with the odd tie (which the next game replays)
+    and a rare double DQ, the same mix a real event throws at the rankings.
+    """
+    outcomes = []
+    game_number = 0
+    while tally(outcomes).winner is None:
+        game_number += 1
+        outcome = rng.choices(["red", "blue", "tie", "double_dq"], weights=[45, 45, 8, 2])[0]
+        outcomes.append(outcome)
+        winner_zone = rng.choice(VALID_ZONES[:4])
+        db.session.add(MatchResult(
+            match_id=match.id,
+            game_number=game_number,
+            outcome=outcome,
+            win_time_seconds=round(rng.uniform(8, 180), 1) if outcome in ("red", "blue") else None,
+            red_final_zone=winner_zone if outcome != "blue" else "Ring-out",
+            blue_final_zone=winner_zone if outcome != "red" else "Ring-out",
+            submitted_by=match.arena,
+        ))
+    match.status = "complete"
+    return game_number
+
+
 def seed_matches():
+    rng = random.Random(2026)
+    random.seed(2026)  # the generator draws from the module-level random
+
     teams = Team.query.order_by(Team.team_number).all()
+    team_by_number = {team.team_number: team for team in teams}
 
-    teams_by_division = {}
+    schedule = generate_advanced_schedule(
+        [{"team_number": t.team_number, "division": t.division} for t in teams],
+        arenas=["Arena 1", "Arena 2"],
+        start_time=datetime(2026, 10, 24, 10, 0),
+    )
 
-    for team in teams:
-        if team.division not in teams_by_division:
-            teams_by_division[team.division] = []
-
-        teams_by_division[team.division].append(team)
-
-    zones = [
-        "Center",
-        "Red Zone",
-        "Blue Zone",
-        "Off Arena",
-    ]
-
-    outcomes = [
-        "red",
-        "blue",
-        "tie",
-        "double_dq",
-    ]
-
-    match_number = 1
     match_count = 0
-    result_count = 0
+    game_count = 0
+    played = (len(schedule) * 2) // 3
 
-    start_time = datetime(2026, 9, 12, 9, 0)
+    for index, entry in enumerate(schedule):
+        match = Match(
+            match_number=entry["match_number"],
+            phase="qualification",
+            division=entry["division"],
+            arena=entry["arena"],
+            scheduled_time=datetime.strptime(entry["scheduled_time"], "%Y-%m-%d %H:%M"),
+            red_team_id=team_by_number[entry["red_team_number"]].id,
+            blue_team_id=team_by_number[entry["blue_team_number"]].id,
+            status="scheduled",
+        )
+        db.session.add(match)
+        db.session.flush()
+        match_count += 1
 
-    for division, division_teams in teams_by_division.items():
-
-        for round_offset in range(5):
-
-            for i in range(0, len(division_teams), 2):
-
-                if i + 1 >= len(division_teams):
-                    continue
-
-                red_team = division_teams[
-                    (i + round_offset) % len(division_teams)
-                ]
-
-                blue_team = division_teams[
-                    (i + 1 + round_offset) % len(division_teams)
-                ]
-
-                match_count += 1
-
-                is_complete = round_offset < 3
-
-                match = Match(
-                    match_number=match_number,
-                    phase="qualification",
-                    division=division,
-                    arena=(
-                        "Arena 1"
-                        if match_count % 2 == 0
-                        else "Arena 2"
-                    ),
-                    scheduled_time=(
-                        start_time
-                        + timedelta(minutes=15 * (match_count - 1))
-                    ),
-                    red_team_id=red_team.id,
-                    blue_team_id=blue_team.id,
-                    status=(
-                        "complete"
-                        if is_complete
-                        else "scheduled"
-                    ),
-                    is_replay=False,
-                    bracket_round=None,
-                    bracket_slot=None,
-                )
-
-                db.session.add(match)
-                db.session.flush()
-
-                if is_complete:
-                    outcome = outcomes[
-                        match_count % len(outcomes)
-                    ]
-
-                    result = MatchResult(
-                        match_id=match.id,
-                        outcome=outcome,
-                        win_time_seconds=round(
-                            3.5 + (match_count % 10) * 0.8,
-                            2,
-                        ),
-                        red_final_zone=zones[
-                            match_count % len(zones)
-                        ],
-                        blue_final_zone=zones[
-                            (match_count + 1) % len(zones)
-                        ],
-                        submitted_by=(
-                            "Referee A"
-                            if match_count % 2
-                            else "Referee B"
-                        ),
-                    )
-
-                    db.session.add(result)
-                    result_count += 1
-
-                match_number += 1
+        if index < played:
+            game_count += _play_series(match, rng)
 
     db.session.commit()
 
-    return match_count, result_count
+    return match_count, game_count
 
 
 def seed_database():
     app = create_app()
 
     with app.app_context():
+        AuditEntry.query.delete()
         MatchResult.query.delete()
         Match.query.delete()
+        BracketConfig.query.delete()
+        Inspection.query.delete()
         Team.query.delete()
         db.session.commit()
 
         team_count = seed_teams()
 
-        match_count, result_count = seed_matches()
+        match_count, game_count = seed_matches()
 
         print(
             f"Successfully seeded {team_count} teams, "
-            f"{match_count} matches, and "
-            f"{result_count} results."
+            f"{match_count} series, and "
+            f"{game_count} game results."
         )
 
 

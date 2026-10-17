@@ -1,35 +1,77 @@
 <!-- owner: shared / lead -->
 <!-- Shared layout every page extends. Don't edit this file from inside your
      own blueprint folder — if you need something new, ask at check-in. -->
+{#- Which nav item the current page belongs to, so it can be marked. -#}
+{%- set path = request.path -%}
+{%- if path.startswith("/admin") or path.startswith("/schedule/admin") or path.endswith("/manage") -%}
+    {%- set section = "headref" -%}
+{%- elif path.startswith("/rankings/pit") -%}
+    {%- set section = "pit" -%}
+{%- elif path.startswith("/rankings") -%}
+    {%- set section = "rankings" -%}
+{%- elif path.startswith("/schedule") -%}
+    {%- set section = "schedule" -%}
+{%- elif path.startswith("/bracket") -%}
+    {%- set section = "bracket" -%}
+{%- elif path.startswith("/checkin") -%}
+    {%- set section = "checkin" -%}
+{%- elif path.startswith("/referee") -%}
+    {%- set section = "referee" -%}
+{%- elif path.startswith("/register") -%}
+    {%- set section = "register" -%}
+{%- else -%}
+    {%- set section = "" -%}
+{%- endif -%}
+{%- macro nav_link(key, href, label) -%}
+    <a href="{{ href }}"{% if section == key %} aria-current="page"{% endif %}>{{ label }}</a>
+{%- endmacro -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SRC Tournament{% endblock %}</title>
+    <title>{% block title %}Summit{% endblock %} — Summit</title>
+    <meta name="theme-color" content="#141414">
+    {# The public site's face. Without the network the stack falls back to
+       Helvetica/Arial, and every page still works. #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="site-nav">
-        <a href="{{ url_for('main.home') }}" class="site-nav-brand">SRC Tournament</a>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <nav class="site-nav no-print" aria-label="Main">
+        <a href="{{ url_for('main.home') }}" class="site-nav-brand" aria-label="Summit, home">
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}" width="166" height="22" alt="Summit">
+        </a>
         <div class="site-nav-links">
-            <a href="/register/">Register</a>
             {# Hidden while REGISTRATION_ONLY is on: these blueprints aren't
                registered, so the links would 404. #}
             {% if not config.REGISTRATION_ONLY %}
-            <a href="/checkin/">Check-in</a>
-            <a href="/schedule/">Schedule</a>
-            <a href="/schedule/admin">Schedule Admin</a>
-            <a href="/referee/">Referee</a>
-            <a href="/rankings/High_School">Rankings</a>
-            <a href="/bracket/High_School">Bracket</a>
-            <a href="/admin/">Admin</a>
+                {{ nav_link("schedule", "/schedule/", "Schedule") }}
+                {{ nav_link("rankings", "/rankings/High_School", "Rankings") }}
+                {{ nav_link("bracket", "/bracket/High_School", "Bracket") }}
+                {{ nav_link("pit", "/rankings/pit", "Pit lookup") }}
+            {% endif %}
+            {{ nav_link("register", "/register/", "Register") }}
+            {% if not config.REGISTRATION_ONLY %}
+                <span class="site-nav-staff" aria-label="Staff">
+                    {{ nav_link("checkin", "/checkin/", "Check-in") }}
+                    {{ nav_link("referee", "/referee/", "Referee") }}
+                    {{ nav_link("headref", "/admin/", "Head ref") }}
+                </span>
             {% endif %}
         </div>
     </nav>
 
-    <main class="page-container">
+    <main class="page-container" id="main">
+        {# Every flashed message lands here, so "Saved." looks the same on
+           every page. A template that shows them itself must not also. #}
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="notice {% if category in ('ok', 'warn', 'error') %}notice-{{ category }}{% endif %}" role="status">{{ message }}</div>
+        {% endfor %}
         {% block content %}{% endblock %}
     </main>
 </body>

@@ -14,6 +14,7 @@ seed/
 !.env.example
 
 migrate_add_replaces_match_id.py
+migrate_add_series_columns.py
 seed_for_testing.py
 
 # The 20 MB of source CAD renders. tools/render_bot_views.py cuts them down

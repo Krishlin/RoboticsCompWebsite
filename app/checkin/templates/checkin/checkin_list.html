@@ -1,42 +1,55 @@
 {# owner: Shivani — one row per team, tap to check in #}
 {% extends "base.html" %}
+{% from "_ui.html" import team as team_label %}
 {% block title %}Check-in{% endblock %}
 {% block content %}
-    <h1 class="page-title">Check-in</h1>
+    <div class="page-head">
+        <h1 class="page-title">Check-in</h1>
+        <p class="meta">{{ arrived }} of {{ teams | length }} teams here</p>
+    </div>
+    <p class="page-subtitle">Tap Check in when a team arrives. Every robot passes inspection before its first match.</p>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Team</th>
-                <th>Division</th>
-                <th>Status</th>
-                <th>Inspection</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for team in teams %}
+    {% if teams %}
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <td>{{ team.team_number }}</td>
-                    <td>{{ team.name }}</td>
-                    <td>{{ team.division }}</td>
-                    <td>
-                        {% if team.checked_in %}
-                            <span class="badge badge-success">Checked in</span>
-                        {% else %}
-                            <form method="POST" action="{{ url_for('checkin.check_in_team', team_id=team.id) }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-secondary">Check in</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">Inspect</a>
-                        &middot;
-                        <a href="{{ url_for('checkin.inspection_history', team_number=team.team_number) }}">History</a>
-                    </td>
+                    <th>Team</th>
+                    <th>Arrived</th>
+                    <th>Inspection</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                    {% set inspection = latest.get(team.id) %}
+                    <tr>
+                        <td>{{ team_label(team.team_number, team.name) }}</td>
+                        <td>
+                            {% if team.checked_in %}
+                                <span class="badge badge-success">Checked in</span>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('checkin.check_in_team', team_id=team.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn">Check in</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if inspection is none %}
+                                <a class="btn btn-secondary" href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">Inspect</a>
+                            {% else %}
+                                <a href="{{ url_for('checkin.inspection_history', team_number=team.team_number) }}">
+                                    {% if inspection.passed %}<span class="badge badge-success">Passed</span>{% else %}<span class="badge badge-danger">Failed</span>{% endif %}
+                                </a>
+                                {% if not inspection.passed %}
+                                    <a href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">Inspect again</a>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="notice">No teams have registered yet.</div>
+    {% endif %}
 {% endblock %}

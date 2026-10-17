@@ -1,11 +1,15 @@
 {# owner: Emily — full team list, used for check-in reference and CSV export #}
 {% extends "base.html" %}
-{% block title %}All Teams{% endblock %}
+{% from "_ui.html" import team as team_label %}
+{% block title %}Registered teams{% endblock %}
 {% block content %}
-    <h1 class="page-title">Registered Teams</h1>
+    <div class="page-head">
+        <h1 class="page-title">Registered teams</h1>
+        <p class="meta">{{ teams | length }} teams</p>
+    </div>
 
-    <div class="btn-row" style="margin-bottom: 1rem;">
-        <a class="btn btn-secondary" href="{{ url_for('registration.team_list_csv') }}">Export CSV</a>
+    <div class="btn-row">
+        <a class="btn btn-secondary" href="{{ url_for('registration.team_list_csv') }}">Download the check-in list (CSV)</a>
     </div>
 
     <table class="data-table">
@@ -22,7 +26,7 @@
         <tbody>
             {% for team in teams %}
                 <tr>
-                    <td>{{ team.name }}</td>
+                    <td>{{ team_label(team.team_number, team.name) }}</td>
                     <td>{{ team.division }}</td>
                     <td>{{ team.affiliation }}</td>
                     <td>{{ team.students.splitlines() | join(", ") }}</td>

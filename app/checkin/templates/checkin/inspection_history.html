@@ -1,91 +1,52 @@
 {# owner: Shivani — every past inspection attempt for one team, most recent is current #}
 {% extends "base.html" %}
-{% block title %}Inspection History{% endblock %}
+{% from "_ui.html" import team as team_label %}
+{% block title %}Team {{ team.team_number }} inspection{% endblock %}
 {% block content %}
+    <h1 class="page-title">Inspection for {{ team_label(team.team_number, team.name) }}</h1>
 
-<h1 class="page-title">
-    Inspection History — Team {{ team.team_number }}
-</h1>
-
-
-{% if current %}
-
-    <h2>Current Status</h2>
-
-    {% if current.passed %}
-        <span class="badge badge-success">Passed</span>
+    {% if current is none %}
+        <div class="notice">Not inspected yet.</div>
+    {% elif current.passed %}
+        <div class="notice notice-ok"><p><strong>Passed</strong> at {{ current.inspected_at | local_clock }}. Ready to play.</p></div>
     {% else %}
-        <span class="badge">Failed</span>
+        <div class="notice notice-error"><p><strong>Failed</strong> at {{ current.inspected_at | local_clock }}. The team fixes the robot and comes back for another inspection.</p></div>
     {% endif %}
 
-{% else %}
+    <div class="btn-row">
+        <a class="btn" href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">{{ "Inspect again" if current else "Inspect" }}</a>
+        <a class="btn btn-secondary" href="{{ url_for('checkin.checkin_list') }}">Back to check-in</a>
+    </div>
 
-    <p>Not inspected yet.</p>
-
-{% endif %}
-
-
-<h2>Attempts</h2>
-
-{% if history %}
-
-    <table class="data-table">
-
-        <thead>
-            <tr>
-                <th>Attempt</th>
-                <th>Result</th>
-                <th>Time</th>
-                <th>Inspector</th>
-                <th>Notes</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for inspection in history %}
-
-            <tr>
-
-                <td>
-                    {{ loop.revindex }}
-                </td>
-
-                <td>
-                    {% if inspection.passed %}
-                        Passed
-                    {% else %}
-                        Failed
-                    {% endif %}
-                </td>
-
-                <td>
-                    {{ inspection.inspected_at }}
-                </td>
-
-                <td>
-                    {{ inspection.inspector_name }}
-                </td>
-
-                <td>
-                    {{ inspection.notes }}
-                </td>
-
-            </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-{% endif %}
-
-
-<p>
-    <a href="{{ url_for('checkin.inspection_form', team_number=team.team_number) }}">
-        Inspect Again
-    </a>
-</p>
-
+    {% if history %}
+        <h2 class="section-title">Every attempt</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="num">Attempt</th>
+                    <th>Result</th>
+                    <th>Time</th>
+                    <th>Failed checks</th>
+                    <th>Inspector</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inspection in history %}
+                    {% set failed = [] %}
+                    {% for field, label in (("size_ok", "size"), ("weight_ok", "weight"), ("microbit_present", "micro:bit"), ("team_number_displayed", "team number"), ("ref_start_stop_test", "start/stop")) %}
+                        {% if not inspection[field] %}{% set _ = failed.append(label) %}{% endif %}
+                    {% endfor %}
+                    <tr>
+                        <td class="num">{{ loop.revindex }}</td>
+                        <td>{% if inspection.passed %}<span class="badge badge-success">Passed</span>{% else %}<span class="badge badge-danger">Failed</span>{% endif %}</td>
+                        <td>{{ inspection.inspected_at | local_clock }}</td>
+                        <td>{{ failed | join(", ") if failed else "None" }}</td>
+                        <td>{{ inspection.inspector_name or "—" }}</td>
+                        <td>{{ inspection.notes or "—" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}

@@ -50,6 +50,9 @@ def _send_confirmation_email(team):
         to=team.adult_email,
         subject="Welcome to SRC Summit 2026!",
         html=html,
+        # The email tells coaches to "just reply", so replies go to the inbox
+        # SRC actually reads rather than to whatever MAIL_FROM is.
+        reply_to=SITE_LINKS["email"],
     )
 
 
@@ -226,6 +229,7 @@ def confirmation(team_number):
         "registration/confirmation.html",
         team=team,
         payment_url=current_app.config["PAYMENT_FORM_URL"],
+        contact_email=SITE_LINKS["email"],
     )
 
 

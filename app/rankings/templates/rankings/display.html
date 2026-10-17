@@ -1,69 +1,107 @@
-{# owner: Jon — big-screen display: current match, next 3, live rankings.
+{# owner: Jon — big-screen display: what is on now, next 3, live rankings.
    Exception to the shared-styles rule (per CLAUDE.md): this page needs its
-   own large-print layout, readable from 30 feet across a gym. #}
+   own large-print layout, readable from 30 feet across a gym. It is the one
+   tool page on the dark Edge ground, like the public site's dark bands:
+   light type on black carries further on a projector than black on white. #}
 {% extends "base.html" %}
-{% block title %}Display — {{ division }}{% endblock %}
+{% from "_ui.html" import team %}
+{% block title %}Live — {{ division }}{% endblock %}
 
 {% block extra_head %}
-    <meta http-equiv="refresh" content="15">
+    <meta http-equiv="refresh" content="{{ refresh_seconds }}">
     <style>
-        .display-page { max-width: none; padding: 2rem; }
-        .display-heading { font-size: 3rem; margin-bottom: 0.5rem; }
-        .display-current { font-size: 2.5rem; text-align: center; padding: 2rem; margin-bottom: 2rem; }
-        .display-next-list { font-size: 1.5rem; }
-        .display-rankings-table { font-size: 1.75rem; width: 100%; }
-        .display-rankings-table th, .display-rankings-table td { padding: 0.75rem 1rem; }
+        body { background: var(--edge); color: var(--paper); }
+        .page-container { max-width: none; padding: 1.5rem clamp(1rem, 3vw, 3rem) 2rem; }
+        .tv { font-size: clamp(1rem, 1.6vw, 2.6rem); }
+        .tv h1 { font-size: 2.2em; font-stretch: 125%; font-weight: 800; margin: 0 0 0.6em; }
+        .tv h2 { font-size: 1em; font-stretch: 100%; font-weight: 700; color: var(--cyan); margin: 0 0 0.6em; }
+        .tv-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 2.5em; align-items: start; }
+        .tv-paused { margin-bottom: 1em; padding: 0.6em 1em; background: var(--warn-wash); color: var(--ink); border-left: 0.3em solid var(--warn-rule); font-size: 1.3em; font-weight: 700; }
+        .tv-now { margin-bottom: 1em; padding: 0.9em 1.1em; border: 1px solid rgba(242, 244, 244, 0.2); border-left: 0.3em solid var(--cyan); }
+        .tv-now-meta { margin: 0 0 0.5em; color: rgba(242, 244, 244, 0.72); }
+        .tv-now-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 0.25em 1em; font-size: 1.45em; font-weight: 700; }
+        .tv-now-row .wins { font-stretch: 125%; font-weight: 800; font-size: 1.3em; }
+        .tv-idle { color: rgba(242, 244, 244, 0.6); font-size: 1.3em; margin-bottom: 1.2em; }
+        .tv-next { list-style: none; margin: 0 0 1em; padding: 0; }
+        .tv-next li { padding: 0.55em 0; border-top: 1px solid rgba(242, 244, 244, 0.16); }
+        .tv-next .when { display: block; color: rgba(242, 244, 244, 0.72); font-size: 0.85em; }
+        .tv-rank-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.5em; }
+        .tv-rank-cols.is-single { grid-template-columns: minmax(0, 1fr); }
+        .tv-rank td.name { max-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tv-rank { width: 100%; border-collapse: collapse; }
+        .tv-rank th { text-align: left; font-size: 0.8em; font-weight: 600; color: rgba(242, 244, 244, 0.6); padding: 0 0.4em 0.4em; }
+        .tv-rank td { padding: 0.32em 0.4em; border-top: 1px solid rgba(242, 244, 244, 0.14); }
+        .tv-rank .num { text-align: right; }
+        .tv-rank .rank { width: 2em; color: rgba(242, 244, 244, 0.6); }
+        .tv .team-number { font-weight: 800; }
+        @media (max-width: 900px) { .tv-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .tv-rank-cols { grid-template-columns: minmax(0, 1fr); } }
     </style>
 {% endblock %}
 
 {% block content %}
-<div class="display-page">
-    <h1 class="display-heading">{{ division }} — Live</h1>
+<div class="tv">
+    <h1>{{ division }}, live</h1>
 
-    <div class="card display-current">
-        {% if current_match %}
-            Now playing: Match {{ current_match.match_number }} — {{ current_match.arena }}<br>
-            {{ current_match.red_team_number }} — {{ current_match.red_team_name }}
-            &nbsp;vs&nbsp;
-            {{ current_match.blue_team_number }} — {{ current_match.blue_team_name }}
-        {% else %}
-            No match currently in progress
-        {% endif %}
-    </div>
+    {% if paused %}
+        <div class="tv-paused">Matches are paused. Please wait for the head referee.</div>
+    {% endif %}
 
-    <div class="card">
-        <h2>Up Next</h2>
-        <ul class="display-next-list">
-            {% for match in next_matches %}
-                <li>
-                    Match {{ match.match_number }} — {{ match.arena }} — {{ match.scheduled_time }}<br>
-                    {{ match.red_team_number }} {{ match.red_team_name }} vs
-                    {{ match.blue_team_number }} {{ match.blue_team_name }}
-                </li>
+    <div class="tv-grid">
+        <section aria-label="Now playing and up next">
+            <h2>Now playing</h2>
+            {% for match in current_matches %}
+                <div class="tv-now">
+                    <p class="tv-now-meta">{{ match.arena }}, match {{ match.match_number }}{% if match.phase == "elimination" %} (bracket){% endif %}, game {{ match.game_number }}</p>
+                    <div class="tv-now-row">
+                        {{ team(match.red_team_number, match.red_team_name, "red") }}<span class="wins">{{ match.red_wins }}</span>
+                        {{ team(match.blue_team_number, match.blue_team_name, "blue") }}<span class="wins">{{ match.blue_wins }}</span>
+                    </div>
+                </div>
             {% else %}
-                <li class="text-muted">Nothing else scheduled.</li>
+                <p class="tv-idle">No match being played right now.</p>
             {% endfor %}
-        </ul>
-    </div>
 
-    <div class="card">
-        <h2>Rankings</h2>
-        <table class="data-table display-rankings-table">
-            <thead>
-                <tr><th>Rank</th><th>Team</th><th>W</th><th>L</th><th>T</th></tr>
-            </thead>
-            <tbody>
-                {% for row in rankings %}
-                    <tr>
-                        <td>{{ row.rank }}</td>
-                        <td>{{ row.team_number }} — {{ row.team_name }}</td>
-                        <td>{{ row.wins }}</td>
-                        <td>{{ row.losses }}</td>
-                        <td>{{ row.ties }}</td>
-                    </tr>
+            <h2>Up next</h2>
+            <ul class="tv-next">
+                {% for match in next_matches %}
+                    <li>
+                        <span class="when">{{ match.scheduled_time | clock }}, {{ match.arena }}, match {{ match.match_number }}</span>
+                        {{ team(match.red_team_number, match.red_team_name, "red") }} against
+                        {{ team(match.blue_team_number, match.blue_team_name, "blue") }}
+                    </li>
+                {% else %}
+                    <li class="tv-idle">Nothing else scheduled.</li>
                 {% endfor %}
-            </tbody>
-        </table>
+            </ul>
+        </section>
+
+        <section aria-label="Rankings">
+            <h2>Rankings</h2>
+            {% if not rankings %}
+                <p class="tv-idle">No teams yet.</p>
+            {% else %}
+                {# Two columns once the list is longer than a screen holds at this size. #}
+                {% set per_column = 12 if rankings | length > 12 else rankings | length %}
+                <div class="tv-rank-cols{% if rankings | length <= 12 %} is-single{% endif %}">
+                    {% for column in rankings | batch(per_column) %}
+                        <table class="tv-rank">
+                            <thead><tr><th class="rank">#</th><th>Team</th><th class="num">Pts</th><th class="num">Diff</th></tr></thead>
+                            <tbody>
+                                {% for row in column %}
+                                    <tr>
+                                        <td class="rank">{{ row.rank }}</td>
+                                        <td class="name">{{ team(row.team_number, row.team_name) }}</td>
+                                        <td class="num">{{ row.qual_points }}</td>
+                                        <td class="num">{{ "%+d"|format(row.match_diff) if row.match_diff else 0 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </section>
     </div>
 </div>
 {% endblock %}

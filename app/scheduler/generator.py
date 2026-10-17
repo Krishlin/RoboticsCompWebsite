@@ -12,14 +12,30 @@
 # Weeks 4-5:
 # - Advanced generator that avoids back-to-back matches.
 # - Avoid repeat pairings until they are mathematically necessary.
+#
+# Each "match" here is one best-of-three series (game manual T3): the
+# schedule decides who plays whom, where and roughly when, and the games
+# inside a series are the referee page's business.
 
 import random
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
+# Game manual: the event is October 24, 2026; the published day schedule has
+# qualification starting at 10:00 AM. Callers normally pass the configured
+# EVENT_QUAL_START instead - this is only the fallback.
+DEFAULT_START = datetime(2026, 10, 24, 10, 0)
+
+# Minutes between one round of series and the next on the same arena. A
+# series is up to three 3-minute games plus set-up, and a replayed tie.
+DEFAULT_SLOT_MINUTES = 15
+
+# T3: "each team plays at least six qualification series".
+DEFAULT_SERIES_PER_TEAM = 6
 
 
-def _group_teams_by_division(teams: List[Dict[str, Any]]) -> Dict[str, List[int]]:
-    grouped: Dict[str, List[int]] = {}
+def _group_teams_by_division(teams: list[dict[str, Any]]) -> dict[str, list[int]]:
+    grouped: dict[str, list[int]] = {}
     for team in teams:
         division = team.get("division", "High School")
         grouped.setdefault(division, []).append(team["team_number"])
@@ -27,11 +43,18 @@ def _group_teams_by_division(teams: List[Dict[str, Any]]) -> Dict[str, List[int]
 
 
 def _target_matches_per_team(team_count: int, requested_matches_per_team: int) -> int:
+    """How many series each team plays.
+
+    Every team must play the same number, and each series uses two teams, so
+    teams x series must be even. When it isn't (an odd number of teams and an
+    odd request), round UP: T3 sets a minimum ("at least six"), so dropping
+    below the request would break the rule while rounding up keeps it.
+    """
     if team_count < 2:
         return 0
     if (team_count * requested_matches_per_team) % 2 == 0:
         return requested_matches_per_team
-    return max(0, requested_matches_per_team - 1)
+    return requested_matches_per_team + 1
 
 
 def _build_match(
@@ -41,10 +64,14 @@ def _build_match(
     arena: str,
     red_team_number: int,
     blue_team_number: int,
-    arenas: List[str],
-) -> Dict[str, Any]:
-    start_time = datetime(2026, 9, 12, 9, 0)
-    scheduled_time = start_time + timedelta(minutes=(absolute_slot_index // len(arenas)) * 15)
+    arenas: list[str],
+    start_time: datetime | None = None,
+    slot_minutes: int = DEFAULT_SLOT_MINUTES,
+) -> dict[str, Any]:
+    start_time = start_time or DEFAULT_START
+    scheduled_time = start_time + timedelta(
+        minutes=(absolute_slot_index // len(arenas)) * slot_minutes
+    )
     return {
         "match_number": match_number,
         "phase": "qualification",
@@ -57,16 +84,18 @@ def _build_match(
 
 
 def generate_random_schedule(
-    teams: List[Dict[str, Any]],
-    arenas: List[str] = None,
-    matches_per_team: int = 5,
-) -> List[Dict[str, Any]]:
+    teams: list[dict[str, Any]],
+    arenas: list[str] | None = None,
+    matches_per_team: int = DEFAULT_SERIES_PER_TEAM,
+    start_time: datetime | None = None,
+    slot_minutes: int = DEFAULT_SLOT_MINUTES,
+) -> list[dict[str, Any]]:
     """Week 2: random schedule that ignores constraints."""
     if arenas is None:
         arenas = ["Arena 1", "Arena 2"]
 
     teams_by_division = _group_teams_by_division(teams)
-    matches: List[Dict[str, Any]] = []
+    matches: list[dict[str, Any]] = []
     match_number = 1
     absolute_slot_index = 0
 
@@ -93,6 +122,8 @@ def generate_random_schedule(
                     red,
                     blue,
                     arenas,
+                    start_time,
+                    slot_minutes,
                 )
             )
             match_number += 1
@@ -107,11 +138,13 @@ def generate_random_schedule(
 
 
 def generate_balanced_schedule(
-    teams: List[Dict[str, Any]],
-    arenas: List[str] = None,
-    matches_per_team: int = 5,
+    teams: list[dict[str, Any]],
+    arenas: list[str] | None = None,
+    matches_per_team: int = DEFAULT_SERIES_PER_TEAM,
     max_attempts: int = 12000,
-) -> List[Dict[str, Any]]:
+    start_time: datetime | None = None,
+    slot_minutes: int = DEFAULT_SLOT_MINUTES,
+) -> list[dict[str, Any]]:
     """
     Week 3: equal matches + rough red/blue balance.
     Does not enforce no-repeat or no-back-to-back yet.
@@ -120,7 +153,7 @@ def generate_balanced_schedule(
         arenas = ["Arena 1", "Arena 2"]
 
     teams_by_division = _group_teams_by_division(teams)
-    matches: List[Dict[str, Any]] = []
+    matches: list[dict[str, Any]] = []
     match_number = 1
     absolute_slot_index = 0
 
@@ -173,6 +206,8 @@ def generate_balanced_schedule(
                     red_team,
                     blue_team,
                     arenas,
+                    start_time,
+                    slot_minutes,
                 )
             )
 
@@ -194,16 +229,16 @@ def generate_balanced_schedule(
 
 
 def _choose_advanced_pair(
-    available_teams: List[int],
+    available_teams: list[int],
     target: int,
-    match_count: Dict[int, int],
-    red_count: Dict[int, int],
-    blue_count: Dict[int, int],
-    pair_count: Dict[Tuple[int, int], int],
-    max_existing_pair_count: Optional[int] = None,
-) -> Optional[Tuple[int, int]]:
-    best_choice: Optional[Tuple[int, int]] = None
-    best_signature: Optional[Tuple[int, int, int, int, float]] = None
+    match_count: dict[int, int],
+    red_count: dict[int, int],
+    blue_count: dict[int, int],
+    pair_count: dict[tuple[int, int], int],
+    max_existing_pair_count: int | None = None,
+) -> tuple[int, int] | None:
+    best_choice: tuple[int, int] | None = None
+    best_signature: tuple[int, int, int, int, float] | None = None
 
     for i, team_a in enumerate(available_teams):
         if match_count[team_a] >= target:
@@ -242,10 +277,10 @@ def _choose_advanced_pair(
 
 
 def _has_unused_pair_with_demand(
-    team_numbers: List[int],
+    team_numbers: list[int],
     target: int,
-    match_count: Dict[int, int],
-    pair_count: Dict[Tuple[int, int], int],
+    match_count: dict[int, int],
+    pair_count: dict[tuple[int, int], int],
 ) -> bool:
     candidates = [team for team in team_numbers if match_count[team] < target]
     for index, team_a in enumerate(candidates):
@@ -257,12 +292,14 @@ def _has_unused_pair_with_demand(
 
 
 def generate_advanced_schedule(
-    teams: List[Dict[str, Any]],
-    arenas: List[str] = None,
-    matches_per_team: int = 5,
+    teams: list[dict[str, Any]],
+    arenas: list[str] | None = None,
+    matches_per_team: int = DEFAULT_SERIES_PER_TEAM,
     max_slot_multiplier: int = 8,
     max_attempts: int = 250,
-) -> List[Dict[str, Any]]:
+    start_time: datetime | None = None,
+    slot_minutes: int = DEFAULT_SLOT_MINUTES,
+) -> list[dict[str, Any]]:
     """
     Weeks 4-5:
     - Equal match counts (when mathematically possible)
@@ -273,12 +310,12 @@ def generate_advanced_schedule(
     if arenas is None:
         arenas = ["Arena 1", "Arena 2"]
 
-    best_matches: List[Dict[str, Any]] = []
+    best_matches: list[dict[str, Any]] = []
     best_score = 10**9
 
     for _ in range(max_attempts):
         teams_by_division = _group_teams_by_division(teams)
-        matches: List[Dict[str, Any]] = []
+        matches: list[dict[str, Any]] = []
         match_number = 1
         absolute_slot_index = 0
 
@@ -295,7 +332,7 @@ def generate_advanced_schedule(
             red_count = {team_number: 0 for team_number in team_numbers}
             blue_count = {team_number: 0 for team_number in team_numbers}
             last_slot_played = {team_number: -1000 for team_number in team_numbers}
-            pair_count: Dict[Tuple[int, int], int] = {}
+            pair_count: dict[tuple[int, int], int] = {}
 
             made = 0
             slot_index = 0
@@ -359,6 +396,8 @@ def generate_advanced_schedule(
                             red_team,
                             blue_team,
                             arenas,
+                            start_time,
+                            slot_minutes,
                         )
                     )
 
@@ -396,7 +435,7 @@ def generate_advanced_schedule(
     return best_matches
 
 
-def validate_schedule(matches: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+def validate_schedule(matches: list[dict[str, Any]]) -> dict[str, list[str]]:
     """
     Validate schedule through Week 5 constraints.
 
@@ -407,9 +446,9 @@ def validate_schedule(matches: List[Dict[str, Any]]) -> Dict[str, List[str]]:
     - no_back_to_back
     - no_repeat_pairings (until mathematically necessary)
     """
-    violations: Dict[str, List[str]] = {}
+    violations: dict[str, list[str]] = {}
 
-    by_division: Dict[str, List[Dict[str, Any]]] = {}
+    by_division: dict[str, list[dict[str, Any]]] = {}
     for match in matches:
         division = match.get("division", "High School")
         by_division.setdefault(division, []).append(match)
@@ -417,14 +456,14 @@ def validate_schedule(matches: List[Dict[str, Any]]) -> Dict[str, List[str]]:
     for division, division_matches in by_division.items():
         ordered = sorted(division_matches, key=lambda entry: entry.get("match_number", 0))
 
-        team_stats: Dict[int, Dict[str, int]] = {}
-        team_last_slot: Dict[int, int] = {}
-        pairings: Dict[Tuple[int, int], int] = {}
+        team_stats: dict[int, dict[str, int]] = {}
+        team_last_slot: dict[int, int] = {}
+        pairings: dict[tuple[int, int], int] = {}
 
         slot_values = sorted({match.get("scheduled_time") for match in ordered if match.get("scheduled_time")})
         slot_lookup = {slot_value: index for index, slot_value in enumerate(slot_values)}
 
-        for index, match in enumerate(ordered):
+        for _index, match in enumerate(ordered):
             red_team = match.get("red_team_number")
             blue_team = match.get("blue_team_number")
             match_number = match.get("match_number", "?")
@@ -483,24 +522,22 @@ def validate_schedule(matches: List[Dict[str, Any]]) -> Dict[str, List[str]]:
 
             if actual_extra_repeats > minimum_extra_repeats:
                 violations.setdefault("no_repeat_pairings", []).append(
-                    (
-                        f"Division {division}: {actual_extra_repeats} repeated pairings beyond "
-                        f"minimum necessary {minimum_extra_repeats}"
-                    )
+                    f"Division {division}: {actual_extra_repeats} repeated pairings beyond "
+                    f"minimum necessary {minimum_extra_repeats}"
                 )
 
     return violations
 
 
-def count_violations(violations: Dict[str, List[str]]) -> Dict[str, int]:
+def count_violations(violations: dict[str, list[str]]) -> dict[str, int]:
     return {rule: len(issues) for rule, issues in violations.items()}
 
 
-def format_violations(violations: Dict[str, List[str]]) -> str:
+def format_violations(violations: dict[str, list[str]]) -> str:
     if not violations:
         return "✓ Schedule is valid for Week 5 constraints"
 
-    lines: List[str] = []
+    lines: list[str] = []
     for rule, issues in violations.items():
         lines.append(f"\n{rule}:")
         for issue in issues[:5]:

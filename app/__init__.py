@@ -44,6 +44,12 @@ def create_app(config_object="config.Config", **overrides):
     # hidden field or its POST starts returning 400.
     csrf.init_app(app)
 
+    from app.formatting import clock, local_clock, seconds
+
+    app.add_template_filter(clock)
+    app.add_template_filter(local_clock)
+    app.add_template_filter(seconds)
+
     @app.after_request
     def _security_headers(response):
         # nosniff stops a browser from second-guessing a Content-Type, which is

@@ -20,15 +20,22 @@ from app.db import db
 from app.models import Team
 
 STAFF_PASSCODE = "test-passcode-not-a-real-one"
+HEAD_REF_PASSCODE = "test-head-ref-passcode"
 
 
-def staff_auth(passcode: str = STAFF_PASSCODE) -> dict[str, str]:
+def staff_auth(passcode: str = STAFF_PASSCODE, name: str = "staff") -> dict[str, str]:
     """An HTTP Basic header for the staff gate.
 
-    The username is ignored by app.security - there are no usernames yet - so
-    it is spelled "staff" here purely to make failures readable.
+    The staff gate ignores the username; the referee page records it as
+    submitted_by when one is given.
     """
-    raw = base64.b64encode(f"staff:{passcode}".encode()).decode()
+    raw = base64.b64encode(f"{name}:{passcode}".encode()).decode()
+    return {"Authorization": f"Basic {raw}"}
+
+
+def head_ref_auth(name: str = "Head Ref Rio", passcode: str = HEAD_REF_PASSCODE) -> dict[str, str]:
+    """An HTTP Basic header for the head-ref gate, whose username is the audit name."""
+    raw = base64.b64encode(f"{name}:{passcode}".encode()).decode()
     return {"Authorization": f"Basic {raw}"}
 
 
@@ -39,6 +46,7 @@ def _build(tmp_path, **overrides):
         "SQLALCHEMY_DATABASE_URI": f"sqlite:///{dbfile.as_posix()}",
         "WTF_CSRF_ENABLED": False,
         "STAFF_PASSCODE": STAFF_PASSCODE,
+        "HEAD_REF_PASSCODE": HEAD_REF_PASSCODE,
         "ON_VERCEL": False,
         "SECRET_KEY": "test-secret",
         "RESEND_API_KEY": None,  # never let a test reach the network

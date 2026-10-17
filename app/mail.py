@@ -25,7 +25,13 @@ RESEND_ENDPOINT = "https://api.resend.com/emails"
 USER_AGENT = "SRC-Tournament/1.0 (+registration confirmation mail)"
 
 
-def send_email(to: str, subject: str, html: str, timeout: float = 10.0) -> bool:
+def send_email(
+    to: str,
+    subject: str,
+    html: str,
+    timeout: float = 10.0,
+    reply_to: str | None = None,
+) -> bool:
     """Send one email. Returns True if Resend accepted it, False otherwise.
 
     A False return means the message did not go out and the caller should tell
@@ -52,14 +58,15 @@ def send_email(to: str, subject: str, html: str, timeout: float = 10.0) -> bool:
         logger.warning("RESEND_API_KEY is not set - skipping email to %s", to)
         return False
 
-    payload = json.dumps(
-        {
-            "from": current_app.config["MAIL_FROM"],
-            "to": [to],
-            "subject": subject,
-            "html": html,
-        }
-    ).encode("utf-8")
+    message = {
+        "from": current_app.config["MAIL_FROM"],
+        "to": [to],
+        "subject": subject,
+        "html": html,
+    }
+    if reply_to:
+        message["reply_to"] = reply_to
+    payload = json.dumps(message).encode("utf-8")
 
     request = urllib.request.Request(
         RESEND_ENDPOINT,
