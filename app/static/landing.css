@@ -584,6 +584,10 @@ a {
     max-width: 34rem;
 }
 
+.hero-cta-wide {
+    grid-column: 1 / -1;
+}
+
 .hero .reg-deadline {
     margin: 0.6rem 0 0;
 }

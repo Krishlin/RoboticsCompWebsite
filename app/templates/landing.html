@@ -147,10 +147,13 @@
                     <div><dt>Teams, grades 6–12</dt><dd>1–4 students</dd></div>
                 </dl>
 
-                {# Manual first, then Register: read the rules, then commit. #}
+                {# Manual first, then Register: read the rules, then commit.
+                   Purchase sits on its own row under them, because three
+                   labels this long do not fit one row beside each other. #}
                 <div class="hero-ctas">
                     <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the manual</a>
                     <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
+                    <a class="btn btn-ghost hero-cta-wide" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
                 </div>
                 <p class="note reg-deadline">Registration closes {{ config.REGISTRATION_DEADLINE }}.</p>
             </div>
