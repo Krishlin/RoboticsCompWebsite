@@ -175,8 +175,10 @@ class Config:
         "REGISTRATION_FORM_URL", "https://pci.jotform.com/form/262558199273066?utm_id=97760_v0_s00_e0_tv4"
     )
 
-    # Shown under both "Register a team" button rows on the landing page.
-    REGISTRATION_DEADLINE = os.environ.get("REGISTRATION_DEADLINE", "Saturday, October 17")
+    # Shown under both "Register a team" button rows on the landing page. The
+    # landing copy words this as an extension (the original close was
+    # Saturday, October 17), so revisit that wording if it ever moves earlier.
+    REGISTRATION_DEADLINE = os.environ.get("REGISTRATION_DEADLINE", "Wednesday, October 21")
 
     # Jotform for ordering the kit and micro:bit, linked from the cost section
     # ("Purchase materials") and the footer.
