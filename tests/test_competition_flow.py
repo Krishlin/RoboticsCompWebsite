@@ -409,3 +409,24 @@ def test_schedule_generate_needs_csrf_header_when_csrf_is_on(app_factory):
 
 def test_schedule_generate_needs_the_head_ref(app, client, teams_and_match):
     assert client.post("/schedule/api/generate", json={}, headers=STAFF).status_code == 401
+
+
+def test_landing_page_links_into_every_tool(app, client, teams_and_match):
+    # The landing page does not extend base.html, so this bar is the only way
+    # from the front door into the tools. Every link must land on a real page.
+    page = client.get("/").get_data(as_text=True)
+    bar = page.split('aria-label="Tournament"', 1)[1].split("</nav>", 1)[0]
+    links = [chunk.split('"', 1)[0] for chunk in bar.split('href="')[1:]]
+    assert links == [
+        "/schedule/", "/rankings/High_School", "/rankings/display/High_School",
+        "/bracket/High_School", "/rankings/pit", "/checkin/", "/referee/", "/admin/",
+    ]
+    for link in links:
+        headers = HEAD if link.startswith("/admin") else STAFF
+        assert client.get(link, headers=headers).status_code == 200, link
+
+
+def test_landing_page_hides_the_tools_while_registration_only(tmp_path):
+    page = _build(tmp_path, REGISTRATION_ONLY=True).test_client().get("/").get_data(as_text=True)
+    assert 'aria-label="Tournament"' not in page
+    assert "/referee/" not in page

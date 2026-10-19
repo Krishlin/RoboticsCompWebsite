@@ -47,6 +47,27 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
+{# The way into the tournament tools. This page does not extend base.html, so
+   without this bar the front door of a full-app deployment links to none of
+   them. Hidden while REGISTRATION_ONLY is on, for the same reason base.html
+   hides its links: those blueprints are not registered and would 404. #}
+{% if not config.REGISTRATION_ONLY %}
+<nav class="app-bar band" aria-label="Tournament">
+    <ul>
+        <li><a href="/schedule/">Schedule</a></li>
+        <li><a href="/rankings/High_School">Rankings</a></li>
+        <li><a href="/rankings/display/High_School">Big screen</a></li>
+        <li><a href="/bracket/High_School">Bracket</a></li>
+        <li><a href="/rankings/pit">Pit lookup</a></li>
+    </ul>
+    <ul class="app-bar-staff" aria-label="Staff">
+        <li><a href="/checkin/">Check-in</a></li>
+        <li><a href="/referee/">Referee</a></li>
+        <li><a href="/admin/">Head ref</a></li>
+    </ul>
+</nav>
+{% endif %}
+
 {# The section links collapse behind a button on a phone, but only once the
    script has run: the button ships hidden and the list ships visible, so a
    visitor without JavaScript gets every link as a wrapped row rather than a
