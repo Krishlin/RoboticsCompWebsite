@@ -1,32 +1,28 @@
-{# owner: Serena — pick the arena this phone runs. One phone per arena, all day. #}
+{# owner: Serena — every series still to score, in schedule order. Tap one to score it. #}
 {% extends "base.html" %}
 {% block title %}Referee{% endblock %}
 {% block extra_head %}<meta http-equiv="refresh" content="30">{% endblock %}
 {% block content %}
-    <h1 class="page-title">Which arena is this phone for?</h1>
-    <p class="page-subtitle">Pick yours once. The screen then runs every match on that arena in order.</p>
+    <h1 class="page-title">Matches</h1>
 
     {% if paused %}
         <div class="notice notice-warn">Matches are paused by the head ref.</div>
     {% endif %}
 
-    {% for arena in arenas %}
-        <a class="card card-link" href="{{ url_for('referee.arena_screen', arena=arena.slug) }}">
-            <p class="card-link-title">{{ arena.name }}</p>
-            {% if arena.match %}
-                <p class="meta">
-                    {% if arena.match.status == "in_progress" %}<span class="badge badge-now">Now</span>{% else %}Next:{% endif %}
-                    match {{ arena.match.match_number }},
-                    {{ arena.red.team_number if arena.red else "TBD" }} against {{ arena.blue.team_number if arena.blue else "TBD" }}
-                </p>
-            {% else %}
-                <p class="meta">Nothing waiting.</p>
-            {% endif %}
+    {% for row in rows %}
+        <a class="card card-link" href="{{ url_for('referee.result_entry', match_id=row.match.id) }}">
+            <p class="card-link-title">Match {{ row.match.match_number }}</p>
+            <p class="meta">
+                {% if row.match.status == "in_progress" %}<span class="badge badge-now">Now</span>{% endif %}
+                {% if row.match.scheduled_time %}{{ row.match.scheduled_time | clock }},{% endif %}
+                {{ row.match.arena }}:
+                {{ row.red.team_number if row.red else "TBD" }} against {{ row.blue.team_number if row.blue else "TBD" }}
+            </p>
         </a>
     {% else %}
         <div class="notice">
-            No matches are scheduled yet. The head ref generates the qualification
-            schedule from the head ref panel.
+            Nothing left to score. If no schedule exists yet, the head ref generates the
+            qualification schedule from the head ref panel.
         </div>
     {% endfor %}
 {% endblock %}

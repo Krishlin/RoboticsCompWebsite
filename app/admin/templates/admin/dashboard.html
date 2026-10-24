@@ -31,9 +31,54 @@
                 <button type="submit" class="btn">Pause matches</button>
             </form>
         {% endif %}
+        <a class="btn btn-secondary" href="{{ url_for('admin.import_teams') }}">Import teams</a>
         <a class="btn btn-secondary" href="{{ url_for('scheduler.admin') }}">Schedule generator</a>
         <a class="btn btn-secondary" href="{{ url_for('bracket.manage', division='High_School') }}">Bracket setup</a>
         <a class="btn btn-secondary" href="{{ url_for('admin.audit_log') }}">Change log</a>
+    </div>
+
+    {% if not team_count %}
+        <div class="notice notice-warn space-above">
+            <p>No teams are loaded yet. <a href="{{ url_for('admin.import_teams') }}">Import them from the registration sheet</a> first.</p>
+        </div>
+    {% endif %}
+
+    <h2 class="section-title" id="timing">Running late?</h2>
+    <div class="card">
+        {% if next_match %}
+            <p>Next to start: <strong>match {{ next_match.match_number }}</strong> on {{ next_match.arena }},
+            scheduled for <strong>{{ next_match.scheduled_time | clock }}</strong>.
+            {{ upcoming_count }} match{{ "es" if upcoming_count != 1 }} haven't started.</p>
+            {% if paused_minutes is not none %}
+                <p class="hint">Matches have been paused for {{ paused_minutes }} minute{{ "s" if paused_minutes != 1 }}.</p>
+            {% endif %}
+
+            <div class="field-grid space-above">
+                <form method="POST" action="{{ url_for('admin.shift_schedule') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label for="shift-minutes">Push every match that hasn't started back by (minutes)</label>
+                        <input type="number" id="shift-minutes" name="minutes" min="-{{ max_shift }}" max="{{ max_shift }}" step="1"
+                               value="{{ paused_minutes if paused_minutes else 10 }}" required>
+                        <p class="hint">A negative number pulls them earlier if you catch up.</p>
+                    </div>
+                    <button type="submit" class="btn">Shift the schedule</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.shift_schedule') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label for="next-start">Or: match {{ next_match.match_number }} actually starts at</label>
+                        <input type="time" id="next-start" name="next_start" value="{{ next_match.scheduled_time.strftime('%H:%M') }}" required>
+                        <p class="hint">Everything after it moves by the same amount.</p>
+                    </div>
+                    <button type="submit" class="btn btn-secondary">Set the start time</button>
+                </form>
+            </div>
+            <p class="hint">Finished and running matches keep their times. The schedule pages,
+            team pages, pit lookup and big screen all show the new times straight away.</p>
+        {% else %}
+            <p class="text-muted">No upcoming match has a time to move. Bracket series have no fixed time.</p>
+        {% endif %}
     </div>
 
     <h2 class="section-title">Matches</h2>
@@ -45,6 +90,7 @@
             <tr>
                 <th class="num">Match</th>
                 <th>Arena</th>
+                <th>Time</th>
                 <th>Red</th>
                 <th>Blue</th>
                 <th class="num">Series</th>
@@ -58,6 +104,7 @@
                 <tr>
                     <td class="num">{{ match.match_number }}{% if match.phase == "elimination" %} <span class="badge">Bracket</span>{% endif %}</td>
                     <td>{{ match.arena }}</td>
+                    <td>{{ match.scheduled_time | clock }}</td>
                     <td>{{ team(row.red.team_number if row.red else none, row.red.name if row.red else "", "red") }}</td>
                     <td>{{ team(row.blue.team_number if row.blue else none, row.blue.name if row.blue else "", "blue") }}</td>
                     <td class="num">
@@ -73,7 +120,7 @@
                     <td><a href="{{ url_for('admin.edit_result', match_id=match.id) }}">Edit games</a></td>
                 </tr>
             {% else %}
-                <tr><td colspan="7" class="text-muted">No matches yet. Generate the schedule first.</td></tr>
+                <tr><td colspan="8" class="text-muted">No matches yet. Generate the schedule first.</td></tr>
             {% endfor %}
         </tbody>
     </table>

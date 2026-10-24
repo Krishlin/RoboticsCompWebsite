@@ -11,9 +11,10 @@ from flask import (
     abort,
     flash,
     Response,
+    session,
 )
 
-from app.fake_data import DIVISION
+from app.event import DIVISION, FIRST_TEAM_NUMBER
 from app.mail import send_email
 from app.registration import registration_bp
 from app.routes import SITE_LINKS
@@ -26,11 +27,6 @@ from sqlalchemy.exc import IntegrityError
 # comma, not every RFC 5322 edge case. The real check is that a confirmation
 # email actually arrives.
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-
-# Team numbers start here rather than at 1. Three digits reads as a team
-# number at a glance on a pit sign, a match schedule and a bracket, and it
-# leaves 1-99 free for anything that needs a reserved number later.
-FIRST_TEAM_NUMBER = 100
 
 
 def _send_confirmation_email(team):
@@ -203,7 +199,9 @@ def signup():
                     )
 
                 # Send them to the confirmation page, which is the only place
-                # they are told their team number.
+                # they are told their team number. The session is what lets
+                # this browser, and only this one, open it.
+                session["registered_team_number"] = saved_team_number
                 return redirect(
                     url_for("registration.confirmation", team_number=saved_team_number)
                 )
@@ -221,7 +219,17 @@ def signup():
 
 @registration_bp.route("/confirmation/<int:team_number>")
 def confirmation(team_number):
-    """Shown straight after a team registers, so they learn their number."""
+    """Shown straight after a team registers, so they learn their number.
+
+    Only to the browser that registered the team. The page lists the
+    students' names and the adult's name and email, and team numbers are
+    sequential, so a page anyone could open would let a stranger walk
+    100, 101, 102... and collect every family's details. Anyone else gets
+    the same 404 as a number that doesn't exist, so it doesn't even confirm
+    the team is there. Staff have the team list.
+    """
+    if session.get("registered_team_number") != team_number:
+        abort(404)
     team = Team.query.filter_by(team_number=team_number).first()
     if team is None:
         abort(404)

@@ -30,7 +30,6 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.db import db
 from app.match_state import (
-    arena_names,
     current_match_for_arena,
     games_for,
     is_paused,
@@ -53,8 +52,8 @@ def _arena_slug(arena):
     return arena.replace(" ", "_")
 
 
-def _arena_url(arena):
-    return url_for("referee.arena_screen", arena=_arena_slug(arena))
+def _match_url(match):
+    return url_for("referee.result_entry", match_id=match.id)
 
 
 def _teams_for(match):
@@ -155,14 +154,21 @@ def _render_screen(match, arena, errors=None, values=None, status=200):
 @referee_bp.route("/")
 @staff_required
 def current_match():
-    """Pick an arena. Each referee phone then stays on its arena's screen."""
-    arenas = []
-    for arena in arena_names():
-        match = current_match_for_arena(arena)
+    """Every series still to score, in schedule order. Finished ones drop off."""
+    matches = (
+        Match.query.filter(
+            Match.status.in_(("scheduled", "in_progress")),
+            Match.red_team_id.isnot(None),
+            Match.blue_team_id.isnot(None),
+        )
+        .order_by(Match.scheduled_time.asc().nullslast(), Match.match_number)
+        .all()
+    )
+    rows = []
+    for match in matches:
         red, blue = _teams_for(match)
-        arenas.append({"name": arena, "slug": _arena_slug(arena), "match": match,
-                       "red": red, "blue": blue})
-    return render_template("referee/current_match.html", arenas=arenas, paused=is_paused())
+        rows.append({"match": match, "red": red, "blue": blue})
+    return render_template("referee/current_match.html", rows=rows, paused=is_paused())
 
 
 @referee_bp.route("/arena/<arena>")
@@ -212,7 +218,7 @@ def result_entry(match_id):
 def start_game(match_id):
     """Start the timer for this series' next game. Tapping it twice is harmless."""
     match = _get_match_or_404(match_id)
-    back = _arena_url(match.arena)
+    back = _match_url(match)
 
     if is_paused():
         flash("Matches are paused by the head ref. Wait for them to resume.", "warn")
@@ -252,20 +258,20 @@ def pause_timer(match_id):
     match = _get_match_or_404(match_id)
     if match.game_started_at is None:
         flash("No game is running, so there is no timer to pause.", "warn")
-        return redirect(_arena_url(match.arena))
+        return redirect(_match_url(match))
 
     if request.form.get("action") == "resume":
         if match.game_paused_at is not None:
             if is_paused():
                 flash("Matches are paused by the head ref. The timer stays paused.", "warn")
-                return redirect(_arena_url(match.arena))
+                return redirect(_match_url(match))
             match.game_started_at += utcnow() - match.game_paused_at
             match.game_paused_at = None
             db.session.commit()
     elif match.game_paused_at is None:
         match.game_paused_at = utcnow()
         db.session.commit()
-    return redirect(_arena_url(match.arena))
+    return redirect(_match_url(match))
 
 
 @referee_bp.route("/restart/<int:match_id>", methods=["POST"])
@@ -286,7 +292,7 @@ def restart_timer(match_id):
             match.game_paused_at = None
             flash("Timer restarted from zero.", "ok")
         db.session.commit()
-    return redirect(_arena_url(match.arena))
+    return redirect(_match_url(match))
 
 
 @referee_bp.route("/confirm/<int:match_id>")
@@ -312,7 +318,7 @@ def confirm(match_id):
         blue=blue,
         values=values,
         locked=already,
-        arena_url=_arena_url(match.arena),
+        arena_url=_match_url(match),
     )
 
 
@@ -328,7 +334,7 @@ def submit_result(match_id):
             render_template(
                 "referee/confirm.html",
                 match=match, red=red, blue=blue, values=None, locked=True,
-                locked_message=message, arena_url=_arena_url(match.arena),
+                locked_message=message, arena_url=_match_url(match),
             ),
             409,
         )
@@ -400,7 +406,7 @@ def submit_result(match_id):
         # arena screen would jump straight to the next match, so the banner
         # would sit above a different pairing at 0-0.
         return redirect(url_for("referee.result_entry", match_id=match.id))
-    return redirect(_arena_url(match.arena))
+    return redirect(_match_url(match))
 
 
 def _advance_bracket(division):

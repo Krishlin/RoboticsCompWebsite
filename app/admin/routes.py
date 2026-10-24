@@ -15,14 +15,17 @@
 
 import csv
 import io
+import logging
 import math
 import zipfile
+from datetime import datetime, timedelta
 
 from flask import Response, abort, flash, redirect, render_template, request, url_for
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.admin import admin_bp
 from app.db import db
+from app.formatting import clock
 from app.match_state import (
     games_for,
     is_paused,
@@ -40,10 +43,17 @@ from app.models import (
     Team,
     utcnow,
 )
+from app.roster import MAX_BYTES, RosterError, decode, import_roster, parse_roster
 from app.security import current_staff_name, head_ref_required
 from app.series import VALID_OUTCOMES, VALID_ZONES
 
+logger = logging.getLogger(__name__)
+
 EDITABLE_FIELDS = ("outcome", "win_time_seconds", "red_final_zone", "blue_final_zone")
+
+# The furthest one shift may move the schedule. A typed 600 for 60 should be
+# refused, not obeyed.
+MAX_SHIFT_MINUTES = 240
 
 
 @admin_bp.before_request
@@ -118,17 +128,145 @@ def _get_or_create_schedule_state():
     return state
 
 
+def _unstarted_timed_matches():
+    """Every match no game has started in that has a time, soonest first.
+
+    Bracket series have no time (scheduled_time is None), so they never move.
+    """
+    return (
+        Match.query.filter(Match.status == "scheduled", Match.scheduled_time.isnot(None))
+        .order_by(Match.scheduled_time, Match.match_number)
+        .all()
+    )
+
+
 @admin_bp.route("/")
 def dashboard():
+    state = _read_schedule_state()
+    upcoming = _unstarted_timed_matches()
+    paused_minutes = None
+    if state.is_paused and state.changed_at is not None:
+        paused_minutes = int((utcnow() - state.changed_at).total_seconds() // 60)
     return render_template(
         "admin/dashboard.html",
         series_rows=_series_rows(),
-        schedule_state=_read_schedule_state(),
+        schedule_state=state,
         brackets=BracketConfig.query.all(),
         admin_name=_current_admin_name(),
         exports=EXPORTS,
         paused=is_paused(),
+        next_match=upcoming[0] if upcoming else None,
+        upcoming_count=len(upcoming),
+        paused_minutes=paused_minutes,
+        max_shift=MAX_SHIFT_MINUTES,
+        team_count=Team.query.count(),
     )
+
+
+@admin_bp.route("/shift-schedule", methods=["POST"])
+def shift_schedule():
+    """Move every match that hasn't started by the same amount.
+
+    For a delay: the event runs late, so everything still to come moves back
+    and the schedule, the team pages and the big screen tell the truth again.
+    Finished and running series keep their times, and everything that moves
+    moves together, so the gaps between a team's series stay as generated.
+    """
+    # No #timing anchor: the confirmation is flashed at the top of the page,
+    # and the card is right under it anyway.
+    back = redirect(url_for("admin.dashboard"))
+    matches = _unstarted_timed_matches()
+    if not matches:
+        flash("There are no upcoming matches with a time to move.", "warn")
+        return back
+    first = matches[0]
+
+    next_start = (request.form.get("next_start") or "").strip()
+    if next_start:
+        try:
+            wanted = datetime.strptime(next_start, "%H:%M").time()
+        except ValueError:
+            flash(f"Enter the time like 10:45, not {next_start!r}.", "error")
+            return back
+        delta = datetime.combine(first.scheduled_time.date(), wanted) - first.scheduled_time
+    else:
+        raw = (request.form.get("minutes") or "").strip()
+        try:
+            typed = int(raw)
+        except ValueError:
+            flash(f"Enter a whole number of minutes, not {raw!r}.", "error")
+            return back
+        # Clamped before it reaches timedelta, which raises OverflowError on
+        # a long enough string of digits; the limit check below then refuses it.
+        delta = timedelta(minutes=max(-10_000, min(typed, 10_000)))
+
+    minutes = int(delta.total_seconds() // 60)
+    if minutes == 0:
+        flash("Nothing moved: that is the schedule's current time.", "warn")
+        return back
+    if abs(minutes) > MAX_SHIFT_MINUTES:
+        flash(
+            f"Not moved: {abs(minutes)} minutes is more than the {MAX_SHIFT_MINUTES}-minute "
+            "limit for one shift. Check the number, or shift in two steps.",
+            "error",
+        )
+        return back
+
+    old_first = first.scheduled_time
+    for match in matches:
+        match.scheduled_time += delta
+    try:
+        db.session.commit()
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        flash(f"Could not move the schedule, so nothing changed: {exc.__class__.__name__}.", "error")
+        return back
+
+    logger.info(
+        "schedule shifted %+d minutes by %s (%d matches, match %s %s -> %s)",
+        minutes, _current_admin_name(), len(matches), first.match_number,
+        clock(old_first), clock(first.scheduled_time),
+    )
+    flash(
+        f"Moved {len(matches)} match{'es' if len(matches) != 1 else ''} "
+        f"{abs(minutes)} minutes {'later' if minutes > 0 else 'earlier'}. "
+        f"Match {first.match_number} is now at {clock(first.scheduled_time)}.",
+        "ok",
+    )
+    return back
+
+
+@admin_bp.route("/import-teams", methods=["GET", "POST"])
+def import_teams():
+    """Load the registered teams from the registration sheet's CSV export."""
+    summary = None
+    problems = []
+    if request.method == "POST":
+        upload = request.files.get("roster")
+        if upload is None or not upload.filename:
+            problems = ["Choose the sheet's .csv file first."]
+        else:
+            try:
+                rows = parse_roster(decode(upload.read(MAX_BYTES + 1)))
+                summary = import_roster(
+                    rows, remove_missing=request.form.get("remove_missing") == "1"
+                )
+            except RosterError as exc:
+                problems = exc.problems
+        if summary is not None:
+            logger.info(
+                "roster imported by %s: %d added, %d updated, %d removed",
+                _current_admin_name(), len(summary.added), len(summary.updated),
+                len(summary.removed),
+            )
+    page = render_template(
+        "admin/import_teams.html",
+        summary=summary,
+        problems=problems,
+        team_count=Team.query.count(),
+        schedule_exists=Match.query.first() is not None,
+    )
+    return (page, 400) if problems else page
 
 
 def _parse_win_time(raw_value):

@@ -279,6 +279,9 @@ class ScheduleState(db.Model):
     Hill and the result is real. Nothing else changes — scheduled times are
     not shifted, and the head ref can still edit results. The referee screens
     and the big-screen display both say PAUSED.
+
+    Moving the times is a separate, explicit step on the head ref panel
+    (admin.shift_schedule), which offers the length of the pause as the delay.
     """
 
     __tablename__ = "schedule_state"

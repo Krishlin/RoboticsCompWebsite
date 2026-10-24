@@ -16,7 +16,7 @@ import pytest
 from app.db import db
 from app.match_state import series_tally
 from app.models import AuditEntry, Match, MatchResult, ScheduleState, Team
-from tests.conftest import _build, head_ref_auth, staff_auth
+from tests.conftest import STAFF_PASSCODE, _build, head_ref_auth, staff_auth
 
 STAFF = staff_auth(name="Ref Ana")
 HEAD = head_ref_auth()
@@ -110,7 +110,7 @@ def test_finishing_a_series_stays_on_that_match(app, client, teams_and_match):
 
     page = client.get(clinch.headers["Location"], headers=STAFF).get_data(as_text=True)
     assert "Series finished" in page
-    assert "Next match on" in page
+    assert "Back to matches" in page
 
 
 def test_pausing_the_timer_stops_the_clock_until_resume(app, client, teams_and_match):
@@ -224,24 +224,56 @@ def test_referee_pages_need_the_staff_passcode(app, client, teams_and_match):
     assert client.get("/referee/", headers=STAFF).status_code == 200
 
 
-def test_teams_check_themselves_in_without_a_passcode(app, client, teams_and_match):
-    page = client.get("/checkin/self")
-    assert page.status_code == 200
-    assert "Team 101" in page.get_data(as_text=True)
+def test_check_in_needs_the_staff_passcode(app, client, teams_and_match):
+    for path in ("/checkin/", "/checkin/self", "/checkin/inspect/101", "/checkin/history/101"):
+        assert client.get(path).status_code in (401, 404), path
+    assert client.post("/checkin/1/check-in").status_code == 401
+    assert client.get("/checkin/", headers=STAFF).status_code == 200
 
-    with app.app_context():
-        team = Team.query.filter_by(team_number=101).one()
-        team_id = team.id
-        assert not team.checked_in
-    assert client.post(f"/checkin/self/{team_id}").status_code == 302
-    with app.app_context():
-        assert db.session.get(Team, team_id).checked_in
 
-    # The desk list and inspection records stay behind the staff passcode.
-    assert client.get("/checkin/").status_code == 401
-    assert client.get("/checkin/inspect/101").status_code == 401
-    assert client.get("/checkin/history/101").status_code == 401
-    assert client.post(f"/checkin/{team_id}/check-in").status_code == 401
+def test_passcode_gate_rejects_injection_style_and_odd_input(app, client, teams_and_match):
+    from base64 import b64encode
+
+    def attempt(user, password):
+        token = b64encode(f"{user}:{password}".encode()).decode("ascii")
+        return client.get("/referee/", headers={"Authorization": f"Basic {token}"}).status_code
+
+    for bad in ("' OR '1'='1", "x' OR 1=1 --", "\"; DROP TABLE team; --", "é", "😀", STAFF_PASSCODE + " ", ""):
+        assert attempt("Ana", bad) == 401, repr(bad)
+    assert attempt("' OR 1=1 --", STAFF_PASSCODE) != 401, "the username is never looked up"
+    with app.app_context():
+        assert Team.query.count() > 0, "no table was dropped"
+
+
+def test_referee_home_lists_unscored_matches_in_schedule_order(app, client, teams_and_match):
+    import re
+
+    first = teams_and_match
+    with app.app_context():
+        t = {n: Team.query.filter_by(team_number=n).one().id for n in (101, 102, 103, 104)}
+        db.session.add(Match(
+            match_number=9, phase="qualification", division="High School", arena="Arena 2",
+            scheduled_time=datetime(2026, 10, 24, 9, 0),
+            red_team_id=t[103], blue_team_id=t[104],
+        ))
+        db.session.commit()
+        first_number = db.session.get(Match, first).match_number
+
+    def titles():
+        page = client.get("/referee/", headers=STAFF).get_data(as_text=True)
+        assert "Which arena" not in page
+        return re.findall(r"Match (\d+)</p>", page)
+
+    assert titles() == ["9", str(first_number)], "earlier schedule slot first"
+
+    assert submit(client, first, "red", 1).status_code == 302
+    assert submit(client, first, "red", 2).status_code == 302
+    assert titles() == ["9"], "a scored series is gone from the list"
+
+    # And a finished series never starts again.
+    assert client.post(f"/referee/start/{first}", headers=STAFF).status_code == 302
+    with app.app_context():
+        assert db.session.get(Match, first).game_started_at is None
 
 
 def test_each_arena_shows_its_own_series(app, client, teams_and_match):

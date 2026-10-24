@@ -32,7 +32,7 @@
         <h1 class="page-title">{{ arena }}</h1>
         <p class="page-subtitle">No match is waiting on this arena. This screen
         checks again every 15 seconds.</p>
-        <a class="btn btn-secondary" href="{{ url_for('referee.current_match') }}">Choose a different arena</a>
+        <a class="btn btn-secondary" href="{{ url_for('referee.current_match') }}">All matches</a>
     {% else %}
         <div class="page-head">
             <h1 class="page-title">Match {{ match.match_number }}</h1>
@@ -63,7 +63,7 @@
                 {{ [tally.red_wins, tally.blue_wins] | max }}–{{ [tally.red_wins, tally.blue_wins] | min }}.
                 Only the head ref can change it now.</p>
             </div>
-            <a class="btn btn-large" href="{{ url_for('referee.arena_screen', arena=match.arena.replace(' ', '_')) }}">Next match on {{ match.arena }}</a>
+            <a class="btn btn-large" href="{{ url_for('referee.current_match') }}">Back to matches</a>
         {% elif not teams_known %}
             <p class="text-muted">Waiting for an earlier bracket result before both
             teams are known. This screen checks again every 15 seconds.</p>
@@ -160,7 +160,7 @@
             </div>
         {% endif %}
 
-        <p><a href="{{ url_for('referee.current_match') }}">Change arena</a></p>
+        <p><a href="{{ url_for('referee.current_match') }}">All matches</a></p>
     {% endif %}
 
     {% include "referee/_network_guard.html" %}

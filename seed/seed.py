@@ -1,92 +1,41 @@
 # owner: Shivani
 #
-# This script will generate realistic fake data directly into the real
-# database (as opposed to app/fake_data.py, which is hardcoded Python used
-# by every blueprint's routes.py before the database is wired up).
+# Resets a database to the real event's starting point: the registered teams
+# from the registration sheet, and nothing else. Nobody is checked in, there
+# is no schedule and no result, which is exactly where the head ref starts on
+# the day (check teams in, then generate the schedule from the ones who came).
 #
-# What it does:
-#   1. Create 24 fake Team rows in the one division.
-#   2. Generate a qualification schedule for them with Shaurya's generator
-#      (app/scheduler/generator.py), so the fake schedule obeys the same
-#      rules as the real one.
-#   3. Create Match rows from that schedule. Each one is a best-of-three
-#      series (game manual T3).
-#   4. Play out about two thirds of those series game by game, so there's
-#      something to look at in rankings, the bracket, and admin without
-#      everyone having to click through the referee flow by hand first.
+#   python -m seed.seed <sheet link, CSV link, or .csv file>
+#   python -m seed.seed <...> --play
 #
-# Run with: python -m seed.seed   (from the project root, venv active)
+# --play is for development only. It also generates a qualification schedule
+# with Shaurya's generator (app/scheduler/generator.py) and plays about two
+# thirds of it game by game, so rankings, the bracket and the admin pages have
+# something on them without clicking through the referee flow. Those results
+# are made up; never use --play on a database the event will run on.
+#
+# The sheet link is not in this repo on purpose; see seed/teams.py.
 #
 # WARNING: it empties the database it points at first. That is whatever
 # DATABASE_URL says - check it is not the event database.
 
+import argparse
 import random
+import sys
 from datetime import datetime
 
 from app import create_app
 from app.db import db
 from app.models import AuditEntry, BracketConfig, Inspection, Match, MatchResult, Team
+from app.roster import RosterError, import_roster, parse_roster
 from app.scheduler.generator import generate_advanced_schedule
 from app.series import VALID_ZONES, tally
+from seed.teams import load_teams, print_summary, read_source
 
 
-DIVISIONS = ["High School"]
-
-SCHOOLS = [
-    "Lincoln High",
-    "Oakwood High School",
-    "Riverside STEM Academy",
-    "Independent",
-    "Maple Grove High",
-    "Central High School",
-    "Hillcrest High",
-    "Westview High School",
-]
-
-STUDENT_NAMES = [
-    "Ava", "Liam", "Noah", "Emma", "Mia", "Ethan",
-    "Sofia", "Lucas", "Zoe", "Mason", "Ella", "Owen",
-    "Grace", "Leo", "Nora", "Kai", "Ruby", "Sam",
-    "Ivy", "Theo", "Luna", "Max", "Isla", "Finn",
-]
-
-
-def seed_teams():
-    team_count = 0
-
-    for division_index, division in enumerate(DIVISIONS):
-        base_number = 100 + (division_index * 100)
-
-        for i in range(24):
-            team_number = base_number + i + 1
-
-            first_student = STUDENT_NAMES[
-                (team_count * 2) % len(STUDENT_NAMES)
-            ]
-
-            second_student = STUDENT_NAMES[
-                (team_count * 2 + 1) % len(STUDENT_NAMES)
-            ]
-
-            team = Team(
-                team_number=team_number,
-                name=f"Team {team_number}",
-                affiliation=SCHOOLS[i % len(SCHOOLS)],
-                division=division,
-                students=f"{first_student}\n{second_student}",
-                adult_name=f"Adult of Team {team_number}",
-                adult_email=f"adult{team_number}@example.com",
-                adult_phone=f"555-01{team_count:02d}",
-                kit_ordered=False,
-                checked_in=False,
-            )
-
-            db.session.add(team)
-            team_count += 1
-
-    db.session.commit()
-
-    return team_count
+def seed_teams(source):
+    """Import the roster from `source`. Returns how many teams were added."""
+    return len(load_teams(source).added)
 
 
 def _play_series(match, rng):
@@ -116,6 +65,7 @@ def _play_series(match, rng):
 
 
 def seed_matches():
+    """Development only: a generated schedule with two thirds of it played."""
     rng = random.Random(2026)
     random.seed(2026)  # the generator draws from the module-level random
 
@@ -155,28 +105,46 @@ def seed_matches():
     return match_count, game_count
 
 
-def seed_database():
+def empty_event_tables():
+    AuditEntry.query.delete()
+    MatchResult.query.delete()
+    Match.query.delete()
+    BracketConfig.query.delete()
+    Inspection.query.delete()
+    Team.query.delete()
+    db.session.commit()
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Reset the database to the real teams.")
+    parser.add_argument("source", help="Google Sheets link, CSV link, or path to a .csv file")
+    parser.add_argument(
+        "--play",
+        action="store_true",
+        help="development only: also generate a schedule and play made-up results",
+    )
+    args = parser.parse_args(argv)
+
     app = create_app()
-
     with app.app_context():
-        AuditEntry.query.delete()
-        MatchResult.query.delete()
-        Match.query.delete()
-        BracketConfig.query.delete()
-        Inspection.query.delete()
-        Team.query.delete()
-        db.session.commit()
+        print(f"Database: {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1]}")
+        # Read and check the sheet before emptying anything, so a bad link or
+        # a broken row leaves the database as it was.
+        try:
+            rows = parse_roster(read_source(args.source))
+        except RosterError as exc:
+            print("Nothing was changed:", file=sys.stderr)
+            for problem in exc.problems:
+                print(f"  {problem}", file=sys.stderr)
+            return 1
+        empty_event_tables()
+        print_summary(import_roster(rows))
 
-        team_count = seed_teams()
-
-        match_count, game_count = seed_matches()
-
-        print(
-            f"Successfully seeded {team_count} teams, "
-            f"{match_count} series, and "
-            f"{game_count} game results."
-        )
+        if args.play:
+            match_count, game_count = seed_matches()
+            print(f"Generated {match_count} series and played {game_count} made-up games.")
+    return 0
 
 
 if __name__ == "__main__":
-    seed_database()
+    sys.exit(main())

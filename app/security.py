@@ -47,7 +47,11 @@ def _passcode_matches(supplied: str | None, expected: str) -> bool:
     the first wrong character. The timing signal is tiny over HTTP, but this
     costs nothing and the habit is worth more than the microseconds.
     """
-    return bool(supplied) and hmac.compare_digest(supplied, expected)
+    if not supplied:
+        return False
+    # Bytes, because compare_digest raises TypeError on a str with non-ASCII
+    # characters, which would turn a typed "é" into a 500 instead of a 401.
+    return hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8"))
 
 
 def current_staff_name() -> str | None:

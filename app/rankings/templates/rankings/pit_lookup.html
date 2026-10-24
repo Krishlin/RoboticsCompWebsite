@@ -25,7 +25,8 @@
                         <p class="lead-figure">Now, {{ next_match.arena }}</p>
                         <p>Game {{ next_match.game_number }} of match {{ next_match.match_number }}. The series is {{ next_match.red_wins }}–{{ next_match.blue_wins }}.</p>
                     {% else %}
-                        <p class="lead-figure">{{ next_match.arena }}, about {{ next_match.scheduled_time | clock }}</p>
+                        {# Bracket series have no fixed time: "about TBD" says nothing. #}
+                        <p class="lead-figure">{{ next_match.arena }}{% if next_match.scheduled_time %}, about {{ next_match.scheduled_time | clock }}{% else %}, when called{% endif %}</p>
                         <p>Match {{ next_match.match_number }}{% if next_match.phase == "elimination" %}, in the bracket{% endif %}.</p>
                     {% endif %}
                     <p>

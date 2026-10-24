@@ -40,7 +40,6 @@ MANUAL_FILENAME = "summit-manual-v1.0.pdf"
 # your blueprint, add one line here too, so it shows up on the home page.
 ROUTE_INDEX = [
     {"owner": "Emily", "label": "Sign up a team", "path": "/register/"},
-    {"owner": "Emily", "label": "Registration confirmation (team 101)", "path": "/register/confirmation/101"},
     {"owner": "Emily", "label": "Team list / CSV export (staff)", "path": "/register/teams"},
 
     {"owner": "Shivani", "label": "Check-in list (staff)", "path": "/checkin/"},
@@ -64,6 +63,7 @@ ROUTE_INDEX = [
     {"owner": "Krish S", "label": "Bracket setup (head ref)", "path": "/bracket/High_School/manage"},
 
     {"owner": "Yueyue", "label": "Admin dashboard (head ref)", "path": "/admin/"},
+    {"owner": "lead", "label": "Import teams from the registration sheet (head ref)", "path": "/admin/import-teams"},
     {"owner": "Yueyue", "label": "Edit a series' games (head ref)", "path": "/admin/edit/1"},
     {"owner": "Yueyue", "label": "Audit log (head ref)", "path": "/admin/audit-log"},
     {"owner": "Yueyue", "label": "Export everything (head ref)", "path": "/admin/export/all.zip"},

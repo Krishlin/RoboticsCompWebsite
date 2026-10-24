@@ -22,10 +22,17 @@
                 {% for team in teams %}
                     {% set inspection = latest.get(team.id) %}
                     <tr>
-                        <td>{{ team_label(team.team_number, team.name) }}</td>
+                        <td>
+                            {{ team_label(team.team_number, team.name) }}
+                            <p class="meta">{{ team.affiliation }}</p>
+                        </td>
                         <td>
                             {% if team.checked_in %}
                                 <span class="badge badge-success">Checked in</span>
+                                <form class="inline-form" method="POST" action="{{ url_for('checkin.undo_check_in', team_id=team.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="link-button">Undo</button>
+                                </form>
                             {% else %}
                                 <form method="POST" action="{{ url_for('checkin.check_in_team', team_id=team.id) }}">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

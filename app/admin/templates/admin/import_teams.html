@@ -1,0 +1,95 @@
+{# owner: shared / lead — load the registered teams from the registration sheet #}
+{% extends "base.html" %}
+{% from "_ui.html" import team as team_label %}
+{% block title %}Import teams{% endblock %}
+{% block content %}
+    <div class="page-head">
+        <h1 class="page-title">Import teams</h1>
+        <p class="meta">{{ team_count }} team{{ "s" if team_count != 1 }} loaded</p>
+    </div>
+    <p class="page-subtitle">Teams register on the Jotform, which fills the registration
+    Google Sheet. Load that sheet here. Running it again is safe: teams already here keep
+    their number and check-in, and get any changes from the sheet. That is how a late
+    registration gets in.</p>
+
+    {% if problems %}
+        <div class="notice notice-error" role="alert">
+            <p>Nothing was imported. Fix these in the sheet, download it again, and retry:</p>
+            <ul>
+                {% for problem in problems %}<li>{{ problem }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if summary %}
+        <div class="notice notice-ok" role="status">
+            <p>Imported: {{ summary.added | length }} added, {{ summary.updated | length }} updated,
+            {{ summary.unchanged | length }} unchanged{% if summary.removed %}, {{ summary.removed | length }} removed{% endif %}.</p>
+        </div>
+
+        {% if summary.added %}
+            <h2 class="section-title">New teams and their numbers</h2>
+            <p class="text-muted">Robots are programmed with their team number, so tell each new team theirs.</p>
+            <table class="data-table">
+                <thead><tr><th>Team</th><th>School</th><th>Adult</th></tr></thead>
+                <tbody>
+                    {% for team in summary.added %}
+                        <tr>
+                            <td>{{ team_label(team.team_number, team.name) }}</td>
+                            <td>{{ team.affiliation }}</td>
+                            <td>{{ team.adult_name }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {% if summary.updated %}
+            <h2 class="section-title">Updated from the sheet</h2>
+            <ul>
+                {% for team in summary.updated %}<li>{{ team_label(team.team_number, team.name) }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if summary.removed %}
+            <h2 class="section-title">Removed (not in the sheet)</h2>
+            <ul>
+                {% for label in summary.removed %}<li>{{ label }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if summary.not_in_file %}
+            <h2 class="section-title">Here but not in the sheet</h2>
+            <p class="text-muted">Left as they are. A team that is already in a match or has
+            an order is never removed.</p>
+            <ul>
+                {% for team in summary.not_in_file %}<li>{{ team_label(team.team_number, team.name) }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="btn-row space-above">
+            <a class="btn" href="{{ url_for('checkin.checkin_list') }}">Go to check-in</a>
+            <a class="btn btn-secondary" href="{{ url_for('registration.team_list') }}">See every team</a>
+        </div>
+    {% endif %}
+
+    <form class="card space-above" method="POST" action="{{ url_for('admin.import_teams') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="roster">The sheet as a .csv file</label>
+            <input type="file" id="roster" name="roster" accept=".csv,text/csv" required>
+            <p class="hint">In the Google Sheet: File &gt; Download &gt; Comma-separated values (.csv).
+            It needs the columns Team Name, School Name, Students, Adult Name and Adult Email.
+            A Team Number column is optional; without one, new teams are numbered in sheet order.</p>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="remove-missing" name="remove_missing" value="1">
+            <label for="remove-missing">Also remove teams that aren't in the sheet</label>
+        </div>
+        <p class="hint">Use this once, to clear out test teams before the event.
+        {% if schedule_exists %}A schedule exists, so any team already in a match is kept anyway.{% endif %}</p>
+        <div class="btn-row space-above">
+            <button type="submit" class="btn">Import</button>
+        </div>
+    </form>
+{% endblock %}

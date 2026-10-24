@@ -16,10 +16,21 @@ from app.rankings.tiebreak import DEFAULT_DRAW_SEED, rank_division
 
 
 def get_division_rankings(division):
-    """Official T4 standings for one division, best first."""
+    """Official T4 standings for one division, best first.
+
+    Once a qualification schedule exists, only the teams in it are ranked. A
+    team that registered but never came (the schedule is generated from the
+    teams who checked in) would otherwise sit on 0 points with a match
+    differential of 0, above every team that came and lost, and could be
+    seeded into the bracket over them. Before there is a schedule, every
+    registered team is listed.
+    """
     teams = Team.query.filter_by(division=division).all()
-    number_by_id = {t.id: t.team_number for t in teams}
     matches = Match.query.filter_by(division=division, phase="qualification").all()
+    if matches:
+        scheduled = {m.red_team_id for m in matches} | {m.blue_team_id for m in matches}
+        teams = [t for t in teams if t.id in scheduled]
+    number_by_id = {t.id: t.team_number for t in teams}
 
     # Legacy whole-match replays (see Match.replaces_match_id): once the
     # replay is complete, the match it replaced stops counting, so the

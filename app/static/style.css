@@ -413,6 +413,29 @@ a:hover {
     margin: 0;
 }
 
+/* One small button that reads as a link, in a form that sits in a line of
+   text: check-in's Undo next to a team's "Checked in" badge. */
+.inline-form {
+    display: inline;
+    margin: 0 0 0 0.5rem;
+}
+
+.link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--cyan-deep);
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+    cursor: pointer;
+}
+
+.link-button:hover {
+    color: var(--ink);
+}
+
 /* --- Forms ---------------------------------------------------------------- */
 
 .form-group {
@@ -434,6 +457,7 @@ a:hover {
 .form-group input[type="tel"],
 .form-group input[type="number"],
 .form-group input[type="datetime-local"],
+.form-group input[type="time"],
 .form-group select,
 .form-group textarea {
     display: block;

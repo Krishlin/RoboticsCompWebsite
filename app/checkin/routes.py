@@ -3,28 +3,19 @@
 # (pass/fail, timestamped, re-inspection allowed with both attempts kept).
 
 
-from flask import render_template, redirect, url_for, request
+from flask import flash, render_template, redirect, url_for, request
 from app.checkin import checkin_bp
 from app.db import db
 from app.models import Team, Inspection
 from app.security import staff_required
 
 
-# Volunteers only, except the self check-in page below. Gated as a whole,
-# because inspection records and the "who has arrived" desk list are not public.
-_SELF_SERVICE = {"checkin.self_checkin", "checkin.self_checkin_team"}
-
-
-@staff_required
-def _staff_only():
-    return None
-
-
+# Volunteers only: the check-in desk and inspection table. Gated as a whole,
+# because inspection records and the "who has arrived" list are not public.
 @checkin_bp.before_request
+@staff_required
 def _require_staff():
-    if request.endpoint in _SELF_SERVICE:
-        return None
-    return _staff_only()
+    return None
 
 
 @checkin_bp.route("/")
@@ -51,7 +42,7 @@ def checkin_list():
 @checkin_bp.route("/<int:team_id>/check-in", methods=["POST"])
 def check_in_team(team_id):
     # Find the team that matches the ID from the button.
-    team = Team.query.get_or_404(team_id)
+    team = db.get_or_404(Team, team_id)
 
     # Mark the team as arrived.
     team.checked_in = True
@@ -62,22 +53,17 @@ def check_in_team(team_id):
     # Send the user back to the check-in list.
     return redirect(url_for("checkin.checkin_list"))
 
-# No passcode: teams check themselves in. Shows only number, name and whether
-# they have arrived, never inspection results or contact details. Anyone can
-# check in any team, which is accepted; the desk list is the backstop.
-@checkin_bp.route("/self")
-def self_checkin():
-    teams = Team.query.order_by(Team.team_number).all()
-    return render_template("checkin/self_checkin.html", teams=teams)
 
-
-@checkin_bp.route("/self/<int:team_id>", methods=["POST"])
-def self_checkin_team(team_id):
+# A mis-tapped row has to be fixable: the head ref can generate the schedule
+# from checked-in teams only, and a team marked here by mistake would be
+# scheduled even though it never arrived.
+@checkin_bp.route("/<int:team_id>/undo", methods=["POST"])
+def undo_check_in(team_id):
     team = db.get_or_404(Team, team_id)
-    team.checked_in = True
+    team.checked_in = False
     db.session.commit()
-    return redirect(url_for("checkin.self_checkin"))
-
+    flash(f"Team {team.team_number} is no longer checked in.", "ok")
+    return redirect(url_for("checkin.checkin_list"))
 
 @checkin_bp.route("/inspect/<int:team_number>", methods=["GET", "POST"])
 def inspection_form(team_number):
