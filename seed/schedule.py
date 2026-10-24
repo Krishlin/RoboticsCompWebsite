@@ -39,7 +39,8 @@ from app.scheduler.generator import (
 from app.scheduler.service import played_qualification_count, save_schedule
 from seed.teams import print_summary, read_source
 
-DEFAULT_ARENAS = 2
+# The event runs on one field.
+DEFAULT_ARENAS = 1
 
 # Fixed, so the same teams and settings always give the same schedule.
 SCHEDULE_SEED = 2026

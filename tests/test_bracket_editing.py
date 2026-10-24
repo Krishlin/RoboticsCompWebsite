@@ -126,6 +126,7 @@ def test_the_generator_button_can_schedule_a_round_robin(app):
 
     page = client.get("/schedule/admin", headers=HEAD).get_data(as_text=True)
     assert 'id="round-robin" checked' in page
+    assert 'id="arena-count" min="1" max="30" value="1"' in page, "one field by default"
 
 
 def test_the_premade_round_robin_for_eleven_teams(app):
@@ -139,7 +140,10 @@ def test_the_premade_round_robin_for_eleven_teams(app):
         assert len(pairs) == 55 and set(pairs.values()) == {1}
         times = sorted({m["scheduled_time"] for m in schedule})
         assert times[0] == "2026-10-24 10:00"
-        assert len(times) == 28, "two arenas: 28 rounds, the fewest 55 series allow"
+        # One field: the 55 series run one after another, 10 minutes apart.
+        assert len(times) == 55
+        assert {m["arena"] for m in schedule} == {"Arena 1"}
+        assert times[-1] == "2026-10-24 19:00"
 
 
 # --- building ---------------------------------------------------------------------

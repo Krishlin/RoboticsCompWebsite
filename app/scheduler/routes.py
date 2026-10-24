@@ -23,7 +23,8 @@ from app.scheduler.generator import (
 from app.scheduler.service import played_qualification_count, save_schedule
 from app.security import head_ref_required
 
-DEFAULT_ARENA_COUNT = 2
+# The event runs on one field.
+DEFAULT_ARENA_COUNT = 1
 
 
 def _enrich_matches(matches):
