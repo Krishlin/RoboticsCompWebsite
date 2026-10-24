@@ -7,10 +7,9 @@ from datetime import datetime
 from flask import current_app, jsonify, render_template, request
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db import db
 from app.formatting import clock
 from app.match_state import arena_names
-from app.models import Match, MatchResult, Team
+from app.models import Match, Team
 from app.scheduler import scheduler_bp
 from app.scheduler.generator import (
     DEFAULT_SERIES_PER_TEAM,
@@ -21,6 +20,7 @@ from app.scheduler.generator import (
     generate_random_schedule,
     validate_schedule,
 )
+from app.scheduler.service import played_qualification_count, save_schedule
 from app.security import head_ref_required
 
 DEFAULT_ARENA_COUNT = 2
@@ -150,6 +150,9 @@ def api_generate_schedule():
     use_advanced = bool(data.get("use_advanced", False))
     clear_existing = data.get("clear_existing", True)
     checked_in_only = bool(data.get("checked_in_only", False))
+    # Everyone plays everyone once: series per team is the number of other
+    # teams, so it follows however many teams are being scheduled.
+    round_robin = bool(data.get("round_robin", False))
 
     try:
         matches_per_team = _int_option(data, "matches_per_team", DEFAULT_SERIES_PER_TEAM, 1, 30)
@@ -167,15 +170,7 @@ def api_generate_schedule():
     # regenerate (keep played series, reschedule the rest) can't keep series
     # counts equal in general, so the head ref has to decide by hand instead.
     if clear_existing:
-        started = (
-            Match.query.filter(
-                Match.phase == "qualification",
-                db.or_(
-                    Match.status != "scheduled",
-                    Match.id.in_(db.session.query(MatchResult.match_id)),
-                ),
-            ).count()
-        )
+        started = played_qualification_count()
         if started:
             return jsonify({
                 "error": (
@@ -194,6 +189,9 @@ def api_generate_schedule():
         return jsonify({
             "error": "Need at least two teams" + (" checked in" if checked_in_only else "") + "."
         }), 400
+
+    if round_robin:
+        matches_per_team = len(teams) - 1
 
     team_dicts = [{"team_number": t.team_number, "division": t.division} for t in teams]
     arenas = [f"Arena {i}" for i in range(1, arena_count + 1)]
@@ -234,29 +232,8 @@ def api_generate_schedule():
             }), 400
 
     try:
-        if clear_existing:
-            Match.query.filter_by(phase="qualification").delete()
-
-        team_by_number = {t.team_number: t for t in teams}
-        for match_data in matches_data:
-            red_team = team_by_number.get(match_data["red_team_number"])
-            blue_team = team_by_number.get(match_data["blue_team_number"])
-            if not red_team or not blue_team:
-                continue
-            db.session.add(Match(
-                match_number=match_data["match_number"],
-                phase="qualification",
-                division=match_data["division"],
-                arena=match_data["arena"],
-                scheduled_time=datetime.strptime(match_data["scheduled_time"], "%Y-%m-%d %H:%M"),
-                red_team_id=red_team.id,
-                blue_team_id=blue_team.id,
-                status="scheduled",
-                is_replay=False,
-            ))
-        db.session.commit()
+        save_schedule(matches_data, teams, clear_existing=bool(clear_existing))
     except SQLAlchemyError as exc:
-        db.session.rollback()
         return jsonify({"error": f"Could not save the schedule: {exc.__class__.__name__}."}), 500
 
     names = {t.team_number: t.name for t in teams}

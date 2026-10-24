@@ -343,3 +343,81 @@ def test_pit_lookup_for_a_bracket_series_does_not_say_about_tbd(app, schedule):
     )
     assert "about TBD" not in page
     assert "Arena 1, when called" in page
+
+
+# --- today's format, start to finish ----------------------------------------------
+
+
+def test_ten_teams_six_series_each_then_the_top_eight_play_the_bracket(app):
+    """The format for October 24: 10 teams play 6 qualification series each,
+    the bottom 2 are cut, and the top 8 play a single-elimination bracket."""
+    from app.models import BracketConfig
+    from app.rankings.logic import get_division_rankings
+
+    client = app.test_client()
+    with app.app_context():
+        for number in range(100, 110):
+            _team(number)
+        _team(110, checked_in=False)  # registered, didn't come
+        db.session.commit()
+
+    generated = client.post("/schedule/api/generate", json={"checked_in_only": True}, headers=HEAD)
+    assert generated.status_code == 200, generated.get_json()
+    body = generated.get_json()
+    assert body["teams_scheduled"] == 10
+    assert body["series_per_team"] == [6]
+    assert body["matches_generated"] == 30
+
+    # Play every series 2-0, the lower team number winning, through the
+    # referee's own endpoint.
+    with app.app_context():
+        numbers = {t.id: t.team_number for t in Team.query}
+        series = [
+            (m.id, numbers[m.red_team_id] < numbers[m.blue_team_id])
+            for m in Match.query.filter_by(phase="qualification")
+        ]
+    for match_id, red_wins in series:
+        outcome = "red" if red_wins else "blue"
+        for game_number in (1, 2):
+            response = client.post(
+                f"/referee/submit/{match_id}",
+                headers=STAFF,
+                data={
+                    "game_number": str(game_number),
+                    "outcome": outcome,
+                    "red_final_zone": "Plateau" if red_wins else "Ring-out",
+                    "blue_final_zone": "Ring-out" if red_wins else "Plateau",
+                    "win_time_seconds": "30",
+                },
+            )
+            assert response.status_code == 302
+
+    with app.app_context():
+        standings = get_division_rankings("High School")
+        assert len(standings) == 10, "the team that didn't come isn't ranked"
+        assert all(row["series_played"] == 6 for row in standings)
+        cut = {row["team_number"] for row in standings[8:]}
+
+    setup = client.get("/bracket/High_School/manage", headers=HEAD).get_data(as_text=True)
+    assert 'name="size" min="2" max="10" value="8"' in setup, "8 advance by default"
+    assert setup.count('class="is-cut"') == 2
+
+    built = client.post(
+        "/bracket/High_School/build", data={"format": "single", "size": "8"}, headers=HEAD
+    )
+    assert built.status_code == 302
+
+    with app.app_context():
+        team_by_id = {t.id: t.team_number for t in Team.query}
+        seeds = [team_by_id[int(i)] for i in BracketConfig.query.one().seeds.splitlines()]
+        assert seeds == [row["team_number"] for row in standings[:8]]
+        assert not cut & set(seeds), "the bottom two are cut"
+
+        quarterfinals = Match.query.filter_by(phase="elimination").all()
+        assert len(quarterfinals) == 4, "eight teams: four quarterfinals, no byes"
+        seed_of = {number: index + 1 for index, number in enumerate(seeds)}
+        pairings = {
+            frozenset((seed_of[team_by_id[m.red_team_id]], seed_of[team_by_id[m.blue_team_id]]))
+            for m in quarterfinals
+        }
+        assert pairings == {frozenset(p) for p in ((1, 8), (4, 5), (2, 7), (3, 6))}

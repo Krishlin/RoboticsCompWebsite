@@ -45,7 +45,7 @@ from app.models import (
 )
 from app.roster import MAX_BYTES, RosterError, decode, import_roster, parse_roster
 from app.security import current_staff_name, head_ref_required
-from app.series import VALID_OUTCOMES, VALID_ZONES
+from app.series import VALID_OUTCOMES, VALID_ZONES, WINS_NEEDED
 
 logger = logging.getLogger(__name__)
 
@@ -455,6 +455,65 @@ def void_game(game_id):
         if new_value else f"Game {game.game_number} counts again.",
         "ok",
     )
+    return redirect(url_for("admin.edit_result", match_id=match.id))
+
+
+@admin_bp.route("/award/<int:match_id>", methods=["POST"])
+def award_series(match_id):
+    """Give a series to one team: a forfeit, a no-show, or the head ref's call.
+
+    The team ends 2-0 up. Games it already won stay; every other counted game
+    (the opponent's wins, ties, double DQs) is voided, not deleted, and forfeit
+    wins are added until it has two, which is how the manual scores a forfeit
+    (a match win for the opponent). In the bracket the winner moves on, unless
+    a later series has already been played on the old result, in which case
+    nothing is saved.
+    """
+    match = db.session.get(Match, match_id)
+    if match is None:
+        abort(404)
+    side = request.form.get("side")
+    if side not in ("red", "blue"):
+        abort(400)
+    if match.red_team_id is None or match.blue_team_id is None:
+        return _render_series(match, "Both teams must be known before a series is awarded.", 400)
+
+    before = series_tally(match).winner
+    if before == side:
+        flash(f"{side.capitalize()} has already won this series.", "warn")
+        return redirect(url_for("admin.edit_result", match_id=match.id))
+
+    for game in games_for(match.id, include_voided=False):
+        if game.outcome != side:
+            _audit(match.id, f"game {game.game_number} voided", False, True)
+            game.voided = True
+    db.session.flush()
+
+    tally = series_tally(match)
+    wins = tally.red_wins if side == "red" else tally.blue_wins
+    number = next_game_number(match)
+    while wins < WINS_NEEDED:
+        db.session.add(MatchResult(
+            match_id=match.id,
+            game_number=number,
+            outcome=side,
+            win_time_seconds=None,
+            red_final_zone="Plateau" if side == "red" else "Ring-out",
+            blue_final_zone="Plateau" if side == "blue" else "Ring-out",
+            submitted_by=f"{_current_admin_name()} (awarded)",
+        ))
+        _audit(match.id, f"game {number} outcome", None, f"{side} (awarded)")
+        number += 1
+        wins += 1
+    _audit(match.id, "series awarded to", before or "undecided", side)
+    match.game_started_at = None
+    match.game_paused_at = None
+
+    error = _commit_series_change(match)
+    if error:
+        return _render_series(match, error, 409)
+    winner = db.session.get(Team, match.red_team_id if side == "red" else match.blue_team_id)
+    flash(f"Series awarded to {winner.team_number} {winner.name}.", "ok")
     return redirect(url_for("admin.edit_result", match_id=match.id))
 
 

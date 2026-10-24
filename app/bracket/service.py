@@ -153,25 +153,43 @@ def qualification_unfinished(division):
     ).count()
 
 
-def build_bracket(division, fmt, size, created_by):
-    """Seed the bracket from the final qualification standings and lock it."""
+def bracket_games_played(division):
+    """Whether any bracket series has a game recorded or a timer running."""
+    matches = Match.query.filter_by(division=division, phase="elimination").all()
+    return any(games_for(m.id) or m.game_started_at for m in matches)
+
+
+def _check_build(division, fmt, size, allow_unfinished):
+    """Everything build_bracket refuses, checked without writing. Returns standings."""
     from app.rankings.logic import get_division_rankings
 
     if fmt not in logic.FORMATS:
         raise BracketError("Choose single or double elimination.")
-    if get_config(division) is not None:
-        raise BracketError("This division already has a bracket. Reset it first.")
     unfinished = qualification_unfinished(division)
-    if unfinished:
+    if unfinished and not allow_unfinished:
         raise BracketError(
             f"{unfinished} qualification series are not finished. The bracket seeds "
             "from the final standings, so finish them (or enter their results on the "
-            "admin panel) first."
+            "admin panel) first, or tick \"build from the standings as they are now\"."
         )
 
     standings = get_division_rankings(division)
     if not 2 <= size <= len(standings):
         raise BracketError(f"Teams advancing must be between 2 and {len(standings)}.")
+    return standings
+
+
+def build_bracket(division, fmt, size, created_by, allow_unfinished=False):
+    """Seed the bracket from the qualification standings and lock it.
+
+    Normally only once every qualification series is finished. With
+    allow_unfinished the head ref builds from the standings as they are, for
+    when the day runs out before the schedule does; unplayed qualification
+    series stay on the referee list but no longer change the seeds.
+    """
+    if get_config(division) is not None:
+        raise BracketError("This division already has a bracket. Reset it first.")
+    standings = _check_build(division, fmt, size, allow_unfinished)
 
     numbers = [row["team_number"] for row in standings[:size]]
     teams = {t.team_number: t.id for t in Team.query.filter(Team.team_number.in_(numbers))}
@@ -193,15 +211,66 @@ def reset_bracket(division):
     config = get_config(division)
     if config is None:
         return
-    matches = Match.query.filter_by(division=division, phase="elimination").all()
-    if any(games_for(m.id) or m.game_started_at for m in matches):
+    if bracket_games_played(division):
         raise BracketError(
             "Bracket games have already been played, so the bracket can no longer be reset."
         )
-    for match in matches:
+    for match in Match.query.filter_by(division=division, phase="elimination").all():
         db.session.delete(match)
     db.session.delete(config)
     db.session.commit()
+
+
+def rebuild_bracket(division, fmt, size, created_by, allow_unfinished=False):
+    """Build the bracket again with a different size or format.
+
+    Seeds come from the standings again, so seeds changed by hand are lost.
+    Everything is checked before the old bracket is removed, so a refused
+    rebuild leaves the bracket as it was.
+    """
+    if bracket_games_played(division):
+        raise BracketError(
+            "Bracket games have already been played, so the number of teams can't change."
+        )
+    _check_build(division, fmt, size, allow_unfinished)
+    reset_bracket(division)
+    return build_bracket(division, fmt, size, created_by, allow_unfinished)
+
+
+def set_seed(division, seed_number, team_id):
+    """Put a team in one seed of the built bracket, by hand.
+
+    A team that already holds another seed swaps places with the one it
+    replaces, so no team is ever in the bracket twice. Refused when the series
+    either team is in has already been played: that series is a record now,
+    and who advances from it is changed by awarding the series instead.
+    Returns True if anything changed.
+    """
+    config = get_config(division)
+    if config is None:
+        raise BracketError("Build the bracket first.")
+    seeds = seeds_for(config)
+    if not 1 <= seed_number <= len(seeds):
+        raise BracketError(f"Seed must be between 1 and {len(seeds)}.")
+    if db.session.get(Team, team_id) is None:
+        raise BracketError("That team doesn't exist.")
+
+    current = seeds[seed_number - 1]
+    if current == team_id:
+        return False
+    if team_id in seeds:
+        seeds[seeds.index(team_id)] = current
+    seeds[seed_number - 1] = team_id
+    config.seeds = "\n".join(str(t) for t in seeds)
+    db.session.flush()
+
+    conflicts = sync_division(division, dry_run=True)
+    if conflicts:
+        db.session.rollback()
+        raise BracketError("Not changed: " + " ".join(conflicts))
+    db.session.commit()
+    sync_division(division)
+    return True
 
 
 def bracket_view(division):

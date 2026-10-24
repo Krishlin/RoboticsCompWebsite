@@ -81,6 +81,27 @@
         </form>
     {% endif %}
 
+    {% if red and blue %}
+        <div class="card" id="award">
+            <h2>Award the series</h2>
+            <p class="hint space-below">For a forfeit, a no-show, or your decision. The team gets
+            the series 2–0: any games the other team won (and ties) are voided, and forfeit wins
+            are recorded. Every step goes in the change log.
+            {% if match.phase == "elimination" %}In the bracket, the winner moves on straight away.{% endif %}</p>
+            <div class="btn-row">
+                {% for side, side_team in (("red", red), ("blue", blue)) %}
+                    {% if tally.winner != side %}
+                        <form method="POST" action="{{ url_for('admin.award_series', match_id=match.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="side" value="{{ side }}">
+                            <button type="submit" class="btn btn-secondary">{{ side_team.team_number }} {{ side_team.name }} wins the series</button>
+                        </form>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
     <div class="btn-row">
         <a class="btn btn-secondary" href="{{ url_for('admin.match_history', match_id=match.id) }}">Change log for this match</a>
         <a class="btn btn-secondary" href="{{ url_for('admin.dashboard') }}">Back to the head ref panel</a>

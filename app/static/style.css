@@ -413,6 +413,41 @@ a:hover {
     margin: 0;
 }
 
+/* One seed's "change to" picker on the bracket setup page: select and Save
+   side by side. 1rem so Safari doesn't zoom in on the select. */
+.seed-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0;
+}
+
+.seed-form select {
+    min-width: 0;
+    max-width: 100%;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1rem;
+}
+
+/* A team below the bracket cut on the bracket setup page. Two classes, so
+   it beats .badge's display, which comes later in this file. */
+.badge.cut-badge {
+    display: none;
+}
+
+tr.is-cut td {
+    color: var(--ink-soft);
+}
+
+tr.is-cut .badge.cut-badge {
+    display: inline-block;
+}
+
 /* One small button that reads as a link, in a form that sits in a line of
    text: check-in's Undo next to a team's "Checked in" badge. */
 .inline-form {
@@ -904,4 +939,15 @@ table.data-table .num {
         padding: 0;
         max-width: none;
     }
+}
+
+/* Read by assistive tech, not drawn: a label a sighted reader gets from the
+   table around it. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
 }
