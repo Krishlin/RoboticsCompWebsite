@@ -169,6 +169,26 @@ def test_referee_pages_need_the_staff_passcode(app, client, teams_and_match):
     assert client.get("/referee/", headers=STAFF).status_code == 200
 
 
+def test_teams_check_themselves_in_without_a_passcode(app, client, teams_and_match):
+    page = client.get("/checkin/self")
+    assert page.status_code == 200
+    assert "Team 101" in page.get_data(as_text=True)
+
+    with app.app_context():
+        team = Team.query.filter_by(team_number=101).one()
+        team_id = team.id
+        assert not team.checked_in
+    assert client.post(f"/checkin/self/{team_id}").status_code == 302
+    with app.app_context():
+        assert db.session.get(Team, team_id).checked_in
+
+    # The desk list and inspection records stay behind the staff passcode.
+    assert client.get("/checkin/").status_code == 401
+    assert client.get("/checkin/inspect/101").status_code == 401
+    assert client.get("/checkin/history/101").status_code == 401
+    assert client.post(f"/checkin/{team_id}/check-in").status_code == 401
+
+
 def test_each_arena_shows_its_own_series(app, client, teams_and_match):
     with app.app_context():
         team_103 = Team.query.filter_by(team_number=103).one()
@@ -415,6 +435,8 @@ def test_landing_page_links_into_every_tool(app, client, teams_and_match):
     # The landing page does not extend base.html, so this bar is the only way
     # from the front door into the tools. Every link must land on a real page.
     page = client.get("/").get_data(as_text=True)
+    # The class is what pins the bar and moves the nav and anchors below it.
+    assert '<body class="has-app-bar">' in page
     bar = page.split('aria-label="Tournament"', 1)[1].split("</nav>", 1)[0]
     links = [chunk.split('"', 1)[0] for chunk in bar.split('href="')[1:]]
     assert links == [
@@ -429,4 +451,5 @@ def test_landing_page_links_into_every_tool(app, client, teams_and_match):
 def test_landing_page_hides_the_tools_while_registration_only(tmp_path):
     page = _build(tmp_path, REGISTRATION_ONLY=True).test_client().get("/").get_data(as_text=True)
     assert 'aria-label="Tournament"' not in page
+    assert "has-app-bar" not in page
     assert "/referee/" not in page

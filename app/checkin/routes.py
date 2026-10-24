@@ -10,12 +10,21 @@ from app.models import Team, Inspection
 from app.security import staff_required
 
 
-# Volunteers only: the check-in desk and inspection table. Gated as a whole,
-# because inspection records and the "who has arrived" list are not public.
-@checkin_bp.before_request
+# Volunteers only, except the self check-in page below. Gated as a whole,
+# because inspection records and the "who has arrived" desk list are not public.
+_SELF_SERVICE = {"checkin.self_checkin", "checkin.self_checkin_team"}
+
+
 @staff_required
-def _require_staff():
+def _staff_only():
     return None
+
+
+@checkin_bp.before_request
+def _require_staff():
+    if request.endpoint in _SELF_SERVICE:
+        return None
+    return _staff_only()
 
 
 @checkin_bp.route("/")
@@ -52,6 +61,23 @@ def check_in_team(team_id):
 
     # Send the user back to the check-in list.
     return redirect(url_for("checkin.checkin_list"))
+
+# No passcode: teams check themselves in. Shows only number, name and whether
+# they have arrived, never inspection results or contact details. Anyone can
+# check in any team, which is accepted; the desk list is the backstop.
+@checkin_bp.route("/self")
+def self_checkin():
+    teams = Team.query.order_by(Team.team_number).all()
+    return render_template("checkin/self_checkin.html", teams=teams)
+
+
+@checkin_bp.route("/self/<int:team_id>", methods=["POST"])
+def self_checkin_team(team_id):
+    team = db.get_or_404(Team, team_id)
+    team.checked_in = True
+    db.session.commit()
+    return redirect(url_for("checkin.self_checkin"))
+
 
 @checkin_bp.route("/inspect/<int:team_number>", methods=["GET", "POST"])
 def inspection_form(team_number):

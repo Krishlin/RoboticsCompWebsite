@@ -44,7 +44,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
 </head>
-<body>
+<body{% if not config.REGISTRATION_ONLY %} class="has-app-bar"{% endif %}>
 <a class="skip-link" href="#main">Skip to content</a>
 
 {# The way into the tournament tools. This page does not extend base.html, so
