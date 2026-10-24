@@ -282,6 +282,7 @@ def edit_result(match_id):
             **values,
         ))
         match.game_started_at = None
+        match.game_paused_at = None
         for field in EDITABLE_FIELDS:
             _audit(match.id, f"game {number} {field}", None, values[field])
 

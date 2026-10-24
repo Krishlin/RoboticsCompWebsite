@@ -10,6 +10,7 @@
 #
 # Adds, all nullable or defaulted, so existing rows keep their meaning:
 #   match.game_started_at        the running game's start time (referee timer)
+#   match.game_paused_at         when the referee paused that timer, if it is paused
 #   match.bracket_side           W / L / GF for bracket series
 #   match_result.game_number     which game of the series; existing rows -> 1
 #   match_result.voided          replay ordered by the head ref; existing -> false
@@ -31,6 +32,7 @@ from app.db import db
 COLUMNS = [
     # (table, column, SQLite type, Postgres type)
     ("match", "game_started_at", "DATETIME", "TIMESTAMP WITHOUT TIME ZONE"),
+    ("match", "game_paused_at", "DATETIME", "TIMESTAMP WITHOUT TIME ZONE"),
     ("match", "bracket_side", "VARCHAR(2)", "VARCHAR(2)"),
     ("match_result", "game_number", "INTEGER NOT NULL DEFAULT 1", "INTEGER NOT NULL DEFAULT 1"),
     ("match_result", "voided", "BOOLEAN NOT NULL DEFAULT 0", "BOOLEAN NOT NULL DEFAULT FALSE"),

@@ -46,6 +46,7 @@ def refresh_series_status(match: Match) -> SeriesTally:
     if result.winner is not None:
         match.status = "complete"
         match.game_started_at = None
+        match.game_paused_at = None
     elif match.game_started_at is not None or games_for(match.id):
         match.status = "in_progress"
     else:

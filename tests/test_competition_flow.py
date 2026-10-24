@@ -101,6 +101,61 @@ def _rankings(app):
 
 # --- the referee screen ------------------------------------------------------
 
+def test_finishing_a_series_stays_on_that_match(app, client, teams_and_match):
+    match_id = teams_and_match
+    assert submit(client, match_id, "red", 1).status_code == 302
+    clinch = submit(client, match_id, "red", 2)
+    assert clinch.status_code == 302
+    assert clinch.headers["Location"].endswith(f"/referee/result/{match_id}")
+
+    page = client.get(clinch.headers["Location"], headers=STAFF).get_data(as_text=True)
+    assert "Series finished" in page
+    assert "Next match on" in page
+
+
+def test_pausing_the_timer_stops_the_clock_until_resume(app, client, teams_and_match):
+    from datetime import timedelta
+
+    from app.models import utcnow
+
+    match_id = teams_and_match
+    assert client.post(f"/referee/pause/{match_id}", headers=STAFF).status_code == 302
+    with app.app_context():
+        assert db.session.get(Match, match_id).game_paused_at is None, "nothing running to pause"
+
+    client.post(f"/referee/start/{match_id}", headers=STAFF)
+    with app.app_context():
+        match = db.session.get(Match, match_id)
+        match.game_started_at = utcnow() - timedelta(seconds=60)
+        db.session.commit()
+
+    client.post(f"/referee/pause/{match_id}", data={"action": "pause"}, headers=STAFF)
+    with app.app_context():
+        match = db.session.get(Match, match_id)
+        assert match.game_paused_at is not None
+        # Backdate the pause: 20 s ago, so 40 s of the 60 were actually played.
+        match.game_paused_at = utcnow() - timedelta(seconds=20)
+        db.session.commit()
+
+    page = client.get(f"/referee/result/{match_id}", headers=STAFF).get_data(as_text=True)
+    assert 'data-paused="1"' in page and "Resume timer" in page
+    assert 'data-elapsed="40.' in page, "frozen at the moment of the pause"
+
+    client.post(f"/referee/pause/{match_id}", data={"action": "resume"}, headers=STAFF)
+    with app.app_context():
+        match = db.session.get(Match, match_id)
+        assert match.game_paused_at is None
+        played = (utcnow() - match.game_started_at).total_seconds()
+        assert 39 < played < 42, "the 20 s pause is not counted"
+
+    # A result ends the game and drops any pause with it.
+    client.post(f"/referee/pause/{match_id}", data={"action": "pause"}, headers=STAFF)
+    assert submit(client, match_id, "red", 1).status_code == 302
+    with app.app_context():
+        match = db.session.get(Match, match_id)
+        assert match.game_started_at is None and match.game_paused_at is None
+
+
 def test_series_is_best_of_three_and_locks_each_game(app, client, teams_and_match):
     match_id = teams_and_match
 

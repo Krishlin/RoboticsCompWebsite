@@ -109,6 +109,9 @@ class Match(db.Model):
     # phone, so a reload, a locked screen or a different phone picks the
     # running timer back up instead of starting it again from zero.
     game_started_at = db.Column(db.DateTime, nullable=True)
+    # Set while the referee has the running game's timer paused. Resuming
+    # pushes game_started_at forward by the pause, so elapsed time never counts it.
+    game_paused_at = db.Column(db.DateTime, nullable=True)
 
     # Legacy whole-match replays. Replays are now per game (MatchResult.voided),
     # so nothing creates these any more, but rows written before that change

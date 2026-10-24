@@ -144,7 +144,8 @@ def _render_screen(match, arena, errors=None, values=None, status=200):
             locked=tally.winner is not None,
             game_number=next_game_number(match),
             games=games_for(match.id),
-            elapsed=(utcnow() - started).total_seconds() if started else None,
+            elapsed=((match.game_paused_at or utcnow()) - started).total_seconds() if started else None,
+            timer_paused=match.game_paused_at is not None,
             teams_known=red is not None and blue is not None,
         )
     page = render_template("referee/result_entry.html", **context)
@@ -239,6 +240,34 @@ def start_game(match_id):
     return redirect(back)
 
 
+@referee_bp.route("/pause/<int:match_id>", methods=["POST"])
+@staff_required
+def pause_timer(match_id):
+    """Freeze or unfreeze the running game's clock (a robot stuck, a field fault).
+
+    Pausing records when; resuming moves the start time forward by that long,
+    so elapsed time, the on-screen clock and the recorded win time all skip it.
+    Tapping either twice is harmless.
+    """
+    match = _get_match_or_404(match_id)
+    if match.game_started_at is None:
+        flash("No game is running, so there is no timer to pause.", "warn")
+        return redirect(_arena_url(match.arena))
+
+    if request.form.get("action") == "resume":
+        if match.game_paused_at is not None:
+            if is_paused():
+                flash("Matches are paused by the head ref. The timer stays paused.", "warn")
+                return redirect(_arena_url(match.arena))
+            match.game_started_at += utcnow() - match.game_paused_at
+            match.game_paused_at = None
+            db.session.commit()
+    elif match.game_paused_at is None:
+        match.game_paused_at = utcnow()
+        db.session.commit()
+    return redirect(_arena_url(match.arena))
+
+
 @referee_bp.route("/restart/<int:match_id>", methods=["POST"])
 @staff_required
 def restart_timer(match_id):
@@ -247,12 +276,14 @@ def restart_timer(match_id):
     if match.game_started_at is not None:
         if request.form.get("action") == "cancel":
             match.game_started_at = None
+            match.game_paused_at = None
             refresh_series_status(match)
             flash("Timer cancelled. Tap Start when the game really starts.", "ok")
         elif is_paused():
             flash("Matches are paused by the head ref. The timer was not restarted.", "warn")
         else:
             match.game_started_at = utcnow()
+            match.game_paused_at = None
             flash("Timer restarted from zero.", "ok")
         db.session.commit()
     return redirect(_arena_url(match.arena))
@@ -339,6 +370,7 @@ def submit_result(match_id):
         )
     )
     match.game_started_at = None
+    match.game_paused_at = None
     tally = refresh_series_status(match)
 
     try:
@@ -363,6 +395,11 @@ def submit_result(match_id):
         _advance_bracket(match.division)
 
     flash(_summary(values, tally, red, blue), "ok")
+    if tally.winner is not None:
+        # Stay on the finished series so the ref sees the final score. The
+        # arena screen would jump straight to the next match, so the banner
+        # would sit above a different pairing at 0-0.
+        return redirect(url_for("referee.result_entry", match_id=match.id))
     return redirect(_arena_url(match.arena))
 
 

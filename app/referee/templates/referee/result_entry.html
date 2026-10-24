@@ -80,8 +80,19 @@
                     clock is kept on the server, so reloading this page or locking
                     the phone doesn't reset it.</p>
                 {% else %}
-                    <div id="timer" class="big-number ref-timer" data-elapsed="{{ '%.3f' | format(elapsed) }}" data-limit="{{ game_seconds }}" aria-live="off">--:--</div>
-                    <p class="ref-timer-note text-muted">Game {{ game_number }} is running. Tap the result the moment it's decided.</p>
+                    <div id="timer" class="big-number ref-timer" data-elapsed="{{ '%.3f' | format(elapsed) }}" data-limit="{{ game_seconds }}" data-paused="{{ 1 if timer_paused else 0 }}" aria-live="off">--:--</div>
+                    <p class="ref-timer-note text-muted">
+                        {% if timer_paused %}Game {{ game_number }} is <strong>paused</strong>. The clock is stopped until you resume.
+                        {% else %}Game {{ game_number }} is running. Tap the result the moment it's decided.{% endif %}
+                    </p>
+                    <form method="POST" action="{{ url_for('referee.pause_timer', match_id=match.id) }}" data-needs-network class="space-above">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if timer_paused %}
+                            <button type="submit" name="action" value="resume" class="btn btn-large" {% if paused %}disabled data-keep-disabled{% endif %}>Resume timer</button>
+                        {% else %}
+                            <button type="submit" name="action" value="pause" class="btn btn-secondary">Pause timer</button>
+                        {% endif %}
+                    </form>
                     <details class="ref-problems">
                         <summary>Timer problems</summary>
                         <form method="POST" action="{{ url_for('referee.restart_timer', match_id=match.id) }}" data-needs-network class="space-above">
@@ -166,7 +177,8 @@
         // screen is locked, so the timer is right the moment it wakes.
         function elapsedNow() {
             if (!timer) { return null; }
-            return parseFloat(timer.dataset.elapsed) + (Date.now() - loadedAt) / 1000;
+            var frozen = timer.dataset.paused === "1";
+            return parseFloat(timer.dataset.elapsed) + (frozen ? 0 : (Date.now() - loadedAt) / 1000);
         }
 
         if (timer) {
