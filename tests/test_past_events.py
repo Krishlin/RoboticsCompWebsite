@@ -162,7 +162,7 @@ def test_landing_page_section_links_stay_in_page(client):
     assert 'aria-current="page"' not in nav
 
 
-def test_landing_page_shows_the_latest_results_after_the_awards(client):
+def test_landing_page_shows_the_latest_results_after_the_next_competition(client):
     page = client.get("/").get_data(as_text=True)
     latest = PAST_EVENTS[0]
     results = page.split('id="results"', 1)[1].split("</section>", 1)[0]
@@ -171,9 +171,9 @@ def test_landing_page_shows_the_latest_results_after_the_awards(client):
         assert winner["name"] in results
     assert f'href="/past-events/{latest["slug"]}"' in results
     # The page opens on what Summit is; last time's winners come after the
-    # awards.
+    # next competition.
     assert page.index('id="welcome"') < page.index('id="results"')
-    assert page.index('id="awards"') < page.index('id="results"') < page.index('id="register"')
+    assert page.index('id="event"') < page.index('id="results"') < page.index('id="register"')
 
 
 def test_landing_page_links_to_past_events(client):

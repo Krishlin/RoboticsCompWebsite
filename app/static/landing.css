@@ -90,7 +90,6 @@ img {
 .display,
 .facts dt,
 .zones caption,
-.schedule dt,
 .receipt-total,
 .duo h3,
 .block h3,
@@ -242,10 +241,6 @@ a {
 .has-app-bar .section,
 .has-app-bar .creed {
     scroll-margin-top: calc(6rem + var(--app-bar-h));
-}
-
-.has-app-bar .event-aside {
-    top: calc(6rem + var(--app-bar-h));
 }
 
 @media (max-width: 700px) {
@@ -800,6 +795,27 @@ a {
     margin-right: 0.55rem;
 }
 
+/* The Hill sits on the dark ground. The drawing keeps its white sheet;
+   the table's rules and the swatch rims turn light. The Edge Band swatch
+   is the page's own black, so without a light rim it would vanish. */
+.dark .spec-figure {
+    border: var(--rule-dark);
+}
+
+.dark .zones th,
+.dark .zones td {
+    border-bottom: var(--rule-dark);
+}
+
+.dark .zones thead th {
+    color: rgba(242, 244, 244, 0.62);
+    border-bottom: 2px solid rgba(242, 244, 244, 0.6);
+}
+
+.dark .swatch {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
 .split-swatch {
     background: linear-gradient(90deg, var(--z-red) 0 50%, var(--z-blue) 50% 100%);
 }
@@ -1026,63 +1042,6 @@ a {
     white-space: nowrap;
 }
 
-/* --- Schedule: a real day, set as a time column, with the kit list the
-       day requires beside it rather than sections away --- */
-
-.event-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    gap: clamp(2rem, 5vw, 4.5rem);
-    align-items: start;
-}
-
-.event-aside {
-    position: sticky;
-    top: 6rem;
-}
-
-.schedule {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 0 clamp(1rem, 3vw, 2.5rem);
-}
-
-.schedule > div {
-    display: contents;
-}
-
-.schedule dt {
-    font-stretch: 125%;
-    font-weight: 800;
-    font-size: 1rem;
-    padding: 1.1rem 0;
-    border-top: var(--rule);
-    white-space: nowrap;
-}
-
-.schedule dd {
-    margin: 0;
-    padding: 1.1rem 0;
-    border-top: var(--rule);
-    color: var(--ink-soft);
-    max-width: 60ch;
-}
-
-.schedule dd b {
-    color: var(--ink);
-    font-weight: 600;
-}
-
-/* The three moments a team actually has to hit. Weight, not an icon. */
-.schedule .key dt,
-.schedule .key dd {
-    border-top: 2px solid var(--ink);
-}
-
-.schedule .key dd {
-    color: var(--ink);
-}
-
 /* --- Two-up prose blocks (exhibition / areas, bring / register) --- */
 
 .duo {
@@ -1260,14 +1219,6 @@ a {
    --------------------------------------------------------------- */
 
 @media (max-width: 880px) {
-    .event-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .event-aside {
-        position: static;
-    }
-
     .spec,
     .cost,
     .register {
@@ -1425,20 +1376,6 @@ a {
 @media (max-width: 560px) {
     body {
         font-size: 1rem;
-    }
-
-    .schedule {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0;
-    }
-
-    .schedule dd {
-        border-top: 0;
-        padding-top: 0;
-    }
-
-    .schedule .key dd {
-        border-top: 0;
     }
 
     /* Full-width buttons, but only the ones in a row of them: the nav's

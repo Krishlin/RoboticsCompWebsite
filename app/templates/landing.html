@@ -129,7 +129,7 @@
     </section>
 
     <!-- The Hill, to spec -->
-    <section class="section band" id="hill">
+    <section class="section band dark" id="hill">
         <div class="section-head">
             <h2 class="display">The Hill</h2>
             <p class="lede">
@@ -139,8 +139,8 @@
         </div>
 
         {# The game as an object rather than a diagram: two legal robots on
-           the Hill, facing each other across the Plateau. The hero's SVG is
-           the rules; this is what a team actually builds toward. #}
+           the Hill, facing each other across the Plateau. The drawing below
+           is the rules; this is what a team actually builds toward. #}
         <figure class="game-photo">
             {{ art_img(art, 'RobotsOnField.png',
                        'Two micro:bit robots on the Hill, one on the red half and one on the blue, facing each other across the white Plateau',
@@ -194,41 +194,6 @@
                 </table>
             </div>
         </div>
-    </section>
-
-    <!-- The manual, all of it. The claim SRC makes is that the rulebook is
-         nine pages; showing the nine pages is a stronger version of saying so.
-         Thumbnails come from tools/render_manual_thumbs.py — plain images, so
-         this costs a visitor nothing but the pictures. If they have not been
-         generated, the section is a link to the PDF instead. -->
-    <section class="section band dark" id="manual">
-        <div class="manual-head">
-            <div>
-                <h2 class="display">Game Manual</h2>
-            </div>
-            <a class="btn btn-primary" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Open the manual</a>
-        </div>
-
-        {% if manual %}
-            <div class="manual-sheet" style="--pages: {{ manual.count }}">
-                {% for page in manual.pages %}
-                    <a class="sheet-page"
-                       href="{{ url_for('main.manual') }}#page={{ page.page }}"
-                       target="_blank" rel="noopener"
-                       aria-label="Open the game manual at page {{ page.page }}">
-                        <img src="{{ url_for('static', filename='img/manual/' ~ page.file) }}"
-                             width="{{ page.width }}" height="{{ page.height }}"
-                             loading="lazy" decoding="async"
-                             alt="Game manual, page {{ page.page }}">
-                        <span class="sheet-number">{{ page.page }}</span>
-                    </a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="manual-fallback note">
-                <a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Open the game manual (PDF)</a>
-            </p>
-        {% endif %}
     </section>
 
     <!-- Cost -->
@@ -366,92 +331,57 @@
         </div>
     </section>
 
-    <!-- The event -->
+    <!-- The manual, all of it. The claim SRC makes is that the rulebook is
+         nine pages; showing the nine pages is a stronger version of saying so.
+         Thumbnails come from tools/render_manual_thumbs.py — plain images, so
+         this costs a visitor nothing but the pictures. If they have not been
+         generated, the section is a link to the PDF instead. -->
+    <section class="section band dark" id="manual">
+        <div class="manual-head">
+            <div>
+                <h2 class="display">Game Manual</h2>
+            </div>
+            <a class="btn btn-primary" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Open the manual</a>
+        </div>
+
+        {% if manual %}
+            <div class="manual-sheet" style="--pages: {{ manual.count }}">
+                {% for page in manual.pages %}
+                    <a class="sheet-page"
+                       href="{{ url_for('main.manual') }}#page={{ page.page }}"
+                       target="_blank" rel="noopener"
+                       aria-label="Open the game manual at page {{ page.page }}">
+                        <img src="{{ url_for('static', filename='img/manual/' ~ page.file) }}"
+                             width="{{ page.width }}" height="{{ page.height }}"
+                             loading="lazy" decoding="async"
+                             alt="Game manual, page {{ page.page }}">
+                        <span class="sheet-number">{{ page.page }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="manual-fallback note">
+                <a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Open the game manual (PDF)</a>
+            </p>
+        {% endif %}
+    </section>
+
+    <!-- The next competition. Takes the Event Day slot and its #event
+         anchor, so the nav's Event link and old links to /#event land here.
+         Only what is known: the month. Add the date and venue when SRC
+         confirms them. -->
     <section class="section band" id="event">
         <div class="section-head">
-            <h2 class="display">Event Day</h2>
+            <h2 class="display">Next competition: February 2027</h2>
             <p class="lede">
-                Saturday, October 24, at Arcadia High School.
-            </p>
-            <p class="lede">
-                Check-in starts at 9 AM. Matches begin at 10 AM. Awards start at 2:15 PM.
-            </p>
-        </div>
-
-        <div class="event-grid">
-        <dl class="schedule">
-            <div>
-                <dt>8:00–9:00 AM</dt>
-                <dd>Staff setup and field testing</dd>
-            </div>
-            <div class="key">
-                <dt>9:00–9:40 AM</dt>
-                <dd><b>Team check-in, inspection, open practice, calibration</b></dd>
-            </div>
-            <div>
-                <dt>9:40–9:50 AM</dt>
-                <dd>Opening meeting and rules briefing</dd>
-            </div>
-            <div>
-                <dt>9:50–10:00 AM</dt>
-                <dd>Final calibration / teams queue for first matches</dd>
-            </div>
-            <div class="key">
-                <dt>10:00–11:45 AM</dt>
-                <dd><b>Qualification series</b></dd>
-            </div>
-            <div>
-                <dt>11:45 AM–12:20 PM</dt>
-                <dd>Lunch + rankings finalized</dd>
-            </div>
-            <div>
-                <dt>12:20–12:30 PM</dt>
-                <dd>Elimination bracket announcement / preparation</dd>
-            </div>
-            <div class="key">
-                <dt>12:30–1:45 PM</dt>
-                <dd><b>Elimination bracket</b></dd>
-            </div>
-            <div>
-                <dt>1:45–2:15 PM</dt>
-                <dd>Buffer / exhibition matches if ahead</dd>
-            </div>
-            <div class="key">
-                <dt>2:15–2:30 PM</dt>
-                <dd><b>Awards and photos</b></dd>
-            </div>
-            <div>
-                <dt>2:30–3:00 PM</dt>
-                <dd>Cleanup</dd>
-            </div>
-        </dl>
-
-        <aside class="event-aside block">
-            <h3>What to bring</h3>
-            <ul class="checklist">
-                <li>Your robot, with the official start/stop code loaded and your team number entered</li>
-                <li>A laptop with MakeCode and a USB cable</li>
-                <li>Your charger</li>
-                <li>A completed consent and release form for each student</li>
-                <li>Your team's adult, for the whole day</li>
-            </ul>
-        </aside>
-        </div>
-    </section>
-
-    <!-- Awards. Trophies only; the sponsor prizes are not listed on this page. -->
-    <section class="section band dark" id="awards">
-        <div class="section-head">
-            <h2 class="display">Awards</h2>
-            <p class="lede">
-                The Champion, Finalist, Semifinalists, and Middle School Champion receive trophies.
-                The overall Champion also receives the Summit championship banner.
+                The next Summit is coming up in February 2027. The date, venue, and registration
+                details will be posted here.
             </p>
         </div>
     </section>
 
-    {# The latest event's winners. After the awards, so the page says what
-       Summit is before it says who won it last time. The
+    {# The latest event's winners. After the next competition, so the page
+       says what Summit is and what is coming before who won it last time. The
        data is app/past_events.py; the band goes away on its own if that list
        is ever empty. On a phone the photo sits between the headline and the
        link. #}
