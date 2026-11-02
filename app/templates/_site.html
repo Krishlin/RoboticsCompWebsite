@@ -1,0 +1,148 @@
+{# owner: shared / lead
+   The public site's chrome: the tournament bar, the main nav and the
+   footer, shared by every page that wears landing.css so a visitor never
+   lands somewhere that has lost the rest of the site. base.html is the
+   chrome for the tournament tools and does not use this.
+
+   `current` names the page doing the including: "home" or "past_events".
+   On the landing page the section links are in-page anchors; anywhere else
+   they point back at the landing page's sections. #}
+
+{# One <img> for a piece of flat artwork, in WebP at the sizes
+   tools/convert_site_art.py wrote, or the original PNG if it has not been
+   run. `sizes` is the CSS width the image is shown at, which is what lets a
+   phone pick the small file.
+
+   `art` is passed in rather than read from the page's context: a macro does
+   not inherit it. #}
+{% macro art_img(art, name, alt, sizes, klass="") -%}
+    {%- set variants = art.get(name) -%}
+    {%- if variants -%}
+        <img {% if klass %}class="{{ klass }}" {% endif %}
+             src="{{ url_for('static', filename='img/' ~ variants[-1].file) }}"
+             srcset="{% for v in variants %}{{ url_for('static', filename='img/' ~ v.file) }} {{ v.width }}w{% if not loop.last %}, {% endif %}{% endfor %}"
+             sizes="{{ sizes }}"
+             width="{{ variants[-1].width }}" height="{{ variants[-1].height }}"
+             alt="{{ alt }}" loading="lazy" decoding="async">
+    {%- else -%}
+        <img {% if klass %}class="{{ klass }}" {% endif %}
+             src="{{ url_for('static', filename='img/' ~ name) }}"
+             alt="{{ alt }}" loading="lazy" decoding="async">
+    {%- endif -%}
+{%- endmacro %}
+
+{# The class the <body> needs for the bar below to sit right. #}
+{% macro body_class() -%}
+    {%- if not config.REGISTRATION_ONLY %} class="has-app-bar"{% endif -%}
+{%- endmacro %}
+
+{% macro site_header(current) -%}
+{%- set home = "" if current == "home" else url_for('main.home') -%}
+{# The way into the tournament tools. These pages do not extend base.html, so
+   without this bar the front door of a full-app deployment links to none of
+   them. Hidden while REGISTRATION_ONLY is on, for the same reason base.html
+   hides its links: those blueprints are not registered and would 404. #}
+{% if not config.REGISTRATION_ONLY %}
+<nav class="app-bar band" aria-label="Tournament">
+    <ul>
+        <li><a href="/schedule/">Schedule</a></li>
+        <li><a href="/rankings/High_School">Rankings</a></li>
+        <li><a href="/rankings/display/High_School">Big screen</a></li>
+        <li><a href="/bracket/High_School">Bracket</a></li>
+        <li><a href="/rankings/pit">Pit lookup</a></li>
+    </ul>
+    <ul class="app-bar-staff" aria-label="Staff">
+        <li><a href="/checkin/">Check-in</a></li>
+        <li><a href="/referee/">Referee</a></li>
+        <li><a href="/admin/">Head ref</a></li>
+    </ul>
+</nav>
+{% endif %}
+
+{# The section links collapse behind a button on a phone, but only once the
+   script has run: the button ships hidden and the list ships visible, so a
+   visitor without JavaScript gets every link as a wrapped row rather than a
+   dead button. landing.js flips that round on load. #}
+<nav class="nav band" id="site-nav" aria-label="Main">
+    <a class="nav-logo" href="{{ url_for('main.home') }}" aria-label="Summit, home">
+        {# 987x130 in the file; these are that ratio at the height the
+           stylesheet sets, so the bar does not resize once the logo
+           arrives. #}
+        <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+             width="197" height="26" alt="Summit">
+    </a>
+
+    <ul class="nav-links" id="nav-links">
+        <li><a href="{{ home }}#game">Game</a></li>
+        <li><a href="{{ home }}#hill">Field</a></li>
+        <li><a href="{{ home }}#manual">Rules</a></li>
+        <li><a href="{{ home }}#cost">Kit &amp; cost</a></li>
+        <li><a href="{{ home }}#event">Event</a></li>
+        <li><a href="{{ url_for('main.past_events') }}"
+               {%- if current == "past_events" %} aria-current="page"{% endif %}>Past events</a></li>
+    </ul>
+
+    {# Two labels, because "Register a team" will not sit beside a menu button
+       on a 360 px screen. Both are hidden from assistive tech and the link
+       carries the full name itself, so collapsing the visible one never
+       leaves the link unnamed. #}
+    <a class="btn btn-primary nav-cta" href="{{ config.REGISTRATION_FORM_URL }}"
+       target="_blank" rel="noopener" aria-label="Register a team">
+        <span class="nav-cta-long" aria-hidden="true">Register a team</span>
+        <span class="nav-cta-short" aria-hidden="true">Register</span>
+    </a>
+
+    {# The name is on the button, so the visible word beside the bars is
+       decoration and the narrowest phones can drop it. #}
+    <button class="nav-toggle" type="button" id="nav-toggle"
+            aria-controls="nav-links" aria-expanded="true" aria-label="Menu" hidden>
+        <span class="nav-bars" aria-hidden="true"></span>
+        <span class="nav-toggle-text" aria-hidden="true">Menu</span>
+    </button>
+</nav>
+{%- endmacro %}
+
+{% macro site_footer(links, art, current) -%}
+{%- set home = "" if current == "home" else url_for('main.home') -%}
+<footer class="footer band dark">
+    <div class="footer-inner">
+        <div>
+            <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+                 width="182" height="24" alt="Summit" loading="lazy" decoding="async">
+            <p>STEMsters Robotics Competition</p>
+
+            {# The organiser's own mark, against the line that names it.
+               Summit keeps the nav and the hero to itself — it is the
+               competition, and it is what a family arrives looking for.
+               STEMsters is who runs it, and the footer is the one place on
+               the page that says so. #}
+            <div class="footer-org">
+                {{ art_img(art, 'stemsters_logo.png', 'STEMsters',
+                           '180px', 'footer-org-mark') }}
+                <p>A program of STEMsters, a student-led 501(c)(3) nonprofit organization.</p>
+            </div>
+        </div>
+        <div>
+            <ul>
+                <li><a href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Game manual</a></li>
+                <li><a href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a></li>
+                <li><a href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a></li>
+                <li><a href="{{ url_for('registration.team_list') }}">Registered teams</a></li>
+                <li><a href="{{ url_for('main.past_events') }}">Past events</a></li>
+                <li><a href="{{ home }}#cost">The kit</a></li>
+            </ul>
+        </div>
+        <div>
+            <ul>
+                {% if links.email %}
+                    <li><a href="mailto:{{ links.email }}">{{ links.email }}</a></li>
+                {% endif %}
+                {% if links.instagram %}
+                    <li><a href="{{ links.instagram }}" target="_blank" rel="noopener">Instagram</a></li>
+                {% endif %}
+            </ul>
+            <p class="footer-creed">Climb together.</p>
+        </div>
+    </div>
+</footer>
+{%- endmacro %}

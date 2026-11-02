@@ -1,0 +1,25 @@
+{# owner: shared / lead
+   The past-events picker: a card for every SRC event that has happened,
+   newest first, each opening that event's own page (past_event.html). The
+   data is app/past_events.py. #}
+{% extends "_archive.html" %}
+{% from "_events.html" import event_card %}
+
+{% block main %}
+    <header class="band dark archive-head">
+        <h1 class="display archive-title">Past events</h1>
+        <p class="lede">Results and photos from every STEMsters Robotics Competition so far. Pick an event to see who won and how the day went.</p>
+    </header>
+
+    <section class="band section event-picker" aria-label="Events">
+        {% if events %}
+            <ul class="event-cards">
+                {% for event in events %}
+                    {{ event_card(event, "(max-width: 560px) calc(100vw - 2.5rem), 20rem") }}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="lede">No events yet. The first one's results will be here once it has been played.</p>
+        {% endif %}
+    </section>
+{% endblock %}

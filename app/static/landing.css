@@ -338,6 +338,15 @@ a {
     transform: scaleX(1);
 }
 
+/* The page you are on keeps the hover state, so the nav says where you are. */
+.nav-links a[aria-current="page"] {
+    color: var(--cyan);
+}
+
+.nav-links a[aria-current="page"]::after {
+    transform: scaleX(1);
+}
+
 .nav-cta {
     padding: 0.62rem 1.15rem;
     font-size: 0.95rem;
@@ -2120,5 +2129,687 @@ a {
 
     .title-block > div {
         padding-block: 0.35rem 0.4rem;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Results: the latest event's winners, on the landing page after the
+   awards, and the same podium on the past-events page. The band is a
+   .section, so it takes its spacing and anchor offset from there.
+   --------------------------------------------------------------- */
+
+/* Headline and body stacked in the middle of the left column, beside the
+   photo. The two empty rows either side are what centre them. */
+.results-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-rows: 1fr auto auto 1fr;
+    grid-template-areas:
+        ".     figure"
+        "title figure"
+        "body  figure"
+        ".     figure";
+    column-gap: clamp(2rem, 5vw, 4.5rem);
+}
+
+.results-title {
+    grid-area: title;
+    font-size: clamp(2.2rem, 4.6vw, 3.6rem);
+    max-width: 12ch;
+    margin: 0 0 1.25rem;
+}
+
+.results-body {
+    grid-area: body;
+}
+
+.results-body .lede {
+    max-width: 40ch;
+    margin-bottom: 1.75rem;
+}
+
+.results .champions {
+    grid-area: figure;
+}
+
+.results .champions,
+.recap-grid .champions {
+    width: 100%;
+    max-width: 36rem;
+    justify-self: end;
+}
+
+/* --- The winners on the podium ---
+
+   The photo, then a strip under it as tall as --step-base. The three steps
+   are pinned to the bottom of the figure, one per third, each as tall as the
+   strip plus its own rise, so each one climbs that far up into the photo.
+   A step whose text needs more room grows upward, over more of the photo,
+   never leaving a gap under it. */
+
+.champions {
+    --step-base: 3rem;
+    --rise-1: 6rem;
+    --rise-2: 4rem;
+    --rise-3: 2.25rem;
+    position: relative;
+    margin: 0;
+}
+
+.champions.has-photo {
+    padding-bottom: var(--step-base);
+}
+
+.champions-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.champions-podium {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+}
+
+.has-photo .champions-podium {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.champion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    padding: 0.7rem 0.8rem;
+    color: var(--ink);
+}
+
+/* The prize podium's sponsor colours, so each step says what it won. */
+.champion-1 {
+    background: var(--brand-bambu);
+    min-height: calc(var(--step-base) + var(--rise-1));
+}
+
+.champion-2 {
+    background: var(--brand-chatgpt);
+    min-height: calc(var(--step-base) + var(--rise-2));
+}
+
+.champion-3 {
+    background: var(--brand-discord);
+    color: #fff;
+    min-height: calc(var(--step-base) + var(--rise-3));
+}
+
+.champion-place {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.champion-name {
+    font-weight: 800;
+    font-size: 1.05rem;
+    line-height: 1.12;
+    overflow-wrap: break-word;
+}
+
+.champion-1 .champion-name {
+    font-stretch: 112%;
+    font-size: clamp(1rem, 2.2vw, 1.3rem);
+}
+
+/* Down at the floor of the step, under the name rather than beside it. */
+.champion-grade {
+    margin-top: auto;
+    padding-top: 0.25rem;
+    font-size: 0.85rem;
+}
+
+/* The steps rise under the winners once, highest last: the same gesture as
+   the prize podium in the hero. */
+@media (prefers-reduced-motion: no-preference) {
+    .champion {
+        animation: podium-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+
+    .champion-3 { animation-delay: 0.1s; }
+    .champion-2 { animation-delay: 0.2s; }
+    .champion-1 { animation-delay: 0.3s; }
+}
+
+@media (max-width: 880px) {
+    .results-grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+        grid-template-areas:
+            "title"
+            "figure"
+            "body";
+    }
+
+    .results .champions,
+    .recap-grid .champions {
+        justify-self: start;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* A third of a phone is about 100 px, and the longest name has to fit in it
+   a word to a line without breaking inside a word. Second place is set tall
+   enough to stay above third even when a 320 px screen wraps third's name
+   onto two lines (measured: 90 px); otherwise the podium reads out of order. */
+@media (max-width: 560px) {
+    .champions {
+        --step-base: 2.25rem;
+        --rise-1: 5rem;
+        --rise-2: 3.75rem;
+        --rise-3: 1.75rem;
+    }
+
+    .champion {
+        padding: 0.5rem;
+    }
+
+    .champion-place,
+    .champion-grade {
+        font-size: 0.72rem;
+    }
+
+    .champion-name {
+        font-size: 0.85rem;
+    }
+
+    .champion-1 .champion-name {
+        font-stretch: 100%;
+        font-size: min(0.92rem, 3.9vw);
+    }
+}
+
+/* ---------------------------------------------------------------
+   Past events
+   --------------------------------------------------------------- */
+
+/* The page's own name and what it holds, on one line, as a header bar
+   rather than a band of its own: the cards under it are the page. The
+   description sits right after the name, not pushed to the far edge, where
+   on a wide screen it read as belonging to nothing. */
+.archive-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 2rem;
+    padding-block: clamp(1.75rem, 4vw, 2.5rem) clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.archive-title {
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    margin: 0;
+}
+
+.archive-head .lede {
+    max-width: 44ch;
+    font-size: 1rem;
+}
+
+.recap {
+    scroll-margin-top: 6rem;
+}
+
+.has-app-bar .recap {
+    scroll-margin-top: calc(6rem + var(--app-bar-h));
+}
+
+/* --- The picker ---
+
+   A card per event on the light ground, four to a row on a wide screen the
+   way the landing page sets its prizes, one to a row on a phone. The whole
+   card is the link: the name and date along the top, the picture, where it
+   was and who won, then a line that says where the click goes. */
+
+.event-picker {
+    background: var(--paper);
+}
+
+/* While there are only a few events the picker is shorter than a laptop
+   screen, and the footer would stop partway up it with bare page under it.
+   The page is a column whose main part takes up the slack instead. */
+.archive-page body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.archive-page main {
+    flex: 1;
+}
+
+.event-picker-title {
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    margin: 0 0 1.75rem;
+}
+
+.event-cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
+    gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.event-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    height: 100%;
+    padding: 0.9rem;
+    background: #fff;
+    border: var(--rule);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.event-card:hover {
+    border-color: var(--cyan-deep);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .event-card:hover {
+        transform: translateY(-3px);
+    }
+}
+
+.event-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.event-card-name {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    font-stretch: 112%;
+    line-height: 1.15;
+}
+
+.event-card-date {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+}
+
+/* A fixed 4:3, so cards sit level in a row whatever shape each event's
+   picture is. Without a picture the frame stays, as a quiet panel. */
+.event-card-frame {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--paper-deep);
+}
+
+.event-card-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.event-card-text {
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+/* "6–12" breaks at the dash otherwise. */
+.event-card-text .nowrap {
+    white-space: nowrap;
+}
+
+.event-card-more {
+    margin-top: auto;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--cyan-deep);
+}
+
+.event-card-more::after {
+    content: " \2192";
+}
+
+.event-picker-more {
+    border-top: var(--rule);
+}
+
+/* --- The way back to the picker, above the event's name --- */
+
+.crumbs ol {
+    list-style: none;
+    margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: rgba(242, 244, 244, 0.62);
+}
+
+.crumbs li + li::before {
+    content: "/";
+    margin-right: 0.4rem;
+}
+
+.crumbs a {
+    color: var(--cyan);
+    font-weight: 700;
+}
+
+/* --- The event, as a poster ---
+
+   The name stacked large in the left column, like "Robot / King of the
+   Hill" on the landing page, with the facts under it; the winners on the
+   right. On a phone the winners come straight after the name, so who won is
+   on the first screen and the facts are the detail. */
+
+/* First under the nav now, with the breadcrumb at its top, so the top
+   margin is the hero's short one rather than a section's. */
+.recap-head {
+    padding-block: clamp(1.5rem, 3vw, 2.25rem) clamp(3rem, 7vw, 5.5rem);
+}
+
+.recap-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "title figure"
+        "facts figure";
+    column-gap: clamp(2rem, 5vw, 4.5rem);
+}
+
+/* Large enough that the column breaks "Summit 2026" after the name. */
+.recap-title {
+    grid-area: title;
+    font-size: clamp(3rem, 7.4vw, 6.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.recap-facts {
+    grid-area: facts;
+}
+
+.recap-facts .title-block {
+    margin-bottom: 0;
+}
+
+.recap-grid .champions {
+    grid-area: figure;
+}
+
+.recap-subhead {
+    font-size: 1rem;
+    margin: 1.75rem 0 0.75rem;
+}
+
+.recap-prizes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 34rem;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.recap-prize {
+    display: grid;
+    grid-template-columns: 3.25rem 2.75rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.9rem;
+}
+
+.recap-prize-art {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+}
+
+.recap-prize-art img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 62%;
+    max-height: 62%;
+}
+
+/* The printer is a photo cut out on transparency, not a logo, and reads
+   better nearly filling its tile. */
+.recap-prize-1 .recap-prize-art img {
+    max-width: 86%;
+    max-height: 86%;
+}
+
+/* The same sponsor colours as the podium steps. */
+.recap-prize-1 .recap-prize-art { background: var(--brand-bambu); }
+.recap-prize-2 .recap-prize-art { background: var(--brand-chatgpt); }
+.recap-prize-3 .recap-prize-art { background: var(--brand-discord); }
+
+/* The logo file is drawn white for the dark page; on the white tile it has
+   to be dark. */
+.recap-prize-2 .recap-prize-art img { filter: invert(1); }
+
+.recap-prize-place {
+    font-stretch: 125%;
+    font-weight: 800;
+}
+
+.recap-prize-name {
+    color: rgba(242, 244, 244, 0.86);
+    line-height: 1.3;
+}
+
+@media (max-width: 880px) {
+    .recap-grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+        grid-template-areas:
+            "title"
+            "figure"
+            "facts";
+    }
+}
+
+/* --- Photos, the day in order ---
+
+   Each part of the day is its own band, alternating light and dark like
+   the landing page's sections, so the change of ground marks where one part
+   ends. It opens on two photos side by side at the full measure, then the
+   rest in shorter rows. */
+
+.photo-group {
+    --row-h: 15rem;
+    --lead-max: 32rem;
+    padding-block: clamp(3rem, 7vw, 5rem);
+}
+
+.photo-group-title {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    margin: 0 0 clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+/* Equal-height rows with every photo at its own shape. Each photo's share of
+   the row's spare width is proportional to its aspect ratio, which is the one
+   split that keeps their heights equal. The filler after the last photo
+   swallows the spare width on the final row, so a short last row stays at
+   the base height instead of blowing two photos up to fill it. */
+.photo-row {
+    --gap: clamp(0.35rem, 0.8vw, 0.6rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+}
+
+.photo-row::after {
+    content: "";
+    flex: 100000 1 0;
+}
+
+.photo-row + .photo-row {
+    margin-top: var(--gap);
+}
+
+.photo {
+    flex: calc(var(--ar) * 100) 1 calc(var(--ar) * var(--row-h));
+    min-width: 0;
+}
+
+/* The lead pair: one line, no filler, so the two fill the measure at one
+   height between them. The cap stops two narrow photos growing taller than
+   a laptop screen; past it they stop short of the edge instead. */
+.photo-row-lead {
+    flex-wrap: nowrap;
+}
+
+.photo-row-lead::after {
+    content: none;
+}
+
+.photo-row-lead .photo {
+    max-width: calc(var(--ar) * var(--lead-max));
+}
+
+.photo a {
+    display: block;
+    background: var(--paper-deep);
+    cursor: zoom-in;
+}
+
+.dark .photo a {
+    background: var(--edge-soft);
+}
+
+.photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Low enough that two photos share a row on a phone, wide ones included
+   (two 16:9 at this height are 318 px with the gap), and the row then grows
+   to fill the screen. Any taller and every photo gets a row to itself, which
+   on this page was six thousand pixels of scrolling. The lead pair goes one
+   above the other, each the width of the screen. */
+@media (max-width: 560px) {
+    .photo-group {
+        --row-h: 5.5rem;
+    }
+
+    .photo-row-lead {
+        flex-wrap: wrap;
+    }
+
+    .photo-row-lead .photo {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+}
+
+/* --- The viewer: one photo, full screen --- */
+
+.viewer {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(20, 20, 20, 0.97);
+}
+
+.viewer[open] {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.viewer::backdrop {
+    background: rgba(20, 20, 20, 0.7);
+}
+
+.viewer-frame {
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    padding: clamp(0.75rem, 3vw, 2rem);
+    cursor: zoom-out;
+}
+
+.viewer-img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    cursor: default;
+}
+
+.viewer-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding: 0.75rem var(--spine);
+    border-top: var(--rule-dark);
+}
+
+.viewer-count {
+    margin: 0;
+    font-weight: 700;
+}
+
+.viewer-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.viewer-controls .btn {
+    padding: 0.6rem 1.1rem;
+}
+
+/* Answers the click that opened it; nothing here moves on its own. */
+@media (prefers-reduced-motion: no-preference) {
+    .viewer[open] {
+        animation: viewer-in 0.18s ease-out;
+    }
+}
+
+@keyframes viewer-in {
+    from { opacity: 0; }
+}
+
+@media (max-width: 560px) {
+    .viewer-controls {
+        flex: 1 1 100%;
+    }
+
+    .viewer-controls .btn {
+        flex: 1 1 0;
+        padding-inline: 0.5rem;
     }
 }

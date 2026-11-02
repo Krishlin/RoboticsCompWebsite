@@ -1,0 +1,138 @@
+{# owner: shared / lead
+   One past event, at /past-events/<slug>. Picked from the cards at
+   /past-events.
+
+   It opens like the landing page's hero, on the dark ground: the name set
+   as a poster, the facts in a title block, the prizes, and the winners on
+   the podium. The photos follow in the order the day went, each part of the
+   day on its own ground, alternating light and dark the way the landing
+   page's sections do. The data is app/past_events.py; the photos are cut by
+   tools/cut_event_photos.py.
+
+   Every photo is a link to its largest cut, so without JavaScript a click
+   opens the picture itself. js/gallery.js turns those clicks into a
+   full-screen viewer with previous and next. #}
+{% extends "_archive.html" %}
+{% from "_events.html" import champions, event_card, srcset %}
+
+{# One row of photos. Every photo keeps its own shape and the row sets them
+   all to one height; `sizes` is what each is shown at, roughly, so a phone
+   fetches the small cut. #}
+{% macro photo_row(photos, sizes, klass="") -%}
+<ul class="photo-row{% if klass %} {{ klass }}{% endif %}">
+    {% for photo in photos %}
+        <li class="photo" style="--ar: {{ '%.4f'|format(photo.largest.width / photo.largest.height) }}">
+            <a href="{{ photo.largest.url }}" data-srcset="{{ srcset(photo) }}">
+                <img src="{{ photo.sizes[0].url }}"
+                     srcset="{{ srcset(photo) }}"
+                     sizes="{{ sizes }}"
+                     width="{{ photo.largest.width }}" height="{{ photo.largest.height }}"
+                     alt="{{ photo.alt }}" loading="lazy" decoding="async">
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+{%- endmacro %}
+
+{% block title %}{{ event.name }} — Past events — Summit{% endblock %}
+{% block description %}Results and photos from {{ event.name }}, {{ event.date }}, at {{ event.venue }}.{% endblock %}
+
+{% block main %}
+    <article class="recap" id="{{ event.slug }}" aria-labelledby="{{ event.slug }}-title">
+        <div class="band dark recap-head">
+            {# The way back to the picker, and where this page sits. #}
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <ol>
+                    <li><a href="{{ url_for('main.past_events') }}">Past events</a></li>
+                    <li aria-current="page">{{ event.name }}</li>
+                </ol>
+            </nav>
+
+            <div class="recap-grid">
+                <h1 class="display recap-title" id="{{ event.slug }}-title">{{ event.name }}</h1>
+
+                <div class="recap-facts">
+                    <dl class="title-block">
+                        <div><dt>Date</dt><dd>{{ event.date_short }}</dd></div>
+                        <div><dt>Venue</dt><dd>{{ event.venue }}</dd></div>
+                        <div><dt>Game</dt><dd>{{ event.game }}</dd></div>
+                        <div><dt>Open to</dt><dd>{{ event.grades }}</dd></div>
+                    </dl>
+
+                    {# Each prize on a tile in the colour of the podium step
+                       that won it, so the list and the photo read as one. #}
+                    {% if event.podium %}
+                        <h2 class="recap-subhead">Prizes</h2>
+                        <ol class="recap-prizes">
+                            {% for winner in event.podium %}
+                                <li class="recap-prize recap-prize-{{ loop.index }}">
+                                    <span class="recap-prize-art">
+                                        {% if winner.art %}
+                                            <img src="{{ url_for('static', filename='img/' ~ winner.art) }}"
+                                                 alt="" loading="lazy" decoding="async">
+                                        {% endif %}
+                                    </span>
+                                    <span class="recap-prize-place">{{ winner.place }}</span>
+                                    <span class="recap-prize-name">{{ winner.prize }}</span>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    {% endif %}
+                </div>
+
+                {% if event.podium %}
+                    {{ champions(event, "(max-width: 880px) calc(100vw - 2.5rem), 576px", eager=true) }}
+                {% endif %}
+            </div>
+        </div>
+
+        {# The day in order. Each part opens on two photos at full width,
+           then the rest in shorter rows under them. #}
+        {% for group in event.groups %}
+            {% set group_id = event.slug ~ "-" ~ group.title|lower|replace(" ", "-") %}
+            <section class="band photo-group{% if loop.index is even %} dark{% endif %}" aria-labelledby="{{ group_id }}">
+                <h2 class="display photo-group-title" id="{{ group_id }}">{{ group.title }}</h2>
+                {{ photo_row(group.photos[:2], "(max-width: 560px) calc(100vw - 2.5rem), 50vw", "photo-row-lead") }}
+                {% if group.photos|length > 2 %}
+                    {{ photo_row(group.photos[2:], "(max-width: 560px) 50vw, (max-width: 1100px) 34vw, 26rem") }}
+                {% endif %}
+            </section>
+        {% endfor %}
+    </article>
+
+    {# The rest of the picker, so the next event is a click away rather than
+       a trip back up. Only once there is another event to show. #}
+    {% if others %}
+        <section class="band section event-picker event-picker-more" aria-labelledby="more-title">
+            <h2 class="display event-picker-title" id="more-title">More past events</h2>
+            <ul class="event-cards">
+                {% for other in others %}
+                    {{ event_card(other, "(max-width: 560px) calc(100vw - 2.5rem), 20rem", heading="h3") }}
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+{% endblock %}
+
+{% block after_main %}
+{# Opened by js/gallery.js and inert without it: a closed <dialog> is not
+   rendered at all. #}
+<dialog class="viewer dark" id="viewer" aria-label="Photo viewer">
+    <div class="viewer-frame">
+        <img class="viewer-img" alt="">
+    </div>
+    <div class="viewer-bar">
+        <p class="viewer-count" aria-live="polite"></p>
+        <div class="viewer-controls">
+            <button class="btn btn-ghost" type="button" data-step="-1">Previous</button>
+            {# Focused when the viewer opens: going forward is the usual next move. #}
+            <button class="btn btn-ghost" type="button" data-step="1" autofocus>Next</button>
+            <button class="btn btn-primary" type="button" data-close>Close</button>
+        </div>
+    </div>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/gallery.js') }}" defer></script>
+{% endblock %}

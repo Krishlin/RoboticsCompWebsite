@@ -27,3 +27,8 @@ Stemsters bod renders/
 SUMMIT_robotics_teaser.mov
 RobotsOnField.png
 updated game manual.pdf
+
+# Raw event photos, 8.5 GB for Summit 2026 alone. tools/cut_event_photos.py
+# writes the 5 MB of WebP the past-events page actually serves.
+SRC champion photos/
+SRC photos-*/

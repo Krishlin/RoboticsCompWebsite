@@ -1,0 +1,80 @@
+{# owner: shared / lead
+   Pieces shared by the landing page's results band and the past-events pages.
+   Photos arrive from routes._past_events() already joined to their cut
+   sizes, each size carrying its own URL. #}
+
+{# A srcset for one cut photo, narrowest first. #}
+{% macro srcset(photo) -%}
+    {%- for size in photo.sizes %}{{ size.url }} {{ size.width }}w{% if not loop.last %}, {% endif %}{% endfor -%}
+{%- endmacro %}
+
+{# The winners standing on the podium.
+
+   The champions photo has the three of them left to right in finishing
+   order, and the crop puts each in a third of the frame. The podium steps
+   sit over the bottom of the photo, one per third, so each name lands under
+   its own person and each step's height is the place it pays: the same
+   side-on Hill as the prize podium in the hero, in the same sponsor colours,
+   now with who won it.
+
+   Without the photo (manifest missing, cut not run) the steps stand on
+   their own as an ordinary podium, so the results still read.
+
+   `sizes` is the CSS width the photo is shown at; `eager` is for the one
+   page where this is the first thing on screen. #}
+{% macro champions(event, sizes, eager=false) -%}
+{%- set photo = event.champions_photo -%}
+<figure class="champions{% if photo %} has-photo{% endif %}">
+    {% if photo %}
+        <img class="champions-photo"
+             src="{{ photo.largest.url }}"
+             srcset="{{ srcset(photo) }}"
+             sizes="{{ sizes }}"
+             width="{{ photo.largest.width }}" height="{{ photo.largest.height }}"
+             alt="{{ photo.alt }}"
+             {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+             decoding="async">
+    {% endif %}
+    <ol class="champions-podium" aria-label="{{ event.name }} podium">
+        {% for winner in event.podium %}
+            <li class="champion champion-{{ loop.index }}">
+                <span class="champion-place">{{ winner.place }}</span>
+                <span class="champion-name">{{ winner.name }}</span>
+                <span class="champion-grade">{{ winner.grade }}</span>
+            </li>
+        {% endfor %}
+    </ol>
+</figure>
+{%- endmacro %}
+
+{# One past event as a card in the picker: its name and date along the top,
+   a picture, then where it was and who won. The whole card is the link, and
+   the name inside it is a heading, so a screen reader can move card to card.
+   The picture is decoration here, since the link already says which event
+   it opens.
+
+   `sizes` is the width the picture is shown at, as for the champions. #}
+{% macro event_card(event, sizes, heading="h2") -%}
+<li>
+    <a class="event-card" href="{{ url_for('main.past_event', slug=event.slug) }}">
+        <span class="event-card-top">
+            <{{ heading }} class="event-card-name">{{ event.name }}</{{ heading }}>
+            <span class="event-card-date">{{ event.date_short }}</span>
+        </span>
+        <span class="event-card-frame">
+            {% if event.cover %}
+                <img src="{{ event.cover.sizes[0].url }}"
+                     srcset="{{ srcset(event.cover) }}"
+                     sizes="{{ sizes }}"
+                     width="{{ event.cover.sizes[0].width }}" height="{{ event.cover.sizes[0].height }}"
+                     alt="" loading="lazy" decoding="async">
+            {% endif %}
+        </span>
+        <span class="event-card-text">
+            {{ event.venue }}, <span class="nowrap">{{ event.grades|lower }}</span>.
+            {% if event.podium %}Won by {{ event.podium[0].name }}.{% endif %}
+        </span>
+        <span class="event-card-more" aria-hidden="true">Results and photos</span>
+    </a>
+</li>
+{%- endmacro %}

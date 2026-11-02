@@ -1,0 +1,37 @@
+{# owner: shared / lead
+   The shell the past-events pages share: the picker at /past-events and
+   each event's own page. Standalone like the landing page and wearing the
+   same clothes: the same stylesheet, and the same nav and footer from
+   _site.html, so arriving here never loses the rest of the site. base.html
+   is the chrome for the tournament tools. #}
+{% from "_site.html" import body_class, site_header, site_footer %}
+<!DOCTYPE html>
+<html lang="en" class="archive-page">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Past events — Summit{% endblock %}</title>
+    <meta name="description" content="{% block description %}Results and photos from past STEMsters Robotics Competition events.{% endblock %}">
+    <meta name="theme-color" content="#141414">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+</head>
+<body{{ body_class() }}>
+<a class="skip-link" href="#main">Skip to content</a>
+
+{{ site_header("past_events") }}
+
+<main id="main">
+{% block main %}{% endblock %}
+</main>
+
+{% block after_main %}{% endblock %}
+
+{{ site_footer(links, art, "past_events") }}
+
+<script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

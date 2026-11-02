@@ -6,12 +6,13 @@ import json
 import logging
 import os
 
-from flask import Blueprint, current_app, jsonify, render_template, send_from_directory
+from flask import Blueprint, abort, current_app, jsonify, render_template, send_from_directory, url_for
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
 from app.db import db
+from app.past_events import PAST_EVENTS
 from app.security import staff_required
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ MANUAL_FILENAME = "summit-manual-v1.0.pdf"
 # Hand-maintained list of every route in the app. When you add a page to
 # your blueprint, add one line here too, so it shows up on the home page.
 ROUTE_INDEX = [
+    {"owner": "lead", "label": "Past events: results and photos", "path": "/past-events"},
     {"owner": "Emily", "label": "Sign up a team", "path": "/register/"},
     {"owner": "Emily", "label": "Team list / CSV export (staff)", "path": "/register/teams"},
 
@@ -201,14 +203,114 @@ def _art():
     return art
 
 
+def _photo_sizes(entry) -> list[dict] | None:
+    """One photo's cut sizes from an event manifest, narrowest first, or None.
+
+    The manifest is a build artefact, so every field is checked rather than
+    trusted: a size with a missing or non-numeric width would otherwise reach
+    the template and render a srcset the browser silently ignores.
+    """
+    if not isinstance(entry, dict) or not isinstance(entry.get("sizes"), list):
+        return None
+    sizes = []
+    for size in entry["sizes"]:
+        try:
+            sizes.append({
+                "file": str(size["file"]),
+                "width": int(size["width"]),
+                "height": int(size["height"]),
+            })
+        except (KeyError, TypeError, ValueError):
+            continue
+    sizes.sort(key=lambda s: s["width"])
+    return sizes or None
+
+
+def _past_events() -> list[dict]:
+    """PAST_EVENTS, each joined to the photos tools/cut_event_photos.py cut.
+
+    Read fresh each request, like the other manifests. An event whose
+    manifest is missing or malformed still renders, with its facts and podium
+    and no pictures; a single photo with no cut is dropped rather than shown
+    as a broken image. A group left with no photos is dropped with it, so a
+    heading never sits over nothing.
+    """
+    events = []
+    for event in PAST_EVENTS:
+        manifest = _read_manifest("events", event["slug"], "manifest.json") or {}
+        cut = manifest.get("photos")
+        if not isinstance(cut, dict):
+            cut = {}
+        folder = f"img/events/{event['slug']}/"
+
+        def join(photo, cut=cut, folder=folder):
+            sizes = _photo_sizes(cut.get(photo["src"]))
+            if sizes is None:
+                return None
+            for size in sizes:
+                size["url"] = url_for("static", filename=folder + size["file"])
+            return {**photo, "sizes": sizes, "largest": sizes[-1]}
+
+        champions = event.get("champions_photo")
+        champions = join(champions) if champions else None
+        groups = []
+        for group in event.get("groups", []):
+            photos = [p for p in (join(photo) for photo in group.get("photos", [])) if p]
+            if photos:
+                groups.append({**group, "photos": photos})
+
+        # The card's picture is one of the photos above, found by its src. A
+        # cover that names nothing listed, or was not cut, falls back to the
+        # champions photo, and with neither the card goes without a picture.
+        cover = None
+        if event.get("cover"):
+            cover = next((p for g in groups for p in g["photos"] if p["src"] == event["cover"]), None)
+        cover = cover or champions
+
+        events.append({
+            **event,
+            "champions_photo": champions,
+            "groups": groups,
+            "cover": cover,
+        })
+    return events
+
+
 @main_bp.route("/")
 def home():
+    events = _past_events()
     return render_template(
         "landing.html",
         links=SITE_LINKS,
         manual=_manual_pages(),
         bot=_bot_gallery(),
         art=_art(),
+        # The most recent event's winners, shown after the awards.
+        latest=events[0] if events else None,
+    )
+
+
+@main_bp.route("/past-events")
+def past_events():
+    """A card for every past event; each opens that event's own page."""
+    # `art` is for the footer, which is shared with the landing page.
+    return render_template("past_events.html", events=_past_events(), links=SITE_LINKS, art=_art())
+
+
+@main_bp.route("/past-events/<slug>")
+def past_event(slug: str):
+    """One event's recap: the podium, the prizes and the photos from the day.
+
+    An unknown slug is a plain 404 rather than a redirect to the list, so a
+    mistyped link says it is wrong instead of quietly landing somewhere else.
+    """
+    events = _past_events()
+    event = next((e for e in events if e["slug"] == slug), None)
+    if event is None:
+        abort(404)
+    others = [e for e in events if e["slug"] != slug]
+    return render_template(
+        "past_event.html", event=event, others=others, links=SITE_LINKS, art=_art()
     )
 
 
