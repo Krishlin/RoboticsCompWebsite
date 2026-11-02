@@ -68,5 +68,20 @@
         "height": 1081
       }
     ]
+  },
+  "welcome_match.jpg": {
+    "source": "welcome_match.jpg",
+    "sizes": [
+      {
+        "file": "welcome_match-640.webp",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "file": "welcome_match-960.webp",
+        "width": 960,
+        "height": 540
+      }
+    ]
   }
 }

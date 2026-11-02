@@ -1,9 +1,7 @@
 /* owner: shared / lead
    Two small enhancements to the landing page. Both are enhancements in the
    strict sense: the page is usable with this file blocked, and everything
-   here only takes something away from that baseline once it is running.
-
-   The Hill in the hero is a separate file, js/hill.js. */
+   here only takes something away from that baseline once it is running. */
 
 (function () {
     "use strict";

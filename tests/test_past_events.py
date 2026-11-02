@@ -171,8 +171,8 @@ def test_landing_page_shows_the_latest_results_after_the_awards(client):
         assert winner["name"] in results
     assert f'href="/past-events/{latest["slug"]}"' in results
     # The page opens on what Summit is; last time's winners come after the
-    # prizes they won.
-    assert page.index('class="hero band dark"') < page.index('id="results"')
+    # awards.
+    assert page.index('id="welcome"') < page.index('id="results"')
     assert page.index('id="awards"') < page.index('id="results"') < page.index('id="register"')
 
 

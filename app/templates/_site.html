@@ -14,8 +14,10 @@
    phone pick the small file.
 
    `art` is passed in rather than read from the page's context: a macro does
-   not inherit it. #}
-{% macro art_img(art, name, alt, sizes, klass="") -%}
+   not inherit it. `eager` is for a picture that is on screen at load, which
+   lazy loading would only delay. #}
+{% macro art_img(art, name, alt, sizes, klass="", eager=false) -%}
+    {%- set loading = 'loading="eager" fetchpriority="high"' if eager else 'loading="lazy"' -%}
     {%- set variants = art.get(name) -%}
     {%- if variants -%}
         <img {% if klass %}class="{{ klass }}" {% endif %}
@@ -23,11 +25,11 @@
              srcset="{% for v in variants %}{{ url_for('static', filename='img/' ~ v.file) }} {{ v.width }}w{% if not loop.last %}, {% endif %}{% endfor %}"
              sizes="{{ sizes }}"
              width="{{ variants[-1].width }}" height="{{ variants[-1].height }}"
-             alt="{{ alt }}" loading="lazy" decoding="async">
+             alt="{{ alt }}" {{ loading|safe }} decoding="async">
     {%- else -%}
         <img {% if klass %}class="{{ klass }}" {% endif %}
              src="{{ url_for('static', filename='img/' ~ name) }}"
-             alt="{{ alt }}" loading="lazy" decoding="async">
+             alt="{{ alt }}" {{ loading|safe }} decoding="async">
     {%- endif -%}
 {%- endmacro %}
 
@@ -64,12 +66,19 @@
    visitor without JavaScript gets every link as a wrapped row rather than a
    dead button. landing.js flips that round on load. #}
 <nav class="nav band" id="site-nav" aria-label="Main">
-    <a class="nav-logo" href="{{ url_for('main.home') }}" aria-label="Summit, home">
-        {# 987x130 in the file; these are that ratio at the height the
-           stylesheet sets, so the bar does not resize once the logo
-           arrives. #}
-        <img src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
-             width="197" height="26" alt="Summit">
+    {# STEMsters runs Summit, and the logo says so: the organiser's mark and
+       the competition's wordmark as one lockup. Inline with a rule between
+       on a wide screen; stacked on a phone, where the bar has no width to
+       spare. The link carries the name, so both images are decoration. #}
+    <a class="nav-logo" href="{{ url_for('main.home') }}" aria-label="STEMsters Summit, home">
+        {# 960x182 and 987x130 in the files; these are those ratios at the
+           heights the stylesheet sets, so the bar does not resize once the
+           logos arrive. #}
+        <img class="nav-logo-org" src="{{ url_for('static', filename='img/stemsters_logo-320.webp') }}"
+             width="158" height="30" alt="">
+        <span class="nav-logo-rule" aria-hidden="true"></span>
+        <img class="nav-logo-summit" src="{{ url_for('static', filename='img/summit_logo_transparent.png') }}"
+             width="197" height="26" alt="">
     </a>
 
     <ul class="nav-links" id="nav-links">
@@ -111,11 +120,8 @@
                  width="182" height="24" alt="Summit" loading="lazy" decoding="async">
             <p>STEMsters Robotics Competition</p>
 
-            {# The organiser's own mark, against the line that names it.
-               Summit keeps the nav and the hero to itself — it is the
-               competition, and it is what a family arrives looking for.
-               STEMsters is who runs it, and the footer is the one place on
-               the page that says so. #}
+            {# The organiser's own mark, against the line that names it. The
+               nav carries it too, in the STEMsters Summit lockup. #}
             <div class="footer-org">
                 {{ art_img(art, 'stemsters_logo.png', 'STEMsters',
                            '180px', 'footer-org-mark') }}

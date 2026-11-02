@@ -31,147 +31,45 @@
 
 <main id="main">
 
-    <!-- Hero. Everything on the poster fits one phone screen without
-         scrolling: the game, the prizes, when, where, who, how much, then the
-         two next steps. The prizes stand on the Hill drawn side-on: Plateau,
-         inner ring, outer ring are the field's own three tiers, so the height
-         of each step is the place it pays. On a wide screen the top-down Hill
-         sits beside it, plan and elevation of the same object. The nav
-         carries the Summit wordmark, so the hero does not repeat it. -->
-    <section class="hero band dark">
-        <div class="hero-grid">
-            <div>
-                <h1 class="display hero-title">Robot<br>King of the Hill</h1>
-                <p class="hero-tagline">
-                    <strong>Two robots. One hill. No remote control.</strong>
-                    Will you race to the summit, hunt your opponent, or defend your position?
-                    Once the match starts, your robot is on its own.
-                </p>
+    <!-- Welcome. The first thing on the page is a person and a real match:
+         who started Summit and why, beside two robots on the Hill at the
+         event, then the teaser under them. The letter is Max's own words; change
+         it only with Max's say-so.
 
-                <ol class="podium" aria-label="Prizes">
-                    <li class="podium-1">
-                        <img class="podium-art podium-art-photo"
-                             src="{{ url_for('static', filename='img/prize_bambu_a1_trim.png') }}"
-                             alt="" width="206" height="213">
-                        <p class="podium-step">
-                            <span class="podium-place">1st place</span>
-                            <span class="podium-prize">Bambu Lab&nbsp;A1 3D&nbsp;printer</span>
-                        </p>
-                    </li>
-                    <li class="podium-2">
-                        <img class="podium-art"
-                             src="{{ url_for('static', filename='img/prize_chatgpt.svg') }}"
-                             alt="" width="40" height="40">
-                        <p class="podium-step">
-                            <span class="podium-place">2nd</span>
-                            <span class="podium-prize">4 months ChatGPT Plus</span>
-                        </p>
-                    </li>
-                    <li class="podium-3">
-                        <img class="podium-art"
-                             src="{{ url_for('static', filename='img/prize_discord.svg') }}"
-                             alt="" width="44" height="33">
-                        <p class="podium-step">
-                            <span class="podium-place">3rd</span>
-                            <span class="podium-prize">4 months Discord Nitro</span>
-                        </p>
-                    </li>
-                </ol>
-
-                {# A drawing's title block: the facts a reader checks before
-                   anything else, in ruled cells, the way the rest of this
-                   page borrows a dimensioned drawing's vocabulary. The two
-                   long ones (venue, teams) share the wider right column. #}
-                <dl class="title-block">
-                    <div><dt>Date</dt><dd>Sat, Oct&nbsp;24</dd></div>
-                    <div><dt>Venue</dt><dd>Arcadia High School</dd></div>
-                    <div><dt>Entry</dt><dd>$20 per team</dd></div>
-                    <div><dt>Teams, grades 6–12</dt><dd>1–4 students</dd></div>
-                </dl>
-
-                {# Manual first, then Register: read the rules, then commit.
-                   Purchase sits on its own row under them, because three
-                   labels this long do not fit one row beside each other. #}
-                <div class="hero-ctas">
-                    <a class="btn btn-ghost" href="{{ url_for('main.manual') }}" target="_blank" rel="noopener">Read the manual</a>
-                    <a class="btn btn-primary" href="{{ config.REGISTRATION_FORM_URL }}" target="_blank" rel="noopener">Register a team</a>
-                    <a class="btn btn-ghost hero-cta-wide" href="{{ config.KIT_ORDER_FORM_URL }}" target="_blank" rel="noopener">Purchase materials</a>
-                </div>
-                <p class="note reg-deadline">Deadline extended: registration now closes <strong>{{ config.REGISTRATION_DEADLINE }}</strong>.</p>
-            </div>
-
-            <figure class="hill-figure">
-                <div class="hill-stage" id="hill-stage">
-                    {# The Hill at true scale: 1 SVG unit = 1 mm, so 420 units
-                       across is 42 cm across. Radii are Appendix A of the manual. #}
-                    <svg id="hill-svg" viewBox="-25 -25 470 470" role="img"
-                         aria-label="The Hill, seen from above: five concentric coloured zones with a robot on it.">
-                        {# The Edge Band is black and so is this section, so the
-                           boundary — the single most consequential line on the
-                           field — is drawn rather than left to the fill. #}
-                        <circle cx="210" cy="210" r="210" fill="#141414"
-                                stroke="rgba(242,244,244,0.32)" stroke-width="2"></circle>
-                        <path d="M 210 30 A 180 180 0 0 0 210 390 Z" fill="#c0433b"></path>
-                        <path d="M 210 30 A 180 180 0 0 1 210 390 Z" fill="#4470d2"></path>
-                        <circle cx="210" cy="210" r="110" fill="#e5c32c" stroke="#141414" stroke-width="1.5"></circle>
-                        <circle cx="210" cy="210" r="80" fill="#4fae55" stroke="#141414" stroke-width="1.5"></circle>
-                        <circle cx="210" cy="210" r="50" fill="#f0f0f0" stroke="#141414" stroke-width="1.5"></circle>
-
-                        <g id="robot" tabindex="0" role="img" transform="translate(355 240)">
-                            {# The Summit bot mark, drawn in its own 512-unit art
-                               space and scaled so wheel to wheel is 10 cm, the legal
-                               starting width — exactly as wide as the Plateau it is
-                               trying to hold. #}
-                            <g transform="scale(0.271) translate(-256 -248)">
-                                {# The white outline goes down first as a thick stroke,
-                                   so the fills drawn over it leave a sticker-style rim
-                                   that reads on every zone colour. #}
-                                <g fill="#fff" stroke="#fff" stroke-width="32" stroke-linejoin="round">
-                                    <ellipse cx="110" cy="266" rx="24" ry="62"></ellipse>
-                                    <ellipse cx="402" cy="266" rx="24" ry="62"></ellipse>
-                                    <rect x="155" y="162" width="203" height="206" rx="14"></rect>
-                                </g>
-                                <ellipse cx="110" cy="266" rx="24" ry="62" fill="#27272c"></ellipse>
-                                <ellipse cx="402" cy="266" rx="24" ry="62" fill="#27272c"></ellipse>
-                                <rect x="155" y="162" width="203" height="206" rx="14" fill="#3651e5"></rect>
-                                <circle cx="210" cy="152" r="44" fill="#fff"></circle>
-                                <circle cx="303" cy="152" r="44" fill="#fff"></circle>
-                                <circle cx="210" cy="152" r="23" fill="#fff" stroke="#3651e5" stroke-width="9"></circle>
-                                <circle cx="303" cy="152" r="23" fill="#fff" stroke="#3651e5" stroke-width="9"></circle>
-                                <g fill="#fff">
-                                    {% for row in range(5) %}{% for col in range(5) %}
-                                    <circle cx="{{ 207 + col * 25 }}" cy="{{ 228 + row * 25 }}" r="5.5"></circle>
-                                    {% endfor %}{% endfor %}
-                                </g>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-
-                <figcaption>
-                    <div class="hill-readout" aria-live="polite">
-                        <div class="readout-swatch" id="readout-swatch"></div>
-                        <div class="readout-zone" id="readout-zone">Zone 4  Flat Band</div>
-                        <div class="readout-detail" id="readout-detail">
-                            The sensor reads blue. Ground level, and where the blue robot starts.
-                        </div>
-                    </div>
-                    {# An affordance, not an explanation: a drag target has to
-                       say it is one. What the colours are for is the next
-                       section's job. #}
-                    <p class="hill-hint">Drag the robot, or press the arrow keys.</p>
-                </figcaption>
+         The teaser is the only moving picture on the page. preload="none"
+         is the whole trick: the poster is 32 KB and the video is 5.4 MB, so
+         a visitor on a phone pays for the still and nothing else until they
+         ask to watch. Encoded by tools/encode_teaser.py — the .mov it comes
+         from is HEVC, which half the browsers this page is built for cannot
+         play. -->
+    <section class="welcome band dark" id="welcome" aria-labelledby="welcome-title">
+        <div class="welcome-grid">
+            <figure class="welcome-photo">
+                {{ art_img(art, 'welcome_match.jpg',
+                           'Two student-built micro:bit robots facing each other across the Hill during a Summit match',
+                           '(max-width: 880px) calc(100vw - 2.5rem), 800px',
+                           eager=true) }}
             </figure>
+            <div class="welcome-letter">
+                <h1 class="display welcome-title" id="welcome-title">Hi, I’m Max. Welcome to Summit!</h1>
+                <p>
+                    When I started competitive robotics, I felt like everyone else already knew what
+                    they were doing. I wanted to make that first step easier for someone else.
+                </p>
+                <p>
+                    I started Summit through STEMsters with a team of volunteers to give beginners an
+                    approachable way to build, code, and compete. Getting started can take equipment,
+                    space, and guidance that beginners don’t always have. Our answer is small robots,
+                    an arena that fits on a desk, and a starter kit that helps students get straight
+                    to experimenting.
+                </p>
+                <p>
+                    But an accessible competition should still be exciting. Summit’s head-to-head
+                    matches leave room to try different strategies, adapt to opponents, and make a
+                    robot your own. We want that first competition to inspire whatever you build next.
+                </p>
+            </div>
         </div>
-    </section>
-
-    <!-- The teaser. First thing after the hero, and the only moving picture
-         on the page. preload="none" is the whole trick: the poster is 32 KB
-         and the video is 5.4 MB, so a visitor on a phone pays for the still
-         and nothing else until they ask to watch. Encoded by
-         tools/encode_teaser.py — the .mov it comes from is HEVC, which half
-         the browsers this page is built for cannot play. -->
-    <section class="teaser-band band dark" id="teaser">
         <figure class="teaser">
             <video controls playsinline preload="none"
                    poster="{{ url_for('static', filename='img/summit_teaser_poster.webp') }}"
@@ -541,7 +439,7 @@
         </div>
     </section>
 
-    <!-- Awards, exhibition, areas -->
+    <!-- Awards. Trophies only; the sponsor prizes are not listed on this page. -->
     <section class="section band dark" id="awards">
         <div class="section-head">
             <h2 class="display">Awards</h2>
@@ -550,45 +448,10 @@
                 The overall Champion also receives the Summit championship banner.
             </p>
         </div>
-
-        <ol class="prizes">
-            <li>
-                <div class="prize-art prize-art-photo prize-bambu">
-                    <img src="{{ url_for('static', filename='img/prize_bambu_a1.png') }}"
-                         alt="Bambu Lab A1 3D printer" width="320" height="320" loading="lazy">
-                </div>
-                <p class="prize-place">1st Place</p>
-                <h3 class="prize-name">Bambu Lab A1 3D Printer</h3>
-                <p class="prize-note">Bring your robot designs to life.</p>
-            </li>
-            <li>
-                <div class="prize-art prize-chatgpt">
-                    <img src="{{ url_for('static', filename='img/prize_chatgpt.svg') }}"
-                         alt="ChatGPT logo" width="72" height="72" loading="lazy">
-                </div>
-                <p class="prize-place">2nd Place</p>
-                <h3 class="prize-name">4 Months of ChatGPT Plus</h3>
-                <p class="prize-note">Explore ideas and develop your next project.</p>
-            </li>
-            <li>
-                <div class="prize-art prize-discord">
-                    <img src="{{ url_for('static', filename='img/prize_discord.svg') }}"
-                         alt="Discord logo" width="80" height="60" loading="lazy">
-                </div>
-                <p class="prize-place">3rd Place</p>
-                <h3 class="prize-name">4 Months of Discord Nitro</h3>
-                <p class="prize-note">Connect, plan, and collaborate with your team on Discord.</p>
-            </li>
-            <li>
-                <p class="prize-place">Middle School Champion</p>
-                <p class="prize-note">Additional recognition for the highest-placing middle school team.</p>
-            </li>
-        </ol>
-
     </section>
 
-    {# The latest event's winners. After the prizes, so the page says what
-       Summit is and what it pays before it says who won it last time. The
+    {# The latest event's winners. After the awards, so the page says what
+       Summit is before it says who won it last time. The
        data is app/past_events.py; the band goes away on its own if that list
        is ever empty. On a phone the photo sits between the headline and the
        link. #}
@@ -677,6 +540,5 @@
 {{ site_footer(links, art, "home") }}
 
 <script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/hill.js') }}" defer></script>
 </body>
 </html>

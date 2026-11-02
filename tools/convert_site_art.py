@@ -45,6 +45,10 @@ ART = {
     # px. 700 is the 1x phone file; 1448 is the source width, which is all a
     # 2x desktop can ask for before it starts upscaling.
     "RobotsOnField.png": [700, 1100, 1448],
+    # The match photo beside the welcome letter at the top of the page,
+    # shown at up to about 640 CSS px. The source is a 960 px still, so 960
+    # is as large as it goes.
+    "welcome_match.jpg": [640, 960],
 }
 
 QUALITY = 84
