@@ -514,7 +514,7 @@ a {
 
 /* ---------------------------------------------------------------
    Welcome: a photo from a real match and Max's letter beside it, with the
-   teaser under them. The page's first band.
+   latest event's recap and the teaser under them. The page's first band.
    --------------------------------------------------------------- */
 
 .welcome {
@@ -588,6 +588,110 @@ a {
         height: auto;
         aspect-ratio: 16 / 9;
         box-shadow: 5px 5px 0 var(--cyan);
+    }
+}
+
+/* --- The recap carousel ---
+
+   One height, with each photo as wide as its own shape asks for, in a
+   scroll-snap row. The height follows the screen, so a phone still sees the
+   edge of the next photo; 26rem is the 416 px the template's `sizes` assumes,
+   and 48vw is its other half. Keep them in step. */
+
+.highlights {
+    --h: clamp(10rem, 48vw, 26rem);
+    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.highlights-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+.highlights-title {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    margin: 0 0 0.6rem;
+}
+
+.highlights-head .note {
+    margin: 0;
+}
+
+.highlights-actions,
+.highlights-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Spelled out because the rule above would otherwise out-specify [hidden]:
+   without the script the buttons have nothing to operate. */
+.highlights-controls[hidden] {
+    display: none;
+}
+
+.highlights-controls .btn:disabled,
+.highlights-controls .btn:disabled:hover {
+    border-color: rgba(242, 244, 244, 0.4);
+    color: var(--paper);
+    opacity: 0.35;
+    cursor: default;
+}
+
+.highlights-strip {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: clamp(0.5rem, 1vw, 0.75rem);
+    overflow-x: auto;
+    overscroll-behavior-x: contain; /* a swipe past the last photo is not a Back */
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.highlights-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.highlights-slide {
+    flex: 0 0 auto;
+    width: calc(var(--ar) * var(--h));
+    height: var(--h);
+    scroll-snap-align: start;
+    background: var(--edge-soft);
+}
+
+.highlights-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Edge to edge on a phone, where cutting a photo off at the page margin looks
+   like a mistake. The padding keeps the first photo on the page's left edge. */
+@media (max-width: 880px) {
+    .highlights-strip {
+        margin-inline: calc(-1 * var(--spine));
+        padding-inline: var(--spine);
+        scroll-padding-inline: var(--spine);
+    }
+}
+
+/* A phone swipes, and on one the buttons would stand taller than the photos
+   they move. */
+@media (max-width: 560px) {
+    .highlights-controls {
+        display: none;
+    }
+
+    .highlights-actions,
+    .highlights-actions .btn {
+        width: 100%;
     }
 }
 

@@ -31,6 +31,16 @@ def test_every_photo_has_alt_text():
             assert photo.get("alt", "").strip(), photo["src"]
 
 
+def test_every_highlight_is_a_listed_photo():
+    # The route drops a highlight it cannot find, so a typo here would quietly
+    # shorten the carousel instead of failing.
+    for event in PAST_EVENTS:
+        listed = {p["src"] for group in event.get("groups", []) for p in group["photos"]}
+        highlights = event.get("highlights", [])
+        assert len(highlights) == len(set(highlights)), event["slug"]
+        assert not set(highlights) - listed, event["slug"]
+
+
 def _event_url(event: dict) -> str:
     return f"/past-events/{event['slug']}"
 
@@ -176,6 +186,50 @@ def test_landing_page_shows_the_latest_results_after_the_next_competition(client
     assert page.index('id="event"') < page.index('id="results"') < page.index('id="register"')
 
 
+def _highlights_section(page: str) -> str:
+    return page.split('class="highlights"', 1)[1].split("</section>", 1)[0]
+
+
+def test_landing_page_recap_sits_between_the_letter_and_the_teaser(client):
+    page = client.get("/").get_data(as_text=True)
+    assert page.index('class="welcome-letter"') < page.index('class="highlights"')
+    assert page.index('class="highlights"') < page.index('class="teaser"')
+
+
+def test_landing_page_recap_shows_the_highlights_in_order(client):
+    latest = PAST_EVENTS[0]
+    section = _highlights_section(client.get("/").get_data(as_text=True))
+    assert section.count('class="highlights-slide"') == len(latest["highlights"])
+    positions = [
+        section.index(f"img/events/{latest['slug']}/{Path(src).stem.lower()}-")
+        for src in latest["highlights"]
+    ]
+    assert positions == sorted(positions)
+    assert f'href="{_event_url(latest)}"' in section
+    # The buttons do nothing without landing.js, which is what un-hides them.
+    assert 'id="highlights-controls" hidden' in section
+
+
+def test_a_highlight_that_names_no_listed_photo_is_dropped(client, monkeypatch):
+    event = {**PAST_EVENTS[0], "highlights": ["IMG_5025.DNG", "not-a-listed-photo.jpg"]}
+    monkeypatch.setattr(routes, "PAST_EVENTS", [event])
+    section = _highlights_section(client.get("/").get_data(as_text=True))
+    assert section.count('class="highlights-slide"') == 1
+    assert "img_5025-" in section
+
+
+@pytest.mark.parametrize("highlights", [{}, {"highlights": []}])
+def test_landing_page_has_no_recap_without_highlights(client, monkeypatch, highlights):
+    event = {k: v for k, v in PAST_EVENTS[0].items() if k != "highlights"} | highlights
+    monkeypatch.setattr(routes, "PAST_EVENTS", [event])
+    assert 'class="highlights"' not in client.get("/").get_data(as_text=True)
+
+
+def test_landing_page_recap_is_up_while_registration_only(app_factory):
+    client = app_factory(REGISTRATION_ONLY=True).test_client()
+    assert 'class="highlights"' in client.get("/").get_data(as_text=True)
+
+
 def test_landing_page_links_to_past_events(client):
     page = client.get("/").get_data(as_text=True)
     nav = page.split('id="nav-links"', 1)[1].split("</ul>", 1)[0]
@@ -202,6 +256,7 @@ def test_pages_survive_a_missing_manifest(client, monkeypatch):
     home = client.get("/")
     assert home.status_code == 200
     assert PAST_EVENTS[0]["podium"][0]["name"] in home.get_data(as_text=True)
+    assert 'class="highlights"' not in home.get_data(as_text=True)
 
 
 def test_a_malformed_size_is_dropped_not_rendered(client, monkeypatch):

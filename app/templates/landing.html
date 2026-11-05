@@ -8,7 +8,7 @@
    `links` from the route; when one is missing the page renders plain text
    instead of a dead link. #}
 {% from "_site.html" import art_img, body_class, site_header, site_footer %}
-{% from "_events.html" import champions %}
+{% from "_events.html" import champions, srcset %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,8 +33,8 @@
 
     <!-- Welcome. The first thing on the page is a person and a real match:
          who started Summit and why, beside two robots on the Hill at the
-         event, then the teaser under them. The letter is Max's own words; change
-         it only with Max's say-so.
+         event, then the latest event's recap and the teaser under them. The
+         letter is Max's own words; change it only with Max's say-so.
 
          The teaser is the only moving picture on the page. preload="none"
          is the whole trick: the poster is 32 KB and the video is 5.4 MB, so
@@ -70,6 +70,43 @@
                 </p>
             </div>
         </div>
+
+        {# The best photos from the latest event, picked in app/past_events.py.
+           A scroll-snap row, so it swipes and scrolls with no JavaScript;
+           landing.js adds the buttons. It never moves on its own. Every photo
+           keeps its own shape, so nothing is cropped out of the frame, and the
+           next one showing at the edge says there are more. #}
+        {% if latest and latest.highlights %}
+        <section class="highlights" aria-labelledby="highlights-title">
+            <div class="highlights-head">
+                <div>
+                    <h2 class="display highlights-title" id="highlights-title">{{ latest.name }} recap</h2>
+                    <p class="note">{{ latest.date }}, at {{ latest.venue }}.</p>
+                </div>
+                <div class="highlights-actions">
+                    <div class="highlights-controls" id="highlights-controls" hidden>
+                        <button class="btn btn-ghost" type="button" data-step="-1">Previous</button>
+                        <button class="btn btn-ghost" type="button" data-step="1">Next</button>
+                    </div>
+                    <a class="btn btn-primary" href="{{ url_for('main.past_event', slug=latest.slug) }}">See all the photos</a>
+                </div>
+            </div>
+            <ul class="highlights-strip" id="highlights-strip" tabindex="0"
+                aria-label="Photos from {{ latest.name }}">
+                {% for photo in latest.highlights %}
+                    {% set ratio = photo.largest.width / photo.largest.height %}
+                    <li class="highlights-slide" style="--ar: {{ '%.4f'|format(ratio) }}">
+                        <img src="{{ photo.largest.url }}"
+                             srcset="{{ srcset(photo) }}"
+                             sizes="min({{ (ratio * 416)|round|int }}px, {{ (ratio * 48)|round|int }}vw)"
+                             width="{{ photo.largest.width }}" height="{{ photo.largest.height }}"
+                             alt="{{ photo.alt }}" loading="lazy" decoding="async">
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
         <figure class="teaser">
             <video controls playsinline preload="none"
                    poster="{{ url_for('static', filename='img/summit_teaser_poster.webp') }}"

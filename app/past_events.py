@@ -61,6 +61,19 @@ PAST_EVENTS = [
         # `src` of a photo listed below, so it is already cut. Optional; the
         # card falls back to the champions photo.
         "cover": "3CA03C13-F7DE-4F8E-98D6-4466BE0C0DBD.jpg",
+        # The best of the day, for the recap carousel on the landing page, in
+        # the order they scroll: the `src` of photos listed below, so they are
+        # already cut. Optional; with none the carousel is left out.
+        "highlights": [
+            "4D9C50FD-4DDF-4520-B40B-B1B48F70E4B3.jpg",
+            "IMG_5025.DNG",
+            "DSC_0091.JPG",
+            "IMG_5010.DNG",
+            "IMG_5054.DNG",
+            "DSC_0089.JPG",
+            "3CA03C13-F7DE-4F8E-98D6-4466BE0C0DBD.jpg",
+            "867452899_1009036315553017_2897763393915498215_n.jpg",
+        ],
         # The crop is (left, top, right, bottom) as fractions of the source.
         # It trims the empty chair on the right and centres each winner in a
         # third of the frame, so each podium step lands under its own person.

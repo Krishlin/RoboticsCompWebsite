@@ -67,6 +67,84 @@
     }
 
     /* -----------------------------------------------------------------
+       Recap carousel. The row already swipes and scrolls. This adds buttons
+       that move it one photo at a time, and greys each out at its end.
+       ----------------------------------------------------------------- */
+
+    var strip = document.getElementById("highlights-strip");
+    var controls = document.getElementById("highlights-controls");
+
+    if (strip && controls) {
+        var slides = Array.prototype.slice.call(strip.children);
+        var previous = controls.querySelector('[data-step="-1"]');
+        var next = controls.querySelector('[data-step="1"]');
+        var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+        // Where the row is heading while a smooth scroll is under way. Counting
+        // from here rather than from where it has got to is what makes two
+        // quick clicks move two photos instead of aiming at the same one twice.
+        var aim = null;
+        var settling;
+
+        // The scroll position that snaps each photo into place.
+        function stops() {
+            var start = strip.getBoundingClientRect().left +
+                (parseFloat(getComputedStyle(strip).scrollPaddingLeft) || 0);
+            return slides.map(function (slide) {
+                return slide.getBoundingClientRect().left - start + strip.scrollLeft;
+            });
+        }
+
+        function step(direction) {
+            var here = aim === null ? strip.scrollLeft : aim;
+            var target = null;
+            stops().forEach(function (stop) {
+                if (direction > 0 && stop > here + 1 && target === null) {
+                    target = stop; // The first photo past where we are.
+                } else if (direction < 0 && stop < here - 1) {
+                    target = stop; // The last photo before it.
+                }
+            });
+            if (target !== null) {
+                // The last few photos cannot reach the left edge, so the row
+                // stops short of them at the end of its travel.
+                aim = Math.min(target, strip.scrollWidth - strip.clientWidth);
+                strip.scrollTo({ left: aim, behavior: calm.matches ? "auto" : "smooth" });
+            }
+        }
+
+        function settleSoon() {
+            clearTimeout(settling);
+            settling = setTimeout(function () { aim = null; }, 150);
+        }
+
+        function syncButtons() {
+            var room = strip.scrollWidth - strip.clientWidth;
+            // A disabled button drops keyboard focus, so hand it to the other
+            // one rather than back to the top of the page.
+            var focused = document.activeElement;
+            previous.disabled = strip.scrollLeft <= 1;
+            next.disabled = strip.scrollLeft >= room - 1;
+            if (focused === previous && previous.disabled) {
+                next.focus();
+            } else if (focused === next && next.disabled) {
+                previous.focus();
+            }
+        }
+
+        previous.addEventListener("click", function () { step(-1); });
+        next.addEventListener("click", function () { step(1); });
+        strip.addEventListener("scroll", function () {
+            settleSoon();
+            syncButtons();
+        }, { passive: true });
+        window.addEventListener("resize", syncButtons);
+
+        controls.hidden = false;
+        syncButtons();
+    }
+
+    /* -----------------------------------------------------------------
        Kit robot gallery. The stage is a scroll-snap row and the rail is a
        list of in-page links into it, so swiping and tapping both already
        work. What is missing without script is any sign of which view you

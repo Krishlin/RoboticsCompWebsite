@@ -267,11 +267,17 @@ def _past_events() -> list[dict]:
             cover = next((p for g in groups for p in g["photos"] if p["src"] == event["cover"]), None)
         cover = cover or champions
 
+        # Found by src the same way, in the order listed. One that names
+        # nothing listed, or was not cut, is dropped.
+        by_src = {p["src"]: p for g in groups for p in g["photos"]}
+        highlights = [by_src[src] for src in event.get("highlights", []) if src in by_src]
+
         events.append({
             **event,
             "champions_photo": champions,
             "groups": groups,
             "cover": cover,
+            "highlights": highlights,
         })
     return events
 
